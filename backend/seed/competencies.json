@@ -1,0 +1,440 @@
+{
+  "pillars": [
+    {
+      "id": "communication",
+      "name": "Communication + Argumentation",
+      "color": "#E53E3E",
+      "description": "Building strong communicators who listen, reason, and persuade effectively"
+    },
+    {
+      "id": "creativity",
+      "name": "Creativity + Curiosity",
+      "color": "#3182CE",
+      "description": "Nurturing creative thinkers who generate, evaluate, and apply ideas"
+    },
+    {
+      "id": "ai_systems",
+      "name": "AI + Systems Thinking + Builder Mindset",
+      "color": "#38A169",
+      "description": "Developing AI-fluent systems thinkers who build real solutions"
+    },
+    {
+      "id": "math_logic",
+      "name": "Math + Logic + Reasoning",
+      "color": "#805AD5",
+      "description": "Strengthening logical reasoning, probability, and mathematical foundations"
+    }
+  ],
+  "capabilities": [
+    {"id": "A", "pillar_id": "communication", "name": "Listening & Comprehension", "description": "Understanding others' ideas accurately before responding"},
+    {"id": "B", "pillar_id": "communication", "name": "Constructing Arguments", "description": "Building logical, evidence-based arguments"},
+    {"id": "C", "pillar_id": "communication", "name": "Adaptive Communication", "description": "Adjusting communication style for different audiences and purposes"},
+    {"id": "D", "pillar_id": "communication", "name": "Dialogue & Debate", "description": "Engaging in productive dialogue, including defending opposing views"},
+    {"id": "E", "pillar_id": "creativity", "name": "Idea Generation", "description": "Producing diverse, original ideas fluently"},
+    {"id": "F", "pillar_id": "creativity", "name": "Creative Depth", "description": "Developing, evaluating, and connecting ideas across domains"},
+    {"id": "G", "pillar_id": "creativity", "name": "Curiosity Drive", "description": "Asking questions and exploring topics with genuine curiosity"},
+    {"id": "H", "pillar_id": "creativity", "name": "Creative Application", "description": "Applying creativity to real-world problems and designs"},
+    {"id": "I", "pillar_id": "ai_systems", "name": "AI Understanding", "description": "Understanding AI capabilities, limitations, and responsible use"},
+    {"id": "J", "pillar_id": "ai_systems", "name": "AI Fluency", "description": "Using AI tools effectively through iteration and collaboration"},
+    {"id": "K", "pillar_id": "ai_systems", "name": "Systems Thinking", "description": "Analyzing systems through inputs, processes, outputs, and feedback"},
+    {"id": "L", "pillar_id": "ai_systems", "name": "Builder Mindset", "description": "Identifying needs, making trade-offs, and delivering products"},
+    {"id": "M", "pillar_id": "math_logic", "name": "Logical Reasoning", "description": "Pattern recognition, boolean logic, and structured reasoning"},
+    {"id": "N", "pillar_id": "math_logic", "name": "Probabilistic & Statistical Reasoning", "description": "Understanding probability, sets, correlation, and data interpretation"},
+    {"id": "O", "pillar_id": "math_logic", "name": "Abstract & Strategic Reasoning", "description": "Working with variables, game theory, and cost-benefit analysis"},
+    {"id": "P", "pillar_id": "math_logic", "name": "Math Foundations", "description": "Core math skills: number sense, fractions, decimals, ratios, algebra, geometry"}
+  ],
+  "competencies": [
+    {
+      "id": "C1.1", "capability_id": "A",
+      "name": "Active listening & paraphrasing",
+      "description": "Can repeat back someone's idea in own words accurately",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.2", "capability_id": "A",
+      "name": "Identifying claims vs. supporting detail",
+      "description": "Knows what the main point is vs. the evidence",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C1.3", "capability_id": "B",
+      "name": "Claim with reason",
+      "description": "Gives 'because' when stating a position — not just the position",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.4", "capability_id": "B",
+      "name": "Fact vs. opinion vs. misleading",
+      "description": "Correctly categorizes statements as fact, opinion, or misleading",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C1.5", "capability_id": "B",
+      "name": "Logical argument chains",
+      "description": "Builds premise → premise → conclusion without contradiction",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.6", "capability_id": "B",
+      "name": "Fallacy identification",
+      "description": "Spots common fallacies in others' arguments",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C1.7", "capability_id": "C",
+      "name": "Audience adaptation",
+      "description": "Genuinely changes explanation for different listeners",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.8", "capability_id": "C",
+      "name": "Ethical persuasion",
+      "description": "Uses logic + emotion + clarity without manipulation",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.9", "capability_id": "C",
+      "name": "Constructive feedback",
+      "description": "Gives specific, actionable feedback; receives without defensiveness",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.10", "capability_id": "D",
+      "name": "Argue the opposing side",
+      "description": "Can coherently defend a position they disagree with",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.11", "capability_id": "D",
+      "name": "Justified position change",
+      "description": "Changes mind AND says why (not social conformity)",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C1.12", "capability_id": "D",
+      "name": "Conflict navigation",
+      "description": "De-escalates, finds common ground, proposes resolution",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.1", "capability_id": "E",
+      "name": "Fluency — quantity of ideas",
+      "description": "Generates 5+ ideas when prompted, moves past the obvious",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C2.2", "capability_id": "E",
+      "name": "Flexible categorization",
+      "description": "Can regroup the same items in completely different ways",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C2.3", "capability_id": "E",
+      "name": "Hypothetical reasoning",
+      "description": "Asks 'what if' unprompted; reasons about counterfactuals",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.4", "capability_id": "F",
+      "name": "Idea elaboration over time",
+      "description": "Takes a rough idea and develops it across sessions",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.5", "capability_id": "F",
+      "name": "Idea evaluation & critique",
+      "description": "Can judge which ideas are stronger and articulate why",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.6", "capability_id": "F",
+      "name": "Cross-domain connection",
+      "description": "Links ideas from unrelated fields ('this is like...')",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.7", "capability_id": "G",
+      "name": "Unprompted question-asking",
+      "description": "Asks questions nobody assigned them to ask",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.8", "capability_id": "G",
+      "name": "Sustained deep exploration",
+      "description": "Returns to the same topic across sessions; goes 10+ turns deep",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.9", "capability_id": "G",
+      "name": "Understanding-seeking over answer-getting",
+      "description": "Uses resources to understand WHY, not just get THE answer",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.10", "capability_id": "H",
+      "name": "Real-world problem framing",
+      "description": "Identifies a genuine problem worth solving, not a toy scenario",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.11", "capability_id": "H",
+      "name": "Design under constraints",
+      "description": "Creates solutions within stated limitations",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C2.12", "capability_id": "H",
+      "name": "Human vs. AI creative judgment",
+      "description": "Knows when AI output is generic vs. when human judgment adds value",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C3.1", "capability_id": "I",
+      "name": "AI as tool, not truth",
+      "description": "Knows AI can be wrong, isn't magic, is a tool",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C3.2", "capability_id": "I",
+      "name": "Instruction clarity to systems",
+      "description": "Gives precise, unambiguous instructions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C3.3", "capability_id": "I",
+      "name": "Structured prompting (CLEAR)",
+      "description": "Applies framework: Context, Limits, Examples, Audience, Refine",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C3.4", "capability_id": "I",
+      "name": "Hallucination detection",
+      "description": "Tags AI responses as reliable/unsure/dangerous accurately",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C3.5", "capability_id": "J",
+      "name": "Prompt iteration",
+      "description": "Refines prompt when output is unsatisfactory instead of giving up",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C3.6", "capability_id": "J",
+      "name": "Agent workflow design",
+      "description": "Plans step-by-step AI workflows with verification + fallback",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C3.7", "capability_id": "J",
+      "name": "AI as collaborator",
+      "description": "Uses AI for brainstorming then applies own judgment to filter/select",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C3.8", "capability_id": "K",
+      "name": "Input → Process → Output modeling",
+      "description": "Can decompose any system into I→P→O",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C3.9", "capability_id": "K",
+      "name": "Feedback loop identification",
+      "description": "Spots where outputs feed back as inputs; understands amplification/dampening",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C3.10", "capability_id": "K",
+      "name": "Fairness & bias recognition",
+      "description": "Identifies when a system/AI produces biased outcomes and explains why",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C3.11", "capability_id": "L",
+      "name": "User need identification",
+      "description": "Conducts research, identifies pain points, prioritizes by impact",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C3.12", "capability_id": "L",
+      "name": "Trade-off reasoning in design",
+      "description": "Makes decisions with explicit 'we chose X because, the downside is...'",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C3.13", "capability_id": "L",
+      "name": "End-to-end product delivery",
+      "description": "Takes idea from concept → prototype → pitch → delivery",
+      "assessment_method": "llm",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.10, "p_slip": 0.15}
+    },
+    {
+      "id": "C4.1", "capability_id": "M",
+      "name": "Pattern recognition",
+      "description": "Identifies rules in visual/numeric sequences",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.2", "capability_id": "M",
+      "name": "Logic gates (AND/OR/NOT)",
+      "description": "Applies boolean logic correctly",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.3", "capability_id": "M",
+      "name": "Decision tree construction",
+      "description": "Builds valid if/else trees",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C4.4", "capability_id": "M",
+      "name": "If/then chain reasoning",
+      "description": "Follows multi-step implications without contradiction",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.5", "capability_id": "M",
+      "name": "Cognitive bias identification",
+      "description": "Recognizes biases in own and others' thinking",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C4.6", "capability_id": "N",
+      "name": "Set theory & Venn reasoning",
+      "description": "Classifies correctly, handles overlaps",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.7", "capability_id": "N",
+      "name": "Basic probability",
+      "description": "Calculates simple probabilities correctly",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.8", "capability_id": "N",
+      "name": "Conditional probability",
+      "description": "Handles Monty Hall-type problems; avoids gambler's fallacy",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.9", "capability_id": "N",
+      "name": "Correlation vs. causation",
+      "description": "Distinguishes 'X correlates with Y' from 'X causes Y'",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C4.10", "capability_id": "N",
+      "name": "Data interpretation & prediction",
+      "description": "Reads graphs, identifies trends, makes justified predictions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.11", "capability_id": "O",
+      "name": "Variables & functional relationships",
+      "description": "Understands input→output rules, can generalize",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.12", "capability_id": "O",
+      "name": "Game theory basics",
+      "description": "Identifies dominant strategies, understands Nash equilibrium intuitively",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C4.13", "capability_id": "O",
+      "name": "Cost-benefit analysis",
+      "description": "Weighs trade-offs quantitatively",
+      "assessment_method": "both",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
+    },
+    {
+      "id": "C4.14", "capability_id": "P",
+      "name": "Number sense & estimation",
+      "description": "Quick mental math, reasonable estimates",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.15", "capability_id": "P",
+      "name": "Fraction operations",
+      "description": "Equivalence, addition, subtraction, multiplication of fractions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.16", "capability_id": "P",
+      "name": "Decimal & percentage reasoning",
+      "description": "Converts between forms, applies to real problems",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.17", "capability_id": "P",
+      "name": "Ratio & proportional reasoning",
+      "description": "Understands direct/inverse proportion, applies to real contexts",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.18", "capability_id": "P",
+      "name": "Algebraic thinking",
+      "description": "Variables, expressions, simple equations",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19", "capability_id": "P",
+      "name": "Geometric reasoning",
+      "description": "Properties of shapes, spatial reasoning, area/perimeter",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    }
+  ]
+}

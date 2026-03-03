@@ -1,0 +1,540 @@
+[
+  {
+    "competency_id": "C1.4",
+    "module_id": "level_1",
+    "text": "Which of the following is a FACT?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Water boils at 100°C at sea level", "is_correct": true},
+      {"label": "B", "text": "Summer is the best season", "is_correct": false},
+      {"label": "C", "text": "Dogs are better pets than cats", "is_correct": false},
+      {"label": "D", "text": "Pizza is the most delicious food", "is_correct": false}
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "A fact can be verified as true or false. Water boiling at 100°C at sea level is a measurable, verifiable fact. The others are opinions."
+  },
+  {
+    "competency_id": "C1.4",
+    "module_id": "level_1",
+    "text": "Which statement is MISLEADING?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "9 out of 10 dentists recommend this toothpaste (survey of 10 dentists)", "is_correct": true},
+      {"label": "B", "text": "The Earth orbits the Sun", "is_correct": false},
+      {"label": "C", "text": "I think chocolate ice cream is great", "is_correct": false},
+      {"label": "D", "text": "India has more than 1 billion people", "is_correct": false}
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "The toothpaste claim sounds impressive but is misleading because the sample size is tiny (only 10 dentists). It uses a real number to create a false impression."
+  },
+  {
+    "competency_id": "C1.4",
+    "module_id": "level_1",
+    "text": "'Everyone knows that video games make kids violent.' This statement is:",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "A fact backed by science", "is_correct": false},
+      {"label": "B", "text": "An opinion disguised as a fact", "is_correct": true},
+      {"label": "C", "text": "A pure opinion clearly stated", "is_correct": false},
+      {"label": "D", "text": "A proven statistic", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "'Everyone knows' makes an opinion sound like a universally accepted fact. The claim about video games and violence is debated by researchers, not settled."
+  },
+  {
+    "competency_id": "C1.4",
+    "module_id": "level_1",
+    "text": "Which of these is an OPINION?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "The Taj Mahal is located in Agra", "is_correct": false},
+      {"label": "B", "text": "The Taj Mahal is the most beautiful building in the world", "is_correct": true},
+      {"label": "C", "text": "The Taj Mahal was built in the 17th century", "is_correct": false},
+      {"label": "D", "text": "The Taj Mahal is made of white marble", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "'Most beautiful' is a judgment that varies from person to person. The other statements are verifiable facts."
+  },
+  {
+    "competency_id": "C1.4",
+    "module_id": "level_1",
+    "text": "A news article says: 'Studies show screen time is harmful.' What's the best response?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Believe it because it says 'studies show'", "is_correct": false},
+      {"label": "B", "text": "Ignore it completely", "is_correct": false},
+      {"label": "C", "text": "Ask which studies, how many, and what they actually measured", "is_correct": true},
+      {"label": "D", "text": "Share it immediately because it sounds important", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Critical thinking means asking for specifics: which studies, how many participants, what was measured. 'Studies show' without details can be misleading."
+  },
+
+  {
+    "competency_id": "C1.6",
+    "module_id": "level_1",
+    "text": "'You can't trust Ravi's argument about climate change because he's only 12 years old.' This is an example of which fallacy?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Ad hominem — attacking the person instead of the argument", "is_correct": true},
+      {"label": "B", "text": "Straw man — misrepresenting someone's argument", "is_correct": false},
+      {"label": "C", "text": "False dilemma — presenting only two options", "is_correct": false},
+      {"label": "D", "text": "Appeal to authority — relying on an expert's word alone", "is_correct": false}
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "This attacks Ravi's age rather than addressing his actual argument. A good counter-argument would address the claims, not the person."
+  },
+  {
+    "competency_id": "C1.6",
+    "module_id": "level_1",
+    "text": "'Either you support building a new playground, or you don't care about kids at all.' What's wrong with this argument?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "It's an appeal to emotion", "is_correct": false},
+      {"label": "B", "text": "It's a false dilemma — there are more than two options", "is_correct": true},
+      {"label": "C", "text": "It's a slippery slope", "is_correct": false},
+      {"label": "D", "text": "Nothing — it's a valid argument", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "This creates a false choice between only two extremes. You could care about kids AND have valid reasons to oppose the playground (budget, location, priorities)."
+  },
+  {
+    "competency_id": "C1.6",
+    "module_id": "level_1",
+    "text": "'If we let students use phones in class, next they'll want to play video games, then they'll stop studying entirely.' This is a:",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Strong logical argument", "is_correct": false},
+      {"label": "B", "text": "Straw man fallacy", "is_correct": false},
+      {"label": "C", "text": "Slippery slope fallacy", "is_correct": true},
+      {"label": "D", "text": "Bandwagon fallacy", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "A slippery slope assumes one small step will inevitably lead to extreme consequences without evidence that each step actually causes the next."
+  },
+  {
+    "competency_id": "C1.6",
+    "module_id": "level_1",
+    "text": "'Everyone in class thinks the test was unfair, so it must be unfair.' What type of reasoning error is this?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Bandwagon fallacy — assuming something is true because many people believe it", "is_correct": true},
+      {"label": "B", "text": "Circular reasoning — the conclusion is used as a premise", "is_correct": false},
+      {"label": "C", "text": "Red herring — changing the topic", "is_correct": false},
+      {"label": "D", "text": "Ad hominem — attacking the person", "is_correct": false}
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Just because many people believe something doesn't make it true. A test could be fair even if students found it difficult."
+  },
+  {
+    "competency_id": "C1.6",
+    "module_id": "level_1",
+    "text": "'We should eat healthy because eating healthy is good for you.' What's the problem with this argument?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "It uses emotional language", "is_correct": false},
+      {"label": "B", "text": "It's circular reasoning — the conclusion just restates the premise", "is_correct": true},
+      {"label": "C", "text": "It attacks a person", "is_correct": false},
+      {"label": "D", "text": "It presents a false choice", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "This argument goes in circles: 'do X because X is good' doesn't actually explain WHY it's good. A real argument needs evidence."
+  },
+
+  {
+    "competency_id": "C2.1",
+    "module_id": "level_1",
+    "text": "You're asked to think of uses for a brick. Which response shows the MOST creative fluency?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Build a wall, build a house, build a garage (3 similar ideas)", "is_correct": false},
+      {"label": "B", "text": "Build a wall, use as a doorstop, grind into powder for paint, use as a weight for exercise, prop up a bookshelf (5 different categories)", "is_correct": true},
+      {"label": "C", "text": "Build a really tall wall (1 detailed idea)", "is_correct": false},
+      {"label": "D", "text": "I don't know, it's just a brick", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Creative fluency means generating MANY ideas across DIFFERENT categories, not just variations of one idea."
+  },
+  {
+    "competency_id": "C2.1",
+    "module_id": "level_1",
+    "text": "When brainstorming, what should you do FIRST?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Judge each idea carefully before writing it down", "is_correct": false},
+      {"label": "B", "text": "Only write down ideas you're sure will work", "is_correct": false},
+      {"label": "C", "text": "Generate as many ideas as possible without judging them", "is_correct": true},
+      {"label": "D", "text": "Copy what others have done before", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Good brainstorming separates idea generation from evaluation. First produce quantity, then evaluate quality."
+  },
+  {
+    "competency_id": "C2.1",
+    "module_id": "level_1",
+    "text": "Priya generated 3 ideas and Arjun generated 8 ideas in the same brainstorm session. What can we say?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Priya's ideas are definitely better quality", "is_correct": false},
+      {"label": "B", "text": "Arjun showed higher creative fluency", "is_correct": true},
+      {"label": "C", "text": "Arjun's ideas are definitely better quality", "is_correct": false},
+      {"label": "D", "text": "They are equally creative", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Fluency is about quantity of ideas. Arjun showed higher fluency. Quality is a separate dimension — we'd need to evaluate the ideas themselves."
+  },
+
+  {
+    "competency_id": "C2.2",
+    "module_id": "level_1",
+    "text": "Given the items: Apple, Basketball, Tomato, Cricket ball — which is the MOST creative way to group them?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Round things vs. not round things", "is_correct": false},
+      {"label": "B", "text": "Red things vs. orange things", "is_correct": false},
+      {"label": "C", "text": "Things that bounce vs. things that splat when dropped", "is_correct": true},
+      {"label": "D", "text": "Food vs. toys", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Flexible categorization means finding unusual, unexpected ways to group items. 'Bounce vs. splat' is a creative and valid category that others might not think of."
+  },
+  {
+    "competency_id": "C2.2",
+    "module_id": "level_1",
+    "text": "A student groups 'pencil, sword, lightning bolt, and arrow' together. What category could they be using?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Things found in a classroom", "is_correct": false},
+      {"label": "B", "text": "Things that are pointed/sharp", "is_correct": true},
+      {"label": "C", "text": "Things made of metal", "is_correct": false},
+      {"label": "D", "text": "Things that are heavy", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "All four items share the property of being pointed or sharp. Finding the abstract shared property across very different items is flexible categorization."
+  },
+
+  {
+    "competency_id": "C2.12",
+    "module_id": "level_1",
+    "text": "AI generates a story. Which part most needs HUMAN creative judgment?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Checking grammar and spelling", "is_correct": false},
+      {"label": "B", "text": "Deciding if the story is emotionally authentic and meaningful", "is_correct": true},
+      {"label": "C", "text": "Counting the number of words", "is_correct": false},
+      {"label": "D", "text": "Translating it to another language", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "AI can check grammar and count words easily. But judging whether a story feels authentic, meaningful, or emotionally resonant requires human experience and judgment."
+  },
+  {
+    "competency_id": "C2.12",
+    "module_id": "level_1",
+    "text": "You ask AI for 10 business ideas. They all sound similar. What does this tell you?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "AI is smarter than humans at business", "is_correct": false},
+      {"label": "B", "text": "These must be the best ideas since AI suggested them", "is_correct": false},
+      {"label": "C", "text": "AI tends to produce generic, common ideas — human creativity can add originality", "is_correct": true},
+      {"label": "D", "text": "You should use all 10 ideas", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "AI draws from patterns in existing data, so its outputs can be generic. Humans bring personal experience, cultural context, and original thinking."
+  },
+
+  {
+    "competency_id": "C3.1",
+    "module_id": "level_1",
+    "text": "AI gives you an answer about a historical event. What should you do?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Trust it completely because AI knows everything", "is_correct": false},
+      {"label": "B", "text": "Verify it with a reliable source because AI can make mistakes", "is_correct": true},
+      {"label": "C", "text": "Ignore it because AI is always wrong", "is_correct": false},
+      {"label": "D", "text": "Ask AI if its own answer is correct", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "AI is a tool that can be helpful but also make mistakes. Always verify important information with reliable sources."
+  },
+  {
+    "competency_id": "C3.1",
+    "module_id": "level_1",
+    "text": "Which statement about AI is TRUE?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "AI understands emotions the same way humans do", "is_correct": false},
+      {"label": "B", "text": "AI generates responses based on patterns in data, not real understanding", "is_correct": true},
+      {"label": "C", "text": "AI is always right because computers don't make mistakes", "is_correct": false},
+      {"label": "D", "text": "AI can think for itself and form its own opinions", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "AI processes patterns in training data. It doesn't truly 'understand' or have emotions — it generates plausible-sounding responses based on patterns."
+  },
+  {
+    "competency_id": "C3.1",
+    "module_id": "level_1",
+    "text": "You're writing an essay and AI suggests a quote by Mahatma Gandhi. What's the best approach?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Use it immediately — AI knows all quotes", "is_correct": false},
+      {"label": "B", "text": "Check if Gandhi actually said it, because AI sometimes invents fake quotes", "is_correct": true},
+      {"label": "C", "text": "Don't use any quotes from AI ever", "is_correct": false},
+      {"label": "D", "text": "Ask AI to confirm the quote is real (AI checking itself)", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "AI is known to fabricate quotes (hallucinate). Always verify quotes independently. Asking AI to check itself isn't reliable."
+  },
+
+  {
+    "competency_id": "C3.2",
+    "module_id": "level_1",
+    "text": "Which prompt will give BETTER results from an AI?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Tell me about animals", "is_correct": false},
+      {"label": "B", "text": "List 5 endangered animals in India with their habitats and why they are threatened", "is_correct": true},
+      {"label": "C", "text": "Animals please", "is_correct": false},
+      {"label": "D", "text": "Write something about nature", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Specific, clear instructions with details (what, how many, which aspects) give AI much better guidance than vague requests."
+  },
+  {
+    "competency_id": "C3.2",
+    "module_id": "level_1",
+    "text": "You want AI to write a birthday invitation. Which instruction is MOST precise?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Write an invitation", "is_correct": false},
+      {"label": "B", "text": "Write something nice for my friend", "is_correct": false},
+      {"label": "C", "text": "Write a fun birthday party invitation for a 10-year-old, including date (March 15), time (3 PM), venue (City Park), and a dinosaur theme", "is_correct": true},
+      {"label": "D", "text": "Make a card", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "The best instructions include all relevant details: who, what, when, where, and the style/theme. This gives the system clear constraints to work within."
+  },
+
+  {
+    "competency_id": "C3.3",
+    "module_id": "level_1",
+    "text": "In the CLEAR framework for prompting, what does the 'E' stand for?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Emotion", "is_correct": false},
+      {"label": "B", "text": "Examples", "is_correct": true},
+      {"label": "C", "text": "Evaluate", "is_correct": false},
+      {"label": "D", "text": "Execute", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "CLEAR = Context, Limits, Examples, Audience, Refine. Providing examples helps AI understand exactly what kind of output you want."
+  },
+  {
+    "competency_id": "C3.3",
+    "module_id": "level_1",
+    "text": "Which prompt uses the CLEAR framework BEST?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Write a poem", "is_correct": false},
+      {"label": "B", "text": "Write a 4-line rhyming poem about monsoon rain for 8-year-olds. Example style: 'Twinkle twinkle little star.' Keep it simple and fun.", "is_correct": true},
+      {"label": "C", "text": "Poem about rain now", "is_correct": false},
+      {"label": "D", "text": "I need creative writing help", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "This prompt has Context (monsoon rain), Limits (4 lines, rhyming), Examples (Twinkle Twinkle style), Audience (8-year-olds), and could be Refined based on output."
+  },
+  {
+    "competency_id": "C3.3",
+    "module_id": "level_1",
+    "text": "You used the CLEAR framework but the AI output isn't quite right. What's the best next step?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Give up and write it yourself", "is_correct": false},
+      {"label": "B", "text": "Accept whatever AI gives you", "is_correct": false},
+      {"label": "C", "text": "Refine: tell AI specifically what to change and try again", "is_correct": true},
+      {"label": "D", "text": "Start a completely new conversation", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "The 'R' in CLEAR stands for Refine. Iteration is key — tell AI what was wrong and what you want differently."
+  },
+
+  {
+    "competency_id": "C3.4",
+    "module_id": "level_1",
+    "text": "AI says: 'The Great Wall of China is visible from the Moon.' How should you tag this?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Safe — it's a well-known fact", "is_correct": false},
+      {"label": "B", "text": "Dangerous — this is a common myth that has been disproven", "is_correct": true},
+      {"label": "C", "text": "Unsure — hard to check", "is_correct": false},
+      {"label": "D", "text": "Safe — AI wouldn't lie about geography", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "This is a well-known myth. Astronauts have confirmed the Great Wall is NOT visible from the Moon. AI can confidently state false 'facts.'"
+  },
+  {
+    "competency_id": "C3.4",
+    "module_id": "level_1",
+    "text": "You ask AI: 'Who invented the telephone?' It says: 'Alexander Graham Bell invented the telephone in 1876.' This is:",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Definitely a hallucination", "is_correct": false},
+      {"label": "B", "text": "Likely reliable — well-established historical fact, easy to verify", "is_correct": true},
+      {"label": "C", "text": "Impossible to verify", "is_correct": false},
+      {"label": "D", "text": "Dangerous information", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Well-known historical facts are generally reliable from AI. It's less common facts, recent events, and specific numbers where AI is more likely to hallucinate."
+  },
+  {
+    "competency_id": "C3.4",
+    "module_id": "level_1",
+    "text": "Which AI response is MOST likely to be a hallucination?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "'2 + 2 = 4'", "is_correct": false},
+      {"label": "B", "text": "'The capital of France is Paris'", "is_correct": false},
+      {"label": "C", "text": "'According to a 2024 study by Dr. Sharma at IIT Delhi, 73.2% of students prefer online learning'", "is_correct": true},
+      {"label": "D", "text": "'Water is H2O'", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "AI often invents specific statistics, researcher names, and study details that sound convincing but are completely fabricated. Always verify specific claims."
+  },
+  {
+    "competency_id": "C3.4",
+    "module_id": "level_1",
+    "text": "AI confidently gives you health advice: 'Eating 10 bananas a day cures headaches.' You should:",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Follow the advice since AI said it confidently", "is_correct": false},
+      {"label": "B", "text": "Tag this as potentially dangerous and consult a real doctor", "is_correct": true},
+      {"label": "C", "text": "Ask AI to confirm its own advice", "is_correct": false},
+      {"label": "D", "text": "Share it with friends immediately", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Health advice from AI can be dangerous. AI confidence doesn't equal accuracy. Medical questions should always be verified with real healthcare professionals."
+  },
+
+  {
+    "competency_id": "C3.8",
+    "module_id": "level_1",
+    "text": "A vending machine takes coins (input), processes the selection (process), and gives a snack (output). What is the FEEDBACK in this system?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "The coin slot", "is_correct": false},
+      {"label": "B", "text": "The display showing 'Item dispensed' or 'Insufficient funds'", "is_correct": true},
+      {"label": "C", "text": "The snack itself", "is_correct": false},
+      {"label": "D", "text": "The electricity powering the machine", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Feedback tells the user what happened — whether the system succeeded or failed. The display message is feedback that completes the loop."
+  },
+  {
+    "competency_id": "C3.8",
+    "module_id": "level_1",
+    "text": "In a school lunch system: students order (input) → kitchen prepares (process) → food is served (output). What could be an INPUT that improves the system?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "More tables in the cafeteria", "is_correct": false},
+      {"label": "B", "text": "Student satisfaction surveys that change next week's menu", "is_correct": true},
+      {"label": "C", "text": "Bigger plates", "is_correct": false},
+      {"label": "D", "text": "Painting the walls", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Satisfaction surveys create a feedback loop: output (food experience) feeds back as input (survey data) to improve the process (menu planning)."
+  },
+
+  {
+    "competency_id": "C3.10",
+    "module_id": "level_1",
+    "text": "An AI hiring tool rejects most applications from women. What's the MOST likely cause?",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "AI is always unfair", "is_correct": false},
+      {"label": "B", "text": "Women are less qualified", "is_correct": false},
+      {"label": "C", "text": "The training data was biased — it learned from past hiring patterns that favored men", "is_correct": true},
+      {"label": "D", "text": "Someone programmed it to be unfair", "is_correct": false}
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "AI learns from data. If historical hiring data showed bias toward men, the AI will reproduce that bias. This is a systemic issue, not intentional programming."
+  },
+  {
+    "competency_id": "C3.10",
+    "module_id": "level_1",
+    "text": "A facial recognition system works well for light-skinned people but poorly for dark-skinned people. This is because:",
+    "type": "mcq",
+    "options": [
+      {"label": "A", "text": "Dark skin is harder to photograph", "is_correct": false},
+      {"label": "B", "text": "The training data likely had more light-skinned faces, so the system learned those better", "is_correct": true},
+      {"label": "C", "text": "AI doesn't work on dark skin", "is_correct": false},
+      {"label": "D", "text": "The camera is broken", "is_correct": false}
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Representation bias: if training data is skewed toward one group, the system performs worse on underrepresented groups. The fix is more diverse training data."
+  }
+]

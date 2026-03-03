@@ -1,0 +1,59 @@
+import { style } from "@vanilla-extract/css";
+import { vars } from "@/styles/theme.css";
+
+export const header = style({
+  position: "sticky",
+  top: 0,
+  zIndex: Number(vars.zIndex.sticky),
+  backgroundColor: vars.color.surface.overlay,
+  backdropFilter: "blur(12px)",
+  borderBottom: `1px solid ${vars.color.border.subtle}`,
+});
+
+export const inner = style({
+  maxWidth: "1280px",
+  margin: "0 auto",
+  padding: `0 ${vars.space[4]}`,
+  height: "56px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+});
+
+export const brand = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space[2],
+});
+
+export const brandName = style({
+  fontFamily: vars.font.family.display,
+  fontWeight: vars.font.weight.bold,
+  fontSize: vars.font.size.lg,
+  color: vars.color.text.primary,
+});
+
+export const right = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space[3],
+});
+
+export const studentName = style({
+  fontSize: vars.font.size.sm,
+  color: vars.color.text.secondary,
+  fontWeight: vars.font.weight.medium,
+});
+
+export const iconBtn = style({
+  padding: vars.space[1],
+  borderRadius: vars.radius.lg,
+  color: vars.color.text.tertiary,
+  transition: `all ${vars.transition.base}`,
+  ":hover": {
+    color: vars.color.text.secondary,
+    backgroundColor: vars.color.surface.hover,
+  },
+});
+
+export const themeBtn = style([iconBtn]);

@@ -1,0 +1,1 @@
+export { MCQQuestion } from "./MCQQuestion";

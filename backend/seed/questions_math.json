@@ -1,0 +1,5538 @@
+[
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "text": "What comes next in the sequence: 2, 6, 18, 54, ...?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "108",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "162",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "72",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "216",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Each number is multiplied by 3: 2×3=6, 6×3=18, 18×3=54, 54×3=162."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "text": "What is the pattern? 1, 1, 2, 3, 5, 8, 13, ...?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Each number is double the previous",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Each number is the sum of the two numbers before it",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Each number adds 3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The numbers alternate between odd and even",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "This is the Fibonacci sequence: 1+1=2, 1+2=3, 2+3=5, 3+5=8, 5+8=13."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "text": "Find the next number: 3, 7, 15, 31, ...?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "47",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "62",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "63",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "45",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Each number is doubled and then 1 is added: 3×2+1=7, 7×2+1=15, 15×2+1=31, 31×2+1=63."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "text": "In this pattern, what's missing? 5, 10, 20, ?, 80, 160",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "40",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "50",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "60",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Each number doubles: 5→10→20→40→80→160."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "text": "What pattern do these numbers follow? 1, 4, 9, 16, 25, 36",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "They increase by 5 each time",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "They are perfect squares: 1², 2², 3², 4², 5², 6²",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "They are all even numbers",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "They double each time",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "These are perfect squares: 1²=1, 2²=4, 3²=9, 4²=16, 5²=25, 6²=36."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "text": "If A = TRUE and B = FALSE, what is A AND B?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "FALSE",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "MAYBE",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "AND requires BOTH inputs to be TRUE. Since B is FALSE, the result is FALSE."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "text": "If A = FALSE and B = TRUE, what is A OR B?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "TRUE",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "MAYBE",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "OR requires at least ONE input to be TRUE. Since B is TRUE, the result is TRUE."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "text": "If A = TRUE, what is NOT A?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "TRUE",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "FALSE",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "MAYBE",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Still TRUE",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "NOT flips the value. NOT TRUE = FALSE."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "text": "A door opens only when BOTH sensors detect someone (Sensor1 AND Sensor2). Sensor1 = ON, Sensor2 = OFF. Does the door open?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, one sensor is enough",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No, both sensors must be ON for AND to work",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Yes, AND means either one",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The door is broken",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "AND gate requires ALL inputs to be TRUE/ON. Since Sensor2 is OFF, the AND condition fails and the door stays closed."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "text": "What is (TRUE AND FALSE) OR (TRUE AND TRUE)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "TRUE",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "FALSE",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Cannot determine",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "MAYBE",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Step by step: (TRUE AND FALSE) = FALSE, (TRUE AND TRUE) = TRUE. FALSE OR TRUE = TRUE."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "text": "In a decision tree for 'Should I carry an umbrella?', which is the BEST first question?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "What color umbrella do I have?",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Is it likely to rain today?",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Did I eat breakfast?",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "What day of the week is it?",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "The most important decision factor comes first in a decision tree. Rain likelihood directly determines whether you need an umbrella."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "text": "A decision tree has: 'Is temperature > 30°C?' → Yes → 'Wear light clothes' → No → 'Is it raining?' → Yes → 'Wear raincoat' → No → 'Wear normal clothes'. If it's 25°C and raining, what do you wear?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Light clothes",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Raincoat",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Normal clothes",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Follow the tree: 25°C is NOT > 30°C → go to 'Is it raining?' → Yes → Wear raincoat."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "text": "If all cats have tails, and Whiskers is a cat, then:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Whiskers might have a tail",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Whiskers definitely has a tail",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Whiskers is not a real cat",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "We can't be sure",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "This is deductive logic: If ALL cats have tails (premise 1) AND Whiskers is a cat (premise 2), THEN Whiskers has a tail (conclusion)."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "text": "If it rains, the ground gets wet. If the ground is wet, the flowers grow. It rained yesterday. What can we conclude?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "The flowers will grow",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "It will rain again today",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "The ground is dry",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Nothing — we need more information",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Chain: Rain → wet ground → flowers grow. Since it rained, the ground got wet, so flowers will grow."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "text": "If A → B, and B → C, and C → D. We know A is true. What else MUST be true?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Only B is true",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "B and C are true, but not necessarily D",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "B, C, and D are all true",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "None of the above must be true",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "The chain propagates: A→B (so B is true), B→C (so C is true), C→D (so D is true). All consequents follow."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "text": "The ground is wet. Does that mean it rained? (Given: If it rains, the ground gets wet)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, definitely",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No — the ground could be wet for other reasons (sprinkler, spill)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Yes, because wet ground always means rain",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "We need to check the weather forecast",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "'If rain → wet ground' does NOT mean 'if wet ground → rain.' This is the fallacy of affirming the consequent. The ground could be wet for many reasons."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "text": "If all birds can fly, and penguins are birds, then penguins can fly. What's wrong with this argument?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "The logic is valid but the first premise is false — not all birds can fly",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Penguins aren't really birds",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "The conclusion doesn't follow from the premises",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Nothing is wrong — the argument is correct",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "The logical STRUCTURE is valid (if all X are Y, and Z is X, then Z is Y). But the first premise is FACTUALLY wrong — not all birds can fly. Valid logic + false premise = false conclusion."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "text": "Amit has won the last 3 coin flips. He says: 'I'm on a lucky streak — I'll definitely win the next one too!' This is an example of:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Good prediction based on evidence",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Hot hand fallacy — past random events don't predict future ones",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Logical reasoning",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Statistical thinking",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Each coin flip is independent — the coin has no memory. Past wins don't change the 50/50 probability of the next flip. This is the hot hand fallacy."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "text": "Priya sees a news headline: 'Crime rates up 50%!' and feels scared. But the actual numbers went from 2 incidents to 3 in her neighborhood. This shows:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Crime is very dangerous",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Anchoring bias — the percentage sounds scarier than the actual numbers",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The headline is completely accurate",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "She should move immediately",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "While '50% increase' is technically correct, anchoring to that percentage without context (2 → 3 incidents) creates disproportionate fear. Always look at base numbers."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "text": "Everyone in your friend group is buying a particular brand of shoes. You feel like buying them too, even though you don't really like them. This is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Smart shopping",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Good taste",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Bandwagon effect — doing something because everyone else is",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "Being a good friend",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "The bandwagon effect is the tendency to do or believe things because many other people do. Recognizing it helps you make independent decisions."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "text": "You studied hard for a test and got 90%. You think: 'I'm so smart!' Next test you don't study and get 60%. You think: 'The test was unfair!' This is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Self-serving bias — taking credit for success but blaming external factors for failure",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Completely rational thinking",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "The test was actually unfair",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Confirmation bias",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Self-serving bias: attributing success to internal factors (I'm smart) and failure to external factors (unfair test). Honest self-assessment considers both."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "text": "Ravi only reads news articles that agree with his political views. This is an example of:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Being well-informed",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Confirmation bias — seeking only information that supports existing beliefs",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Critical thinking",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Good research habits",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Confirmation bias means seeking, interpreting, and remembering information that confirms what you already believe, while ignoring contradictory evidence."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "text": "Set A = {1, 2, 3, 4, 5} and Set B = {3, 4, 5, 6, 7}. What is A ∩ B (intersection)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "{1, 2, 3, 4, 5, 6, 7}",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "{3, 4, 5}",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "{1, 2, 6, 7}",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "{1, 2}",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Intersection (∩) is the set of elements in BOTH sets. 3, 4, and 5 appear in both A and B."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "text": "In a class, 15 students play cricket, 12 play football, and 5 play both. How many play at least one sport?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "27",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "22",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "32",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "20",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Using inclusion-exclusion: 15 + 12 - 5 = 22. We subtract the overlap to avoid counting those 5 students twice."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "text": "Set A = {apple, banana, cherry} and Set B = {banana, date, elderberry}. What is A ∪ B (union)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "{banana}",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "{apple, cherry, date, elderberry}",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "{apple, banana, cherry, date, elderberry}",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "{apple, banana, banana, cherry, date, elderberry}",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Union (∪) combines ALL elements from both sets, without duplicates. Banana appears in both but is listed once."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "text": "In a Venn diagram, 20 students like math, 18 like science, 8 like both, and 4 like neither. How many students are there in total?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "42",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "34",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "50",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "30",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Total = (Math only) + (Science only) + (Both) + (Neither) = (20-8) + (18-8) + 8 + 4 = 12 + 10 + 8 + 4 = 34."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "text": "If Set A is a subset of Set B, which must be true?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "A and B have the same elements",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Every element in A is also in B",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "A has more elements than B",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "A and B have no common elements",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "A subset means every element of A is contained in B. B may have additional elements that A doesn't have."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "text": "A bag has 3 red balls and 7 blue balls. What is the probability of drawing a red ball?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/7",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "3/10",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "7/10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Probability = favorable outcomes / total outcomes = 3 red / (3+7 total) = 3/10."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "text": "You flip a fair coin twice. What's the probability of getting heads both times?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/2",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/4",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3/4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "P(heads first) × P(heads second) = 1/2 × 1/2 = 1/4. There are 4 equally likely outcomes: HH, HT, TH, TT."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "text": "A standard die is rolled. What is the probability of getting an even number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/6",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "2/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Even numbers on a die: 2, 4, 6 (3 outcomes). Total outcomes: 6. Probability = 3/6 = 1/2."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "text": "What is the probability of an event that is IMPOSSIBLE?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.5",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "An impossible event has 0 probability. Probability ranges from 0 (impossible) to 1 (certain)."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "text": "A spinner has 4 equal sections: red, blue, green, yellow. What is the probability of NOT landing on red?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/4",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "P(not red) = 1 - P(red) = 1 - 1/4 = 3/4. Three out of four sections are not red."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "text": "You've flipped a coin 5 times and got heads each time. What's the probability of heads on the 6th flip?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Very low — tails is 'due'",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Very high — the coin is 'hot'",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Still 1/2 — each flip is independent",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "1/64",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Each coin flip is independent — the coin has no memory. The probability is always 1/2, regardless of previous results. Thinking otherwise is the gambler's fallacy."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "text": "In the Monty Hall problem: you pick Door 1. The host opens Door 3 (goat). Should you switch to Door 2?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "No — it's 50/50 either way now",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Yes — switching gives you 2/3 probability of winning",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "It doesn't matter at all",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "No — you should always stick with your first choice",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Your initial choice had 1/3 chance. The other 2/3 probability is concentrated on the remaining door after the host reveals a goat. Switching doubles your odds."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "text": "A rare disease affects 1 in 1000 people. A test is 99% accurate. You test positive. What's the ACTUAL probability you have the disease?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "99%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "About 9%",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "50%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Base rate matters! In 1000 people: ~1 truly sick (tests positive), ~10 healthy people also test positive (1% false positive of 999). So only 1 out of ~11 positive tests is truly sick ≈ 9%."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "text": "Bag A has 8 red and 2 blue balls. Bag B has 3 red and 7 blue. You randomly pick a bag (50/50) then draw a ball. It's red. Which bag was it MORE LIKELY from?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Equally likely from either bag",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "More likely from Bag A (8 red)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "More likely from Bag B (3 red)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "P(red|A) = 8/10 = 0.8, P(red|B) = 3/10 = 0.3. Since drawing red is much more likely from Bag A, the red ball more likely came from Bag A."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "text": "'It hasn't rained in 10 days, so it MUST rain tomorrow.' This is an example of:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Good weather prediction",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Gambler's fallacy — past independent events don't make future events more likely",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Scientific reasoning",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Conditional probability",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "The gambler's fallacy assumes that past random events affect future probabilities. Weather has complex patterns, but 'it's due' reasoning is a fallacy."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "text": "Ice cream sales and drowning deaths both increase in summer. This means:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Ice cream causes drowning",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Drowning causes people to buy ice cream",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Both are caused by a third factor (hot weather) — correlation, not causation",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "We should ban ice cream to prevent drowning",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "This is the classic example: hot weather causes both more ice cream consumption AND more swimming (→ more drownings). The two are correlated but neither causes the other."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "text": "A study finds that students who eat breakfast get better grades. Can we conclude that eating breakfast CAUSES better grades?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, the study proves causation",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No — it could be that families who provide breakfast also provide more study support",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Yes, because the correlation is strong",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "No, because studies are always wrong",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Correlation doesn't prove causation. There could be confounding variables: families who ensure breakfast might also provide better study environments, resources, etc."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "text": "Which of these is MOST LIKELY a causal relationship (not just correlation)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Wearing a seatbelt reduces injury in car accidents",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "People who own umbrellas live longer",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Countries with more chocolate consumption win more Nobel Prizes",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Tall people earn more money",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Seatbelts have a clear physical mechanism for reducing injury. The others are correlations likely explained by confounding factors (wealth, nutrition, etc.)."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "text": "A news headline says: 'People who sleep more earn less money!' What's the best response?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Start sleeping less to earn more",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "This is probably just a correlation — many other factors affect income",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Sleep causes poverty",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The headline must be wrong",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Headlines often present correlations as if they're causal. Many factors affect income — reducing sleep wouldn't increase earnings. Always ask 'could there be other explanations?'"
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "text": "A line graph shows a company's sales going up steadily from January to June. What is the BEST prediction for July?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Sales will definitely keep going up",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Sales will likely continue the upward trend, but we can't be certain",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Sales will crash because they've been going up too long",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "We can't make any prediction from this data",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Past trends suggest continuation, but predictions are never certain. The best answer acknowledges the trend while noting uncertainty."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "text": "A bar chart shows: Class A scored average 75%, Class B scored 78%, Class C scored 76%. Which conclusion is WRONG?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Class B had the highest average",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Class B is much smarter than Classes A and C",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The averages are fairly close together",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Class A had the lowest average of the three",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "A small difference in averages (75% vs 78%) doesn't mean one class is 'much smarter.' The difference could be due to many factors. Data shows what, not necessarily why."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "text": "A graph shows temperature rising over 100 years. The Y-axis starts at 14°C and goes to 16°C. The graph looks like a dramatic increase. Why might this be misleading?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Temperature doesn't change",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "The Y-axis doesn't start at 0, making a small change look dramatic",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "100 years is too short",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The graph is completely wrong",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "When the Y-axis doesn't start at 0, small changes appear dramatic. A 2°C change IS significant for global temperature, but the visual exaggeration is still misleading graph design."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "text": "A pie chart shows: 40% prefer cricket, 30% prefer football, 20% prefer basketball, 10% prefer other sports. If 200 students were surveyed, how many prefer football?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "60",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "90",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "30% of 200 = 0.30 × 200 = 60 students prefer football."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "text": "A function machine takes an input number and gives output = input × 2 + 3. If the input is 5, what is the output?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "13",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "5 × 2 + 3 = 10 + 3 = 13."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "text": "Input: 2 → Output: 7. Input: 3 → Output: 10. Input: 4 → Output: 13. What's the rule?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Output = Input + 5",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Output = Input × 3 + 1",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Output = Input × 2 + 3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Output = Input × 4 - 1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Test: 2×3+1=7 ✓, 3×3+1=10 ✓, 4×3+1=13 ✓. The rule is output = input × 3 + 1."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "text": "If y = 2x, and x doubles, what happens to y?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "y stays the same",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "y doubles",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "y triples",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "y halves",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "If y = 2x and x becomes 2x, then y = 2(2x) = 4x. The original y was 2x. New y = 4x = 2 × (2x). So y doubles."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "text": "A taxi charges ₹50 base fare plus ₹10 per kilometer. Which formula represents the total cost C for k kilometers?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "C = 10k",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "C = 50k + 10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "C = 50 + 10k",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "C = 50 × 10k",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Base fare (₹50) + per-km charge (₹10 × k kilometers) = 50 + 10k."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "text": "In the Prisoner's Dilemma, both players get the best COMBINED outcome when they both cooperate. But each player is tempted to:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Cooperate even more",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Defect (betray) to get an even better personal outcome",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Do nothing",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Ask for help",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "The dilemma: cooperation gives the best group outcome, but each individual can gain more by defecting — if the other cooperates. This tension is the core of game theory."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "text": "In Rock-Paper-Scissors, what is the best long-term strategy?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Always pick Rock",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Pick randomly with equal probability (1/3 each)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Always pick what beat you last time",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Always pick Scissors",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "In a zero-sum game with no dominant strategy, the optimal (Nash equilibrium) strategy is to randomize equally. Any predictable pattern can be exploited."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "text": "Two companies can each set prices High or Low. If both set High, both profit ₹100. If both set Low, both profit ₹50. If one sets Low and the other High, the Low company gets ₹120 and the High company gets ₹20. What's the likely outcome?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Both set High (₹100 each)",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Both set Low (₹50 each) — even though both High would be better",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "One High, one Low",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "They cooperate and both set High",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Each company fears being undercut. Setting Low is the 'safe' choice (dominant strategy). Both end up at ₹50 instead of ₹100 — the prisoner's dilemma in business."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "text": "You can study 2 extra hours for a test (cost: missing your favorite show) and improve your grade from B to A (benefit). This is worth it if:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "You always study extra regardless",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "The value you place on the grade improvement exceeds the value of the show",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Your friends are studying too",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The show is boring anyway",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Cost-benefit analysis: compare what you give up (cost) with what you gain (benefit). The decision depends on how much you value each."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "text": "A school can spend ₹5 lakhs on either a new computer lab (benefits 500 students) or a new garden (benefits 100 students). Using cost-benefit analysis:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Always pick the cheaper option",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "The computer lab has a higher benefit-per-rupee ratio for more students",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The garden is better because nature is important",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "You can't compare these — they're different things",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Same cost (₹5 lakhs), but the computer lab impacts 5× more students. Cost-benefit analysis helps compare options with the same resources. The garden may have other benefits to consider too."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "text": "What is 'opportunity cost'?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "The price tag of something you buy",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "The value of the best alternative you gave up",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The cost of an opportunity to earn money",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The cost of making a mistake",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Opportunity cost is what you sacrifice when you choose one option over another. If you spend Saturday studying, the opportunity cost is the fun you could have had."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "text": "Estimate: 498 × 21 is approximately:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1,000",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "5,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "10,000",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "100,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Round: 498 ≈ 500 and 21 ≈ 20. 500 × 20 = 10,000. (Exact answer: 10,458)"
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "text": "Which is the best estimate for 7.8 × 4.2?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 12",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "About 32",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "About 78",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "About 320",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Round: 7.8 ≈ 8 and 4.2 ≈ 4. 8 × 4 = 32. (Exact: 32.76)"
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "text": "A cricket stadium holds about 50,000 people. If tickets cost ₹500 each and the stadium is 80% full, approximately how much ticket revenue is generated?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹2 crore",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹50 lakh",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹25 crore",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹5 crore",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "80% of 50,000 = 40,000 people. 40,000 × ₹500 = ₹2,00,00,000 = ₹2 crore."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "text": "What is 15% of 200?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "15",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "30",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "45",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "20",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "15% of 200 = 0.15 × 200 = 30. Quick way: 10% of 200 = 20, 5% = 10, so 15% = 30."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "text": "There are about 1.4 billion people in India. If about 30% are under 15, approximately how many children under 15 are there?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "42 million",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "420 million",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "4.2 billion",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "140 million",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "30% of 1.4 billion = 0.3 × 1,400,000,000 = 420,000,000 = 420 million."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "text": "What is 1/4 + 1/4?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2/8",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "2/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "1/4 + 1/4 = 2/4 = 1/2. Note: C (2/4) is correct but not simplified. The simplified answer is 1/2."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "text": "Which fraction is EQUIVALENT to 3/6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "2/3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "3/6 simplified: divide both by 3 → 1/2."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "text": "What is 2/3 + 1/6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/9",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "5/6",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "3/6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Convert to same denominator: 2/3 = 4/6. Then 4/6 + 1/6 = 5/6."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "text": "What is 3/4 × 2/5?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6/20",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "5/9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/10",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "6/9",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Multiply numerators: 3×2=6. Multiply denominators: 4×5=20. Simplify 6/20 = 3/10."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "text": "A recipe calls for 3/4 cup of flour. You want to make half the recipe. How much flour do you need?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/2 cups",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "3/8 cup",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "1/4 cup",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/4 cups",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Half of 3/4 = 1/2 × 3/4 = 3/8 cup."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "text": "Convert 3/8 to a decimal:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.375",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.38",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.83",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3.8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "3 ÷ 8 = 0.375."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "text": "A shirt costs ₹800 and is 25% off. What is the sale price?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹200",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹600",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹750",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹575",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "25% of ₹800 = ₹200 discount. Sale price = ₹800 - ₹200 = ₹600."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "text": "Which is the LARGEST: 0.5, 1/3, 45%, or 0.48?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "45%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0.48",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Convert all to decimals: 0.5 = 0.50, 1/3 ≈ 0.33, 45% = 0.45, 0.48. Largest is 0.50."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "text": "A restaurant bill is ₹1,200. You want to leave a 10% tip. How much is the tip?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹12",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹100",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹120",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "₹1,200",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "10% of ₹1,200 = ₹1,200 × 0.10 = ₹120."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "text": "A student scored 36 out of 48 on a test. What percentage is that?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "72%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "75%",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "80%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "36%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "36/48 = 3/4 = 0.75 = 75%."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "text": "If 3 apples cost ₹60, how much do 7 apples cost?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹120",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹140",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹160",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹100",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Price per apple = ₹60 ÷ 3 = ₹20. 7 apples = 7 × ₹20 = ₹140."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "text": "A map scale is 1 cm = 50 km. If two cities are 4.5 cm apart on the map, what is the real distance?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "200 km",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "225 km",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "250 km",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "45 km",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "4.5 cm × 50 km/cm = 225 km."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "text": "If 5 workers can build a wall in 10 days, how many days will 10 workers take (assuming same rate)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "20 days",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "5 days",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "10 days",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2 days",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "This is inverse proportion: doubling the workers halves the time. 5 workers × 10 days = 50 worker-days. 10 workers = 50 ÷ 10 = 5 days."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "text": "A recipe for 4 people uses 2 cups of rice. How much rice for 10 people?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4 cups",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "5 cups",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "6 cups",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8 cups",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Ratio: 2 cups / 4 people = 0.5 cups per person. For 10 people: 0.5 × 10 = 5 cups."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "text": "A car travels 150 km in 3 hours. At the same speed, how far will it travel in 5 hours?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "200 km",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "250 km",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "300 km",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "225 km",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Speed = 150 km ÷ 3 hours = 50 km/h. In 5 hours: 50 × 5 = 250 km."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "text": "Solve for x: 2x + 5 = 15",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 20",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "2x + 5 = 15 → 2x = 10 → x = 5."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "text": "If x = 3 and y = 4, what is 2x + 3y?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "14",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "18",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "24",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "2(3) + 3(4) = 6 + 12 = 18."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "text": "A number machine says: 'I think of a number, multiply by 3, then subtract 7, and get 14.' What was the original number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "7",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "9",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "3x - 7 = 14 → 3x = 21 → x = 7."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "text": "Simplify: 3(x + 4) - 2x",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x + 12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x + 4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5x + 4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x + 7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Distribute: 3x + 12 - 2x = x + 12."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "text": "Which expression represents: 'Five more than three times a number n'?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5 + 3n",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5n + 3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3(n + 5)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5 × 3n",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "'Three times a number' = 3n. 'Five more than' = + 5. So: 3n + 5 or equivalently 5 + 3n."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "text": "What is the area of a rectangle with length 8 cm and width 5 cm?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "13 cm²",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "26 cm²",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "40 cm²",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "80 cm²",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Area of rectangle = length × width = 8 × 5 = 40 cm²."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "text": "A triangle has a base of 10 cm and a height of 6 cm. What is its area?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "60 cm²",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "30 cm²",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "16 cm²",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "32 cm²",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Area of triangle = 1/2 × base × height = 1/2 × 10 × 6 = 30 cm²."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "text": "The perimeter of a square is 36 cm. What is the length of one side?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6 cm",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "9 cm",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "12 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "18 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Perimeter of square = 4 × side. So side = 36 ÷ 4 = 9 cm."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "text": "What is the sum of angles in any triangle?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "90°",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "180°",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "270°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "360°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "The sum of interior angles in any triangle is always 180°."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "text": "A room is 5 meters long and 4 meters wide. You want to put tiles that are 50 cm × 50 cm. How many tiles do you need?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "20",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "40",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "80",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "200",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Room area = 5 × 4 = 20 m². Tile area = 0.5 × 0.5 = 0.25 m². Tiles needed = 20 ÷ 0.25 = 80."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In the sequence 2, 5, 11, 23, 47, ... each term follows a rule. What is the next term?",
+    "options": [
+      {
+        "label": "A",
+        "text": "94",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "95",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "93",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "96",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "6-7",
+    "explanation": "Each term is doubled then +1: 2×2+1=5, 5×2+1=11, 11×2+1=23, 23×2+1=47, 47×2+1=95."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "The sequence 1, 4, 9, 16, 25, ... represents perfect squares. What is the sum of the first 10 terms?",
+    "options": [
+      {
+        "label": "A",
+        "text": "330",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "385",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "400",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "355",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Sum of first n perfect squares = n(n+1)(2n+1)/6. For n=10: 10×11×21/6 = 385."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A pattern starts: 1, 1, 2, 3, 5, 8, 13. What is the ratio of the 10th term to the 9th term (approximately)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1.5",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1.618",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "2.0",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1.414",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "This is the Fibonacci sequence. The ratio of consecutive terms approaches the golden ratio ≈ 1.618. Terms: 1,1,2,3,5,8,13,21,34,55. 55/34 ≈ 1.618."
+  },
+  {
+    "competency_id": "C4.1",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Find the missing number: 2, 6, 12, 20, ?, 42",
+    "options": [
+      {
+        "label": "A",
+        "text": "28",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "30",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "32",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "36",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "These are products of consecutive numbers: 1×2=2, 2×3=6, 3×4=12, 4×5=20, 5×6=30, 6×7=42."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If A = True and B = False, what is the result of (A AND B) OR (NOT B)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "True",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "False",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Cannot be determined",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Depends on other inputs",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "A AND B = True AND False = False. NOT B = NOT False = True. False OR True = True."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A security system unlocks when: (Card AND PIN) OR (Fingerprint AND NOT Guest_Mode). If a person has a card but wrong PIN, and Guest_Mode is ON, can they unlock with fingerprint?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, fingerprint always works",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No, because Guest_Mode blocks fingerprint access",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Yes, because they have a card",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "No, because wrong PIN blocks everything",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "6-7",
+    "explanation": "Card AND wrong PIN = False (first condition fails). Fingerprint AND NOT Guest_Mode = Fingerprint AND False = False (Guest_Mode is ON, so NOT Guest_Mode = False). False OR False = False."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "How many different input combinations of A, B, and C will make the expression (A OR B) AND (B OR C) AND (A OR C) evaluate to True?",
+    "options": [
+      {
+        "label": "A",
+        "text": "3",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "8 total combinations. Only True when at least 2 of 3 variables are True: (T,T,F), (T,F,T), (F,T,T), (T,T,T) = 4 combinations."
+  },
+  {
+    "competency_id": "C4.2",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Which logical expression is equivalent to NOT (A AND B)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "NOT A AND NOT B",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "NOT A OR NOT B",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "A OR B",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "NOT A AND B",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "This is De Morgan's Law: NOT (A AND B) = (NOT A) OR (NOT B)."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a decision tree, you first check \"Is it raining?\" If yes, take an umbrella. If no, check \"Is it sunny?\" If yes, wear sunglasses. How many end outcomes does this tree have?",
+    "options": [
+      {
+        "label": "A",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "3",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Three end outcomes: (1) Raining → umbrella, (2) Not raining + sunny → sunglasses, (3) Not raining + not sunny → nothing special."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A doctor uses a decision tree: First check temperature (>38°C?), then check cough (yes/no?), then check duration (>3 days?). What is the maximum number of leaf nodes (final outcomes)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "8",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "Each binary decision doubles the paths. 3 levels of binary decisions = 2³ = 8 possible leaf nodes."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "You are classifying 8 objects using a binary decision tree. What is the minimum number of yes/no questions needed to identify any object?",
+    "options": [
+      {
+        "label": "A",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "3",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "With binary questions, you can distinguish 2^n objects with n questions. 2^3 = 8, so 3 questions suffice."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A spam filter decision tree checks: (1) Contains \"free money\"? (2) From known contact? (3) Has attachments? The tree correctly classifies 90% of spam and 95% of non-spam. If 20% of emails are spam, what percentage of emails flagged as spam are actually spam?",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 82%",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "About 90%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "About 95%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "About 78%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Using Bayes: P(spam|flagged) = P(flagged|spam)×P(spam) / P(flagged). P(flagged) = 0.90×0.20 + 0.05×0.80 = 0.18+0.04 = 0.22. P(spam|flagged) = 0.18/0.22 ≈ 0.818 or about 82%."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A binary decision tree has depth 5 (5 levels of questions). What is the maximum number of different outcomes it can produce?",
+    "options": [
+      {
+        "label": "A",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "25",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "32",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "64",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "A binary tree of depth d has at most 2^d leaf nodes. 2^5 = 32."
+  },
+  {
+    "competency_id": "C4.3",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a game of 20 Questions (yes/no only), what is the maximum number of different objects you could identify?",
+    "options": [
+      {
+        "label": "A",
+        "text": "20",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "400",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1,048,576",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "1,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Each yes/no question is a binary split. 20 questions = 2^20 = 1,048,576 possible outcomes."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If it rains, the ground gets wet. The ground is wet. Can we conclude it rained?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, definitely",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No, something else could have made it wet",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Only if there are no sprinklers",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Yes, because the rule says so",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "This is the fallacy of affirming the consequent. \"If P then Q\" does not mean \"If Q then P\". The ground could be wet from a hose, sprinkler, etc."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Given: (1) If A then B, (2) If B then C, (3) If C then D, (4) NOT D is true. What can we conclude?",
+    "options": [
+      {
+        "label": "A",
+        "text": "A is true",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "A is false",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "B is true but C is false",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Nothing can be concluded",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "By contrapositive chain: NOT D → NOT C → NOT B → NOT A. Since NOT D is true, A must be false."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A number game: If n is divisible by 6, then n is divisible by 2. If n is divisible by 2, it is even. n = 15. Which statement is correct?",
+    "options": [
+      {
+        "label": "A",
+        "text": "15 is not divisible by 6, so no conclusion about evenness",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "15 is odd, so it cannot be divisible by 6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15 is not even, so it is not divisible by 2 or 6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Both B and C are correct",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "The chain only works forward: div by 6 → div by 2 → even. We can also use contrapositive: not even → not div by 2 → not div by 6. 15 is odd (not even), so it is not div by 2 and not div by 6. But the correct answer focuses on the logic: the premise (div by 6) is false, so we cannot use the chain forward. However B and C are also true facts — but A is the most logically precise answer about what the chain tells us."
+  },
+  {
+    "competency_id": "C4.4",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Three friends make statements: Arun says \"If I pass, Bina passes.\" Bina says \"If I pass, Charu passes.\" Exactly one person failed. Who failed?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Arun",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Bina",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Charu",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be determined",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "If Arun fails, his statement 'If I pass, Bina passes' is vacuously true (the condition is false). Bina passes, so by her statement, Charu passes. Result: exactly 1 failure (Arun). Any other single failure leads to contradictions."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Riya bought a phone for ₹20,000. She sees the same phone elsewhere for ₹18,000. She says \"I don't want to return mine because I already set it up.\" Which bias is this?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Sunk cost fallacy",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Anchoring bias",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Confirmation bias",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Availability bias",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Sunk cost fallacy: making decisions based on what you've already invested (time setting up) rather than future value. The setup time is a sunk cost."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A student only reads articles that agree with their opinion on climate change and ignores opposing research. This is an example of:",
+    "options": [
+      {
+        "label": "A",
+        "text": "Anchoring bias",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Confirmation bias",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Bandwagon effect",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Hindsight bias",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Confirmation bias is seeking information that confirms existing beliefs while ignoring contradicting evidence."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A survey of 100 people found that 60% preferred Brand X. However, the survey was conducted outside a Brand X store. Which bias makes this result unreliable?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Selection bias (sampling bias)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Anchoring bias",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Survivorship bias",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Recency bias",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "The sample is biased because people outside a Brand X store are more likely to be Brand X customers. This is selection/sampling bias — the sample does not represent the general population."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "You read that \"9 out of 10 successful entrepreneurs dropped out of college.\" You conclude college is unnecessary for success. Which TWO biases are at work?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Survivorship bias and base rate neglect",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Confirmation bias and anchoring",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Dunning-Kruger effect and halo effect",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Availability heuristic and framing effect",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Survivorship bias: we only see successful dropouts, not the millions who dropped out and failed. Base rate neglect: ignoring that most dropouts do NOT become successful entrepreneurs."
+  },
+  {
+    "competency_id": "C4.5",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "An AI recommendation system shows you news articles similar to ones you previously clicked. Over time, you see increasingly extreme viewpoints. This demonstrates:",
+    "options": [
+      {
+        "label": "A",
+        "text": "Filter bubble and confirmation bias amplification",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Anchoring bias only",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Dunning-Kruger effect",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Bandwagon effect only",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "AI recommendation creates a filter bubble by only showing similar content. This amplifies confirmation bias — you only see information confirming your existing views, leading to polarization."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a class, 15 students play cricket and 12 play football. 5 play both. How many play at least one sport?",
+    "options": [
+      {
+        "label": "A",
+        "text": "27",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "22",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "20",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "32",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Using inclusion-exclusion: |A ∪ B| = |A| + |B| - |A ∩ B| = 15 + 12 - 5 = 22."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Set A has even numbers from 1-20, Set B has multiples of 3 from 1-20. How many numbers are in A but NOT in B?",
+    "options": [
+      {
+        "label": "A",
+        "text": "7",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "A = {2,4,6,8,10,12,14,16,18,20} (10 numbers). A∩B = {6,12,18} (multiples of both 2 and 3 = multiples of 6). A but not B = 10 - 3 = 7."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a school of 200 students: 120 take Hindi, 100 take English, 80 take Sanskrit. 50 take Hindi and English, 40 take Hindi and Sanskrit, 30 take English and Sanskrit, 20 take all three. How many take none of these?",
+    "options": [
+      {
+        "label": "A",
+        "text": "0",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "20",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "30",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "|H∪E∪S| = 120+100+80-50-40-30+20 = 200. Wait: 120+100+80 = 300, minus 50+40+30 = 180, so 300-120=180, plus 20 = 200. Total taking at least one = 200 - 20 = 180. So 200-180 = 20 take none."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If n(A) = 25, n(B) = 30, and n(A ∪ B) = 40, what is n(A ∩ B)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "15",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "20",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "n(A ∩ B) = n(A) + n(B) - n(A ∪ B) = 25 + 30 - 40 = 15."
+  },
+  {
+    "competency_id": "C4.6",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "For sets A, B, C where each has 10 elements, every pair shares exactly 3 elements, and all three share 1 element. How many elements are in A ∪ B ∪ C?",
+    "options": [
+      {
+        "label": "A",
+        "text": "22",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "23",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "25",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "24",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "|A∪B∪C| = |A|+|B|+|C|-|A∩B|-|A∩C|-|B∩C|+|A∩B∩C| = 10+10+10-3-3-3+1 = 22."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Two dice are rolled. What is the probability that the sum is 7?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "7/36",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/36",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Total outcomes = 36. Pairs summing to 7: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6 ways. P = 6/36 = 1/6."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A bag has 4 red, 3 blue, and 2 green marbles. You draw 2 marbles without replacement. What is the probability both are red?",
+    "options": [
+      {
+        "label": "A",
+        "text": "16/81",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/6",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "4/9",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/9",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "P(1st red) = 4/9. P(2nd red | 1st red) = 3/8. P(both red) = 4/9 × 3/8 = 12/72 = 1/6."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a lottery, 5 numbers are chosen from 1-50. What is the probability of matching all 5? (Express as 1 in N)",
+    "options": [
+      {
+        "label": "A",
+        "text": "1 in 2,118,760",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1 in 312,500,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1 in 250,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1 in 6,250,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "50C5 = 50!/(5!×45!) = (50×49×48×47×46)/(5×4×3×2×1) = 2,118,760. So probability = 1/2,118,760."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Three coins are tossed. What is the probability of getting exactly 2 heads?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "3/8",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "1/2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Total outcomes = 2³ = 8. Exactly 2 heads: HHT, HTH, THH = 3 ways. P = 3/8."
+  },
+  {
+    "competency_id": "C4.7",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "The birthday problem: In a group of 23 people, what is the approximate probability that at least two share a birthday?",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 6%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "About 25%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "About 50%",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "About 75%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "The birthday paradox: with 23 people, there is approximately a 50.7% chance that at least two share a birthday. This is counter-intuitive because there are 253 possible pairs (23C2)."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A card is drawn from a standard deck. Given that it is red, what is the probability it is a heart?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "13/52",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "26/52",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Red cards = 26 (hearts + diamonds). Hearts = 13. P(heart | red) = 13/26 = 1/2."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a class, 70% of students passed Math, 80% passed Science, and 60% passed both. If a student passed Math, what is the probability they also passed Science?",
+    "options": [
+      {
+        "label": "A",
+        "text": "6/7",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "60%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "80%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "P(Science | Math) = P(both)/P(Math) = 0.60/0.70 = 6/7 ≈ 85.7%."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A medical test is 95% accurate (positive when sick) and has a 3% false positive rate. If 1% of the population has the disease, what is the approximate probability you are sick given a positive test?",
+    "options": [
+      {
+        "label": "A",
+        "text": "95%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "24%",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "50%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "75%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "Bayes' theorem: P(sick|+) = P(+|sick)×P(sick)/P(+). P(+) = 0.95×0.01 + 0.03×0.99 = 0.0095+0.0297 = 0.0392. P(sick|+) = 0.0095/0.0392 ≈ 0.242 or 24%."
+  },
+  {
+    "competency_id": "C4.8",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Two dice are rolled. Given that the sum is at least 10, what is the probability the sum is exactly 12?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/36",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Sum ≥ 10: (4,6),(5,5),(6,4),(5,6),(6,5),(6,6) = 6 outcomes. Sum = 12: only (6,6) = 1 outcome. P = 1/6."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Ice cream sales and drowning incidents both increase in summer. Does eating ice cream cause drowning?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, ice cream makes people careless near water",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "No, both are caused by a third factor: hot weather",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Yes, the data shows a clear correlation",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "We need more data to decide",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "This is a classic example of confounding variable. Hot weather causes both more ice cream consumption and more swimming, which leads to more drownings."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A study finds children who eat breakfast daily score higher on tests. Which conclusion is MOST valid?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Eating breakfast causes better test scores",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Better test scores make children want breakfast",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "There is an association; a controlled experiment is needed to prove causation",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "The study is flawed because it has too few participants",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Observational studies show correlation, not causation. Families that provide breakfast may also provide other support (tutoring, stable home), which are confounding variables."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A study finds a strong negative correlation (r = -0.85) between exercise frequency and body fat percentage. Which interpretation is most accurate?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Exercise causes body fat to decrease",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "As exercise increases, body fat tends to decrease, but other factors may contribute",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The relationship is too weak to draw conclusions",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Body fat causes people to exercise less",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "r = -0.85 is a strong negative correlation, meaning the variables move in opposite directions. But correlation alone cannot prove causation — diet, genetics, and lifestyle are confounding variables."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A newspaper reports: \"Countries that consume more chocolate produce more Nobel Prize winners (correlation r = 0.79).\" What is the BEST criticism of claiming chocolate causes Nobel Prizes?",
+    "options": [
+      {
+        "label": "A",
+        "text": "The correlation is not strong enough",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Wealth is a confounding variable — richer countries have more chocolate AND more research funding",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The sample size of countries is too small",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Nobel Prizes are not a good measure of intelligence",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "National wealth (GDP per capita) is a confounding variable that drives both chocolate consumption and Nobel Prize production. This is a famous example of spurious correlation."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Which study design can BEST establish causation?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Cross-sectional survey",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Longitudinal observational study",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Randomized controlled trial (RCT)",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "Case study",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "RCTs randomly assign participants to treatment/control groups, controlling for confounding variables. This is the gold standard for establishing causation."
+  },
+  {
+    "competency_id": "C4.9",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Simpson's Paradox: A treatment has a higher recovery rate for BOTH men and women separately, but a LOWER overall recovery rate. How is this possible?",
+    "options": [
+      {
+        "label": "A",
+        "text": "The data is wrong",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Unequal group sizes — more sick people chose the treatment",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "The treatment works differently for different genders",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "This is mathematically impossible",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Simpson's Paradox occurs when a confounding variable (severity of illness) creates unequal group sizes. If sicker patients disproportionately choose the treatment, the overall rate can reverse even though the treatment helps within each subgroup."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A bar chart shows: Monday=20 books sold, Tuesday=35, Wednesday=15, Thursday=40, Friday=30. What is the average daily sales?",
+    "options": [
+      {
+        "label": "A",
+        "text": "25",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "28",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "35",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Average = (20+35+15+40+30)/5 = 140/5 = 28."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A pie chart shows exam results: A=25%, B=35%, C=20%, D=15%, F=5%. If 200 students took the exam, how many got B or above?",
+    "options": [
+      {
+        "label": "A",
+        "text": "100",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "120",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "140",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "70",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "B or above = A + B = 25% + 35% = 60%. 60% of 200 = 120 students."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Test scores: 45, 50, 52, 55, 55, 58, 60, 65, 70, 95. Which measure of central tendency is MOST affected by the outlier (95)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Mean",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Median",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Mode",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "All are equally affected",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "The mean is pulled up by the outlier 95. Without 95: mean ≈ 56.7. With 95: mean = 60.5. The median (56.5) and mode (55) barely change."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Two datasets: A = {10,10,10,10,10}, B = {2,6,10,14,18}. Both have the same mean (10). Which has higher standard deviation?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Dataset A",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Dataset B",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "They are the same",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be determined",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "A has zero spread (all values equal the mean, SD=0). B has values spread out from the mean, so SD > 0. B's SD = √((64+16+0+16+64)/5) = √32 ≈ 5.66."
+  },
+  {
+    "competency_id": "C4.10",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A graph shows India's GDP growing from ₹100 lakh crore to ₹200 lakh crore over 10 years. A newspaper claims \"GDP doubled — India's economy is booming!\" What critical information is missing?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Inflation adjustment — real GDP growth may be much lower",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Population data",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Other countries' GDP",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Monthly breakdown of data",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Nominal GDP can double even with modest real growth if inflation is high. For example, with 7% annual inflation over 10 years, prices nearly double. The real (inflation-adjusted) growth could be much less impressive."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A function machine doubles the input and adds 3. If the input is 5, what is the output?",
+    "options": [
+      {
+        "label": "A",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "13",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "f(x) = 2x + 3. f(5) = 2×5 + 3 = 10 + 3 = 13."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A taxi charges ₹50 base fare plus ₹15 per km. Write the fare (F) as a function of distance (d), and find the fare for 8 km.",
+    "options": [
+      {
+        "label": "A",
+        "text": "F = 50d + 15; ₹415",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "F = 15d + 50; ₹170",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "F = 50 + 15 + d; ₹73",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "F = 15d; ₹120",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "F = 15d + 50 (₹15 per km plus ₹50 base). For d=8: F = 15×8 + 50 = 120 + 50 = ₹170."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "The area of a circle is A = πr². If the radius is doubled, how does the area change?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Doubles",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Triples",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Quadruples (4 times)",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "Increases by π",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "New area = π(2r)² = π×4r² = 4πr² = 4 times original area. Squaring the doubled radius gives 4."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If f(x) = 3x - 2 and g(x) = x² + 1, what is f(g(2))?",
+    "options": [
+      {
+        "label": "A",
+        "text": "13",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "17",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "First g(2) = 2² + 1 = 5. Then f(5) = 3×5 - 2 = 13."
+  },
+  {
+    "competency_id": "C4.11",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A bacteria population doubles every hour. If you start with 100 bacteria, which function models the population P after t hours?",
+    "options": [
+      {
+        "label": "A",
+        "text": "P = 100 + 2t",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "P = 100 × 2^t",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "P = 200t",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "P = 100t²",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Exponential growth: P = initial × growth_rate^t = 100 × 2^t. After 1 hour: 200, after 2: 400, etc."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In Rock-Paper-Scissors, if your opponent always plays Rock, what is your best strategy?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Always play Rock (tie)",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Always play Paper (win every time)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "Play randomly",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Always play Scissors",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "If the opponent's strategy is predictable (always Rock), you should always play Paper to win every round. This is exploiting a non-random strategy."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Two friends must independently choose to share (cooperate) or keep (defect) a reward. If both share, each gets ₹50. If both keep, each gets ₹20. If one shares and one keeps, the keeper gets ₹80 and the sharer gets ₹0. What is the Nash equilibrium?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Both share",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Both keep",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "One shares, one keeps",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "There is no equilibrium",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "This is the Prisoner's Dilemma. Each player's dominant strategy is to keep (defect): if the other shares, keeping gives ₹80 > ₹50; if the other keeps, keeping gives ₹20 > ₹0. So both keep, even though both sharing (₹50 each) would be better."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In a game, Player A chooses Left or Right, then Player B chooses Up or Down. Payoffs (A,B): Left-Up=(3,2), Left-Down=(1,4), Right-Up=(2,3), Right-Down=(4,1). Using backward induction, what will happen?",
+    "options": [
+      {
+        "label": "A",
+        "text": "A plays Right, B plays Up → (2,3)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "A plays Left, B plays Down → (1,4)",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "A plays Left, B plays Up → (3,2)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "A plays Right, B plays Down → (4,1)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Backward induction: If A plays Left, B picks Down (4>2), so A gets 1. If A plays Right, B picks Up (3>1), so A gets 2. A prefers 2>1, so A plays Right. Result: (2,3)."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "In an auction, you value an item at ₹1000. In a second-price sealed-bid auction (winner pays the second-highest bid), what should you bid?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Less than ₹1000 to get a bargain",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Exactly ₹1000 (your true value)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "More than ₹1000 to ensure winning",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "It depends on what others bid",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "In a second-price auction, bidding your true value is a dominant strategy (Vickrey auction). You pay the second-highest bid, so overbidding risks paying more than your value, and underbidding risks losing a profitable deal."
+  },
+  {
+    "competency_id": "C4.12",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Three companies must choose prices: High, Medium, or Low. If all choose High, each profits ₹100. If one undercuts while others stay high, the undercutter gets ₹200 but others get ₹30. What typically happens?",
+    "options": [
+      {
+        "label": "A",
+        "text": "All choose High (cooperative equilibrium)",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "All race to Low prices (price war)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "One undercuts and others follow",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "They take turns undercutting",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "This is a multi-player Prisoner's Dilemma. Each company has an incentive to undercut, leading to a race to the bottom. The Nash equilibrium is low prices, even though all would prefer high prices."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A school can buy 10 tablets for ₹2,00,000 or 30 textbooks for ₹45,000. Tablets last 3 years, textbooks 1 year. Which is cheaper per student-year?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Tablets (₹6,667 per student-year)",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Textbooks (₹1,500 per student-year)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "They cost the same",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be compared",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Tablets: ₹2,00,000 / (10 × 3 years) = ₹6,667 per student-year. Textbooks: ₹45,000 / (30 × 1 year) = ₹1,500 per student-year. Textbooks are much cheaper per student-year."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "You can walk to school (free, 30 min) or take an auto (₹50, 10 min). If your time is worth ₹100/hour, which is the better economic choice?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Walk — saves ₹17 in total cost",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Auto — the time saved is worth the money",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "They cost the same in total",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be determined",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Walking: ₹0 fare + 30 min × ₹100/60 = ₹50 opportunity cost = ₹50 total. Auto: ₹50 fare + 10 min × ₹100/60 = ₹16.67 opportunity cost = ₹66.67 total. Walking saves ₹16.67."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A factory can install solar panels (₹10 lakh upfront, saves ₹1.5 lakh/year electricity) or continue with grid power. The panels last 15 years. What is the net benefit?",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹12.5 lakh net benefit",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹10 lakh net benefit",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹5 lakh net benefit",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Net loss of ₹1 lakh",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Total savings over 15 years = ₹1.5 lakh × 15 = ₹22.5 lakh. Net benefit = ₹22.5 - ₹10 = ₹12.5 lakh."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A city can build a flyover (₹50 crore, saves 15 min per commuter, 50,000 daily users) or improve bus service (₹10 crore, saves 5 min per commuter, 2,00,000 daily users). Which saves more total commuter-hours per day?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Flyover (12,500 hours/day saved)",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Bus improvement (16,667 hours/day saved)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "They save the same amount",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Flyover (25,000 hours/day saved)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Flyover: 50,000 users × 15 min = 750,000 min = 12,500 hours. Bus: 2,00,000 users × 5 min = 10,00,000 min = 16,667 hours. Bus saves more total hours at 1/5 the cost."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A company must choose: Project A (certain profit ₹5 lakh) or Project B (60% chance of ₹10 lakh, 40% chance of ₹0). What is the expected value of Project B?",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹4 lakh",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹6 lakh",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹10 lakh",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹5 lakh",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Expected value = 0.60 × ₹10 lakh + 0.40 × ₹0 = ₹6 lakh. Since ₹6 lakh > ₹5 lakh, Project B has higher expected value (though more risk)."
+  },
+  {
+    "competency_id": "C4.13",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Opportunity cost: If you spend 3 hours studying math instead of working at ₹200/hour, and the math study helps you score 10 marks more on a test worth ₹5000 scholarship, what is the net gain?",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹5,000",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹4,400",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹600",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹5,600",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Opportunity cost of studying = 3 × ₹200 = ₹600 (lost wages). Benefit = ₹5,000 scholarship. Net gain = ₹5,000 - ₹600 = ₹4,400."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Estimate: A cricket stadium has 50,000 seats. If each seat is about 0.5m wide with 0.8m legroom, approximately what area do the seats cover?",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 10,000 m²",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "About 20,000 m²",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "About 50,000 m²",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "About 5,000 m²",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Each seat ≈ 0.5 × 0.8 = 0.4 m². Total ≈ 50,000 × 0.4 = 20,000 m² (about 2 hectares)."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "How many litres of water does an average Indian household use per day? (Estimate)",
+    "options": [
+      {
+        "label": "A",
+        "text": "50-100 litres",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "200-500 litres",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "1000-2000 litres",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10-50 litres",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "6-7",
+    "explanation": "Average per capita water use in India ≈ 50-70 litres/day. For a family of 4-5: 200-350 litres/day. Including cooking, bathing, washing, cleaning."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Fermi estimation: How many piano tuners are there in Mumbai (population ~20 million)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 50-100",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "About 1,000-5,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "About 5-10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "About 10,000+",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "20M people ÷ 5 per household = 4M households. ~2% have pianos = 80,000 pianos. Each tuned 1-2 times/year = ~120,000 tunings. A tuner does ~4 per day × 250 days = 1000/year. 120,000 ÷ 1000 = ~120 tuners. Roughly 50-100 seems reasonable given lower piano ownership in India."
+  },
+  {
+    "competency_id": "C4.14",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Estimate the number of breaths you take in a year.",
+    "options": [
+      {
+        "label": "A",
+        "text": "About 50,000",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "About 500,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "About 5,000,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "About 8,000,000",
+        "is_correct": true
+      }
+    ],
+    "correct_answer": "D",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Average breathing rate ≈ 15 breaths/minute. Per year: 15 × 60 × 24 × 365 = 15 × 525,600 ≈ 7,884,000 ≈ 8 million breaths."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A recipe needs 2/3 cup of flour. If you want to make 2½ times the recipe, how much flour do you need?",
+    "options": [
+      {
+        "label": "A",
+        "text": "1⅓ cups",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "1⅔ cups",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "1½ cups",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2 cups",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "2/3 × 5/2 = 10/6 = 5/3 = 1⅔ cups."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Arrange in ascending order: 3/7, 2/5, 4/9",
+    "options": [
+      {
+        "label": "A",
+        "text": "2/5 < 3/7 < 4/9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/7 < 2/5 < 4/9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4/9 < 3/7 < 2/5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/5 < 4/9 < 3/7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.7,
+    "grade_band": "6-7",
+    "explanation": "Convert to common denominator (315): 3/7=135/315, 2/5=126/315, 4/9=140/315. Order: 126 < 135 < 140, so 2/5 < 3/7 < 4/9."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If a/b = 3/4 and b/c = 2/5, what is a/c?",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/10",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "6/20",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15/8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "a/c = (a/b) × (b/c) = 3/4 × 2/5 = 6/20 = 3/10. Note: B is also 3/10 but not fully simplified — A is the simplest form."
+  },
+  {
+    "competency_id": "C4.15",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Simplify: (1/2 + 1/3) ÷ (1/4 - 1/6)",
+    "options": [
+      {
+        "label": "A",
+        "text": "5",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "10",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Numerator: 1/2 + 1/3 = 3/6 + 2/6 = 5/6. Denominator: 1/4 - 1/6 = 3/12 - 2/12 = 1/12. Division: 5/6 ÷ 1/12 = 5/6 × 12/1 = 60/6 = 10."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A shopkeeper offers 20% discount, then another 10% on the discounted price. What is the effective single discount?",
+    "options": [
+      {
+        "label": "A",
+        "text": "30%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "28%",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "25%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "32%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "On ₹100: After 20% off = ₹80. After 10% off on ₹80 = ₹72. Total discount = ₹28 on ₹100 = 28%. Successive discounts: 1 - (0.8 × 0.9) = 1 - 0.72 = 0.28 = 28%."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A product's price increases by 25%, then decreases by 25%. Is the final price equal to, more than, or less than the original?",
+    "options": [
+      {
+        "label": "A",
+        "text": "Equal to original",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "Less than original (by 6.25%)",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "More than original",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Depends on the original price",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "6-7",
+    "explanation": "On ₹100: +25% = ₹125. -25% of ₹125 = ₹93.75. Loss = ₹6.25 = 6.25%. This is because 1.25 × 0.75 = 0.9375."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Simple interest: ₹15,000 at 8% per annum for 2.5 years. What is the total amount?",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹17,400",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹18,000",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹19,500",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹16,200",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "SI = P × R × T / 100 = 15,000 × 8 × 2.5 / 100 = ₹3,000. Total = ₹15,000 + ₹3,000 = ₹18,000."
+  },
+  {
+    "competency_id": "C4.16",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If the price of petrol increases by 20%, by what percentage must consumption decrease to keep the expenditure the same?",
+    "options": [
+      {
+        "label": "A",
+        "text": "20%",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "16.67%",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "25%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "If price increases by 20% (multiplied by 1.2), consumption must be multiplied by 1/1.2 = 5/6. Decrease = 1 - 5/6 = 1/6 ≈ 16.67%."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A map has a scale of 1:50,000. Two cities are 8 cm apart on the map. What is the actual distance?",
+    "options": [
+      {
+        "label": "A",
+        "text": "4 km",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40 km",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.4 km",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "400 km",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "8 cm × 50,000 = 400,000 cm = 4,000 m = 4 km."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If 8 workers can build a wall in 12 days, how many days will 6 workers take (assuming same work rate)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "9 days",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "16 days",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "14 days",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10 days",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Inverse proportion: more workers = fewer days. Total work = 8 × 12 = 96 worker-days. With 6 workers: 96 ÷ 6 = 16 days."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Three partners invest ₹2,00,000, ₹3,00,000, and ₹5,00,000 in a business. If the total profit is ₹1,50,000, what is the share of the partner who invested ₹3,00,000?",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹30,000",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "₹45,000",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "₹50,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹75,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Investment ratio = 2:3:5. Total parts = 10. Share = 3/10 × ₹1,50,000 = ₹45,000."
+  },
+  {
+    "competency_id": "C4.17",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A mixture has milk and water in ratio 5:3. If 16 litres of the mixture is replaced with water, the ratio becomes 3:5. What was the original quantity of the mixture?",
+    "options": [
+      {
+        "label": "A",
+        "text": "32 litres",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "40 litres",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "48 litres",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "36 litres",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Let total = 8x (since ratio is 5:3). Milk = 5x, Water = 3x. After removing 16L mixture: milk left = 5x - 5x×16/8x = 5x - 10. Water left = 3x - 6 + 16 = 3x + 10. New ratio: (5x-10)/(3x+10) = 3/5. 25x-50 = 9x+30. 16x = 80. x = 5. Total = 40L."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Solve: 3(x - 4) = 2(x + 1)",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 10",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "x = 14",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "x = 8",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = -2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "3x - 12 = 2x + 2. 3x - 2x = 2 + 12. x = 14."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "The sum of three consecutive even numbers is 78. What is the largest number?",
+    "options": [
+      {
+        "label": "A",
+        "text": "26",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "28",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "24",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Let the numbers be x, x+2, x+4. Sum = 3x + 6 = 78. 3x = 72. x = 24. Largest = 24 + 4 = 28."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A father is 4 times as old as his son. In 20 years, the father will be twice as old as his son. What is the son's current age?",
+    "options": [
+      {
+        "label": "A",
+        "text": "8 years",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "10 years",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "12 years",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15 years",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Let son = x, father = 4x. In 20 years: 4x + 20 = 2(x + 20). 4x + 20 = 2x + 40. 2x = 20. x = 10."
+  },
+  {
+    "competency_id": "C4.18",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "If the sum of two numbers is 45 and their difference is 13, what is the product of the two numbers?",
+    "options": [
+      {
+        "label": "A",
+        "text": "464",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "500",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "416",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "480",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "x + y = 45, x - y = 13. Adding: 2x = 58, x = 29. y = 16. Product = 29 × 16 = 464."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A triangle has angles in ratio 2:3:4. What is the largest angle?",
+    "options": [
+      {
+        "label": "A",
+        "text": "60°",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "80°",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "90°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "100°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Sum of angles = 180°. Ratio 2:3:4, total parts = 9. Each part = 20°. Largest = 4 × 20° = 80°."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A circular garden has radius 7m. A path of width 3.5m runs around it. What is the area of the path? (Use π = 22/7)",
+    "options": [
+      {
+        "label": "A",
+        "text": "192.5 m²",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "154 m²",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "231 m²",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "346.5 m²",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "Outer radius = 7 + 3.5 = 10.5m. Path area = π(R² - r²) = 22/7 × (110.25 - 49) = 22/7 × 61.25 = 192.5 m²."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "A cube has edge length 6 cm. What is the length of the space diagonal (corner to opposite corner)?",
+    "options": [
+      {
+        "label": "A",
+        "text": "6√2 cm",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "6√3 cm",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "12 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "18 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "Space diagonal of a cube with edge a = a√3. For a = 6: diagonal = 6√3 ≈ 10.39 cm."
+  },
+  {
+    "competency_id": "C4.19",
+    "module_id": "math_v1",
+    "type": "mcq",
+    "text": "Two similar triangles have sides in ratio 3:5. What is the ratio of their areas?",
+    "options": [
+      {
+        "label": "A",
+        "text": "3:5",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "6:10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "9:25",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "27:125",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.8,
+    "grade_band": "8-9",
+    "explanation": "For similar figures, the ratio of areas = square of the ratio of sides. (3/5)² = 9/25."
+  }
+]

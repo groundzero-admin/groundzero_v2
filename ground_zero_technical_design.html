@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ground Zero — Technical Design Document</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: #f8f7f4; color: #1a1a1a; line-height: 1.7; }
+
+  .cover {
+    background: #0f0f0f;
+    color: white;
+    padding: 80px 60px;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .cover .label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #888; margin-bottom: 16px; }
+  .cover h1 { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .cover .subtitle { font-size: 15px; color: #aaa; max-width: 700px; }
+  .cover .meta { margin-top: 32px; font-size: 12px; color: #666; letter-spacing: 1px; }
+  .cover .version-badge { display: inline-block; background: #ffd700; color: #0f0f0f; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 14px; }
+
+  .container { max-width: 1020px; margin: 0 auto; padding: 60px 40px; }
+
+  h2 { font-size: 26px; font-weight: 700; margin: 60px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; }
+  h3 { font-size: 18px; font-weight: 700; margin: 32px 0 12px; }
+  h4 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 8px; color: #555; }
+  p { margin-bottom: 14px; font-size: 15px; }
+
+  /* PILLAR COLORS */
+  .p1 { color: #c0392b; }
+  .p2 { color: #2980b9; }
+  .p3 { color: #27ae60; }
+  .p4 { color: #8e44ad; }
+
+  .p1-bg { background: #fdf3f3; border-left: 4px solid #c0392b; }
+  .p2-bg { background: #f0f7fd; border-left: 4px solid #2980b9; }
+  .p3-bg { background: #f0fbf4; border-left: 4px solid #27ae60; }
+  .p4-bg { background: #f8f3fd; border-left: 4px solid #8e44ad; }
+
+  .pillar-block { border-radius: 8px; padding: 28px 32px; margin-bottom: 28px; }
+  .pillar-block h3 { margin-top: 0; font-size: 20px; }
+
+  .pillar-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 12px; margin: 1px 2px; white-space: nowrap; }
+  .pt1 { background: #fdecea; color: #c0392b; border: 1px solid #f5b7b1; }
+  .pt2 { background: #ebf5fb; color: #2980b9; border: 1px solid #aed6f1; }
+  .pt3 { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+  .pt4 { background: #f5eef8; color: #7d3c98; border: 1px solid #d2b4de; }
+
+  /* SOURCE TAGS */
+  .source-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-right: 4px; white-space: nowrap; }
+  .src-mcq { background: #eafaf1; color: #1e8449; border: 1px solid #a9dfbf; }
+  .src-llm { background: #e8f4fd; color: #1a5276; border: 1px solid #aed6f1; }
+  .src-spark { background: #fef9e7; color: #7d6608; border: 1px solid #f9e79f; }
+  .src-facilitator { background: #fdf2f8; color: #76448a; border: 1px solid #d7bde2; }
+  .src-artifact { background: #fef5e7; color: #784212; border: 1px solid #fad7a0; }
+  .src-diagnostic { background: #fce4ec; color: #880e4f; border: 1px solid #f8bbd0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 28px; font-size: 14px; }
+  thead th { padding: 10px 14px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; background: #1a1a1a; color: white; }
+  tbody tr { border-bottom: 1px solid #e8e8e8; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody td { padding: 10px 14px; vertical-align: top; }
+
+  code { background: #f0efe8; padding: 2px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', 'Fira Code', monospace; }
+  pre { background: #1a1a1a; color: #d4d4d4; padding: 20px 24px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 16px 0 28px; font-family: 'SF Mono', 'Fira Code', monospace; }
+  pre .kw { color: #569cd6; }
+  pre .ty { color: #4ec9b0; }
+  pre .str { color: #ce9178; }
+  pre .cm { color: #6a9955; }
+  pre .num { color: #b5cea8; }
+  pre .fn { color: #dcdcaa; }
+
+  .callout { background: #1a1a1a; color: #f5f5f5; border-radius: 8px; padding: 24px 28px; margin: 32px 0; font-size: 14px; line-height: 1.8; }
+  .callout strong { color: #ffd700; }
+
+  .note { background: #fffbea; border: 1px solid #f0d060; border-radius: 6px; padding: 14px 18px; font-size: 13.5px; margin: 20px 0; }
+  .note strong { color: #b7791f; }
+
+  .section-intro { font-size: 16px; color: #444; max-width: 720px; margin-bottom: 32px; line-height: 1.8; }
+
+  .toc { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 28px 32px; margin: 32px 0; }
+  .toc h3 { margin-top: 0; font-size: 15px; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 16px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { padding: 4px 0; font-size: 14px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin: 20px 0; }
+  @media (max-width: 780px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+  .card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; background: white; }
+  .card h4 { margin-top: 0; }
+
+  .metric-row { display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+  .metric-box { flex: 1; min-width: 120px; background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; text-align: center; }
+  .metric-box .big { font-size: 24px; font-weight: 800; display: block; margin-bottom: 4px; }
+  .metric-box p { font-size: 12px; margin: 0; color: #666; }
+
+  .arch-diagram { background: #0f0f0f; border-radius: 12px; padding: 32px; margin: 28px 0; color: white; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.8; overflow-x: auto; }
+  .arch-diagram .layer { border: 1px solid #333; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+  .arch-diagram .layer-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #888; margin-bottom: 8px; display: block; }
+  .arch-diagram .boxes { display: flex; gap: 12px; flex-wrap: wrap; }
+  .arch-diagram .box { border-radius: 6px; padding: 10px 14px; font-size: 12px; text-align: center; min-width: 100px; flex: 1; }
+  .box-blue { background: #1a3a5c; border: 1px solid #2980b9; color: #aed6f1; }
+  .box-green { background: #1a3a2a; border: 1px solid #27ae60; color: #a9dfbf; }
+  .box-purple { background: #2a1a3a; border: 1px solid #8e44ad; color: #d7bde2; }
+  .box-orange { background: #3a2a1a; border: 1px solid #e67e22; color: #fad7a0; }
+  .box-red { background: #3a1a1a; border: 1px solid #c0392b; color: #f5b7b1; }
+  .box-gold { background: #3a3a1a; border: 1px solid #f1c40f; color: #f9e79f; }
+  .arrow-down { text-align: center; font-size: 20px; color: #555; margin: 4px 0; }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 24px 0 20px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+
+  .step { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px 24px; margin: 16px 0; }
+  .step-num { display: inline-block; background: #1a1a1a; color: #ffd700; font-size: 12px; font-weight: 700; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; margin-right: 10px; }
+  .step h4 { display: inline; font-size: 15px; text-transform: none; letter-spacing: 0; color: #1a1a1a; }
+
+  .phase { display: flex; gap: 0; margin: 24px 0; }
+  .phase-item { flex: 1; padding: 16px; text-align: center; font-size: 13px; border: 1px solid #e0e0e0; }
+  .phase-item:first-child { border-radius: 8px 0 0 8px; }
+  .phase-item:last-child { border-radius: 0 8px 8px 0; }
+  .phase-item.active { background: #1a1a1a; color: white; }
+  .phase-num { font-size: 20px; font-weight: 700; display: block; margin-bottom: 4px; }
+
+  ul.clean { list-style: none; padding: 0; }
+  ul.clean li { padding: 6px 0 6px 20px; position: relative; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean li::before { content: "→"; position: absolute; left: 0; color: #aaa; }
+
+  hr { border: none; border-top: 1px solid #e0e0e0; margin: 48px 0; }
+
+  .flow-diagram { background: #0f0f0f; border-radius: 12px; padding: 24px 32px; margin: 20px 0; color: #ccc; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.8; white-space: pre; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="label">Ground Zero — Engineering Architecture</div>
+  <div class="version-badge">V1 — TECHNICAL DESIGN</div>
+  <h1>Technical Design Document<br>for the Learning Platform</h1>
+  <div class="subtitle">Universal competency model (56 competencies), swappable mastery engine (BKT → DKT), evidence pipeline, SPARK diagnostic, and curriculum predictor — designed for 4 pillars, 7 signal sources, and curriculum-agnostic growth tracking</div>
+  <div class="meta">February 2026 &middot; Based on Signal Design v2 + System Design v1 + Level 1 &amp; 2 Curriculum + ML/KT Research</div>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <ol>
+      <li><strong>Product Overview</strong> &mdash; vision, three-layer architecture, design principles</li>
+      <li><strong>Universal Competency Model</strong> &mdash; 4 pillars, 16 capabilities, 56 competencies</li>
+      <li><strong>Skill Graph</strong> &mdash; prerequisite edges, co-development edges, stage thresholds</li>
+      <li><strong>Mastery Engine</strong> &mdash; interface contract, BKT implementation, 10-step algorithm</li>
+      <li><strong>Evidence Pipeline</strong> &mdash; EvidenceEvent schema, 7 signal sources, processing tiers</li>
+      <li><strong>SPARK Diagnostic</strong> &mdash; 10-minute adaptive assessment, graph seeding</li>
+      <li><strong>Curriculum Predictor</strong> &mdash; rule-based → contextual bandit → RL path planner</li>
+      <li><strong>Consumer Surfaces</strong> &mdash; student app, teacher dashboard, parent report, admin</li>
+      <li><strong>Infrastructure &amp; Data (AWS)</strong> &mdash; tech stack, data flow, database schema, scale</li>
+      <li><strong>Implementation Phases</strong> &mdash; MVP → LLM integration → ML pipeline → full personalization</li>
+    </ol>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#c0392b;"></div><strong class="p1">Communication + Argumentation</strong></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2980b9;"></div><strong class="p2">Creativity + Curiosity</strong></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#27ae60;"></div><strong class="p3">AI + Systems + Builder Mindset</strong></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8e44ad;"></div><strong class="p4">Math + Logic + Reasoning</strong></div>
+  </div>
+
+  <!-- ===================== 1. PRODUCT OVERVIEW ===================== -->
+  <h2>1. Product Overview</h2>
+
+  <p class="section-intro">Ground Zero is an AI-powered learning platform for grades 4&ndash;9 that tracks student growth across four fundamental pillars using a combination of structured assessments, live session transcripts, AI companion interactions, and project artifacts.</p>
+
+  <h3>Three-Layer Architecture</h3>
+
+  <div class="arch-diagram">
+    <div class="layer">
+      <span class="layer-title">Layer 1 &mdash; Competency Model (the "what")</span>
+      <div class="boxes">
+        <div class="box box-gold">4 Pillars</div>
+        <div class="box box-gold">16 Capabilities</div>
+        <div class="box box-gold">56 Competencies</div>
+        <div class="box box-gold">Prerequisite<br>Edges</div>
+        <div class="box box-gold">Co-development<br>Edges</div>
+      </div>
+    </div>
+
+    <div class="arrow-down">&darr; Stored as data, not code &mdash; versionable, expandable</div>
+
+    <div class="layer" style="border-color: #ffd700;">
+      <span class="layer-title" style="color: #ffd700;">Layer 2 &mdash; Mastery Engine (the "how")</span>
+      <div class="boxes">
+        <div class="box box-green">BKT Engine<br>(swappable)</div>
+        <div class="box box-green">Evidence<br>Processing</div>
+        <div class="box box-green">Forgetting<br>Curves</div>
+        <div class="box box-green">Stuck<br>Detection</div>
+        <div class="box box-green">Co-development<br>Propagation</div>
+      </div>
+    </div>
+
+    <div class="arrow-down">&darr; Stable interface: EvidenceEvent[] &rarr; StudentState</div>
+
+    <div class="layer">
+      <span class="layer-title">Layer 3 &mdash; Consumers (the "who")</span>
+      <div class="boxes">
+        <div class="box box-blue">SPARK<br>Diagnostic</div>
+        <div class="box box-orange">Curriculum<br>Predictor</div>
+        <div class="box box-purple">Teacher<br>Dashboard</div>
+        <div class="box box-blue">Student<br>App</div>
+        <div class="box box-green">Parent<br>Reports</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Key Design Principles</h3>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Curriculum-Agnostic Engine</h4>
+      <p>The mastery engine knows nothing about specific curricula. It processes evidence events and maintains competency states. Any curriculum module registers its activities with competency mappings.</p>
+    </div>
+    <div class="card">
+      <h4>Model Swappability</h4>
+      <p>The mastery engine exposes a stable interface. BKT sits behind it today. DKT, transformers, or ensembles replace it tomorrow without changing anything above or below.</p>
+    </div>
+    <div class="card">
+      <h4>LLM-as-Assessor</h4>
+      <p>Communication and Creativity cannot be measured by MCQ alone. Transcripts and SPARK chats are assessed by an LLM, producing structured evidence events that feed the same engine as MCQ responses.</p>
+    </div>
+    <div class="card">
+      <h4>Graph as Data, Not Code</h4>
+      <p>The competency model, prerequisite edges, and co-development weights are stored as data &mdash; versionable, A/B testable, and expandable without code changes.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ===================== 2. COMPETENCY MODEL ===================== -->
+  <h2>2. Universal Competency Model</h2>
+
+  <p class="section-intro">Three levels: <strong>Pillars (4) &rarr; Capabilities (16) &rarr; Competencies (56)</strong>. Pillars are for parent reports. Capabilities are what SPARK assesses. Competencies are what BKT tracks per student and what the curriculum predictor uses.</p>
+
+  <div class="metric-row">
+    <div class="metric-box" style="border-top: 4px solid #c0392b;"><span class="big">12</span><p>Communication +<br>Argumentation</p></div>
+    <div class="metric-box" style="border-top: 4px solid #2980b9;"><span class="big">12</span><p>Creativity +<br>Curiosity</p></div>
+    <div class="metric-box" style="border-top: 4px solid #27ae60;"><span class="big">13</span><p>AI + Systems +<br>Builder Mindset</p></div>
+    <div class="metric-box" style="border-top: 4px solid #8e44ad;"><span class="big">19</span><p>Math + Logic +<br>Reasoning</p></div>
+    <div class="metric-box" style="border-top: 4px solid #1a1a1a;"><span class="big">56</span><p>Total<br>Competencies</p></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Pillar</th><th>Capabilities</th><th>Competencies</th><th>MCQ-Primary</th><th>LLM-Primary</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pillar-tag pt1">Communication</span></td><td>4 (A&ndash;D)</td><td>12</td><td>2</td><td>10</td></tr>
+      <tr><td><span class="pillar-tag pt2">Creativity</span></td><td>4 (E&ndash;H)</td><td>12</td><td>3</td><td>9</td></tr>
+      <tr><td><span class="pillar-tag pt3">AI/Systems</span></td><td>4 (I&ndash;L)</td><td>13</td><td>5</td><td>8</td></tr>
+      <tr><td><span class="pillar-tag pt4">Math/Logic</span></td><td>4 (M&ndash;P)</td><td>19</td><td>15</td><td>4</td></tr>
+      <tr style="font-weight:700; background:#f5f5f5;"><td>Total</td><td>16</td><td>56</td><td>25</td><td>31</td></tr>
+    </tbody>
+  </table>
+
+  <!-- PILLAR 1 -->
+  <div class="pillar-block p1-bg">
+    <h3 class="p1">Pillar 1: Communication + Argumentation</h3>
+
+    <h4>Capability A: Listening &amp; Comprehension</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C1.1</strong></td><td>Active listening &amp; paraphrasing</td><td>Can repeat back someone's idea in own words accurately</td><td><span class="source-tag src-llm">LLM</span> Transcript: paraphrase quality</td></tr>
+        <tr><td><strong>C1.2</strong></td><td>Claims vs. supporting detail</td><td>Knows the main point vs. the evidence</td><td><span class="source-tag src-mcq">MCQ</span> + Transcript</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability B: Constructing Arguments</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C1.3</strong></td><td>Claim with reason</td><td>Gives &ldquo;because&rdquo; when stating a position</td><td><span class="source-tag src-llm">LLM</span> Transcript + Short answer</td></tr>
+        <tr><td><strong>C1.4</strong></td><td>Fact vs. opinion vs. misleading</td><td>Correctly categorizes statements</td><td><span class="source-tag src-mcq">MCQ</span> Binary, clean BKT signal</td></tr>
+        <tr><td><strong>C1.5</strong></td><td>Logical argument chains</td><td>Builds premise &rarr; premise &rarr; conclusion</td><td><span class="source-tag src-llm">LLM</span> Transcript: multi-step reasoning</td></tr>
+        <tr><td><strong>C1.6</strong></td><td>Fallacy identification</td><td>Spots common fallacies in others' arguments</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability C: Adaptive Communication</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C1.7</strong></td><td>Audience adaptation</td><td>Genuinely changes explanation for different listeners</td><td><span class="source-tag src-llm">LLM</span> Compares versions for register shift</td></tr>
+        <tr><td><strong>C1.8</strong></td><td>Ethical persuasion</td><td>Uses logic + emotion + clarity without manipulation</td><td><span class="source-tag src-llm">LLM</span> Assessment on persuasion tasks</td></tr>
+        <tr><td><strong>C1.9</strong></td><td>Constructive feedback</td><td>Gives specific, actionable feedback; receives without defensiveness</td><td><span class="source-tag src-llm">LLM</span> Transcript: feedback quality</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability D: Dialogue &amp; Debate</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C1.10</strong></td><td>Argue the opposing side</td><td>Can coherently defend a position they disagree with</td><td><span class="source-tag src-llm">LLM</span> Transcript + SPARK</td></tr>
+        <tr><td><strong>C1.11</strong></td><td>Justified position change</td><td>Changes mind AND says why (not conformity)</td><td><span class="source-tag src-llm">LLM</span> Before/after + reasoning connector</td></tr>
+        <tr><td><strong>C1.12</strong></td><td>Conflict navigation</td><td>De-escalates, finds common ground, proposes resolution</td><td><span class="source-tag src-llm">LLM</span> Conflict scenario assessment</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px; color:#777; margin-top:12px;"><em>12 competencies. ~2 MCQ-assessable (clean BKT). ~10 LLM-assessed from transcripts/SPARK.</em></p>
+  </div>
+
+  <!-- PILLAR 2 -->
+  <div class="pillar-block p2-bg">
+    <h3 class="p2">Pillar 2: Creativity + Curiosity</h3>
+
+    <h4>Capability E: Idea Generation</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C2.1</strong></td><td>Fluency &mdash; quantity of ideas</td><td>Generates 5+ ideas, moves past the obvious</td><td><span class="source-tag src-mcq">MCQ</span> Timed activity: count + speed</td></tr>
+        <tr><td><strong>C2.2</strong></td><td>Flexible categorization</td><td>Regroups items in completely different ways</td><td><span class="source-tag src-mcq">MCQ</span> + Transcript</td></tr>
+        <tr><td><strong>C2.3</strong></td><td>Hypothetical reasoning</td><td>Asks &ldquo;what if&rdquo; unprompted; reasons about counterfactuals</td><td><span class="source-tag src-spark">SPARK</span> Hypothetical framing</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability F: Creative Depth</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C2.4</strong></td><td>Idea elaboration over time</td><td>Develops a rough idea across sessions</td><td><span class="source-tag src-artifact">ARTIFACT</span> v1 vs. vN semantic distance</td></tr>
+        <tr><td><strong>C2.5</strong></td><td>Idea evaluation &amp; critique</td><td>Judges which ideas are stronger and why</td><td><span class="source-tag src-spark">SPARK</span> Evaluation language</td></tr>
+        <tr><td><strong>C2.6</strong></td><td>Cross-domain connection</td><td>Links ideas from unrelated fields</td><td><span class="source-tag src-llm">LLM</span> Analogical reasoning detection</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability G: Curiosity Drive</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C2.7</strong></td><td>Unprompted question-asking</td><td>Asks questions nobody assigned them to ask</td><td><span class="source-tag src-llm">LLM</span> Transcript + <span class="source-tag src-spark">SPARK</span></td></tr>
+        <tr><td><strong>C2.8</strong></td><td>Sustained deep exploration</td><td>Returns to same topic across sessions; 10+ turns deep</td><td><span class="source-tag src-spark">SPARK</span> Cross-session recurrence</td></tr>
+        <tr><td><strong>C2.9</strong></td><td>Understanding-seeking</td><td>Uses resources to understand WHY, not just get the answer</td><td><span class="source-tag src-spark">SPARK</span> Query type classification</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability H: Creative Application</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C2.10</strong></td><td>Real-world problem framing</td><td>Identifies a genuine problem, not a toy scenario</td><td><span class="source-tag src-artifact">ARTIFACT</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+        <tr><td><strong>C2.11</strong></td><td>Design under constraints</td><td>Creates solutions within stated limitations</td><td><span class="source-tag src-llm">LLM</span> Constraint adherence</td></tr>
+        <tr><td><strong>C2.12</strong></td><td>Human vs. AI creative judgment</td><td>Knows when AI output is generic vs. when human adds value</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-spark">SPARK</span></td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px; color:#777; margin-top:12px;"><em>12 competencies. ~3 MCQ-assessable. ~9 LLM-assessed (mostly from SPARK).</em></p>
+  </div>
+
+  <!-- PILLAR 3 -->
+  <div class="pillar-block p3-bg">
+    <h3 class="p3">Pillar 3: AI + Systems Thinking + Builder Mindset</h3>
+
+    <h4>Capability I: AI Understanding</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C3.1</strong></td><td>AI as tool, not truth</td><td>Knows AI can be wrong, isn&rsquo;t magic</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-spark">SPARK</span></td></tr>
+        <tr><td><strong>C3.2</strong></td><td>Instruction clarity</td><td>Gives precise, unambiguous instructions to systems</td><td><span class="source-tag src-mcq">MCQ</span> Prompt quality scoring</td></tr>
+        <tr><td><strong>C3.3</strong></td><td>Structured prompting (CLEAR)</td><td>Applies: Context, Limits, Examples, Audience, Refine</td><td><span class="source-tag src-mcq">MCQ</span> Rubric on prompt submissions</td></tr>
+        <tr><td><strong>C3.4</strong></td><td>Hallucination detection</td><td>Tags AI responses as reliable/unsure/dangerous</td><td><span class="source-tag src-mcq">MCQ</span> Clean binary signal</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability J: AI Fluency</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C3.5</strong></td><td>Prompt iteration</td><td>Refines prompt when unsatisfied instead of giving up</td><td><span class="source-tag src-spark">SPARK</span> Multi-turn revision detection</td></tr>
+        <tr><td><strong>C3.6</strong></td><td>Agent workflow design</td><td>Plans AI workflows with verification + fallback</td><td><span class="source-tag src-llm">LLM</span> Plan completeness</td></tr>
+        <tr><td><strong>C3.7</strong></td><td>AI as collaborator</td><td>Uses AI for brainstorming then applies own judgment</td><td><span class="source-tag src-spark">SPARK</span> Brainstorm-then-evaluate</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability K: Systems Thinking</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C3.8</strong></td><td>I &rarr; P &rarr; O modeling</td><td>Decomposes any system into Input &rarr; Process &rarr; Output</td><td><span class="source-tag src-mcq">MCQ</span> + Short answer</td></tr>
+        <tr><td><strong>C3.9</strong></td><td>Feedback loop identification</td><td>Spots where outputs feed back as inputs</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+        <tr><td><strong>C3.10</strong></td><td>Fairness &amp; bias recognition</td><td>Identifies biased system/AI outcomes and explains why</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability L: Builder Mindset</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C3.11</strong></td><td>User need identification</td><td>Conducts research, identifies pain points, prioritizes</td><td><span class="source-tag src-artifact">ARTIFACT</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+        <tr><td><strong>C3.12</strong></td><td>Trade-off reasoning</td><td>Decides with &ldquo;we chose X because, the downside is&hellip;&rdquo;</td><td><span class="source-tag src-llm">LLM</span> Transcript + Artifact</td></tr>
+        <tr><td><strong>C3.13</strong></td><td>End-to-end product delivery</td><td>Concept &rarr; prototype &rarr; pitch &rarr; delivery</td><td><span class="source-tag src-artifact">ARTIFACT</span> Demo Day rubric</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px; color:#777; margin-top:12px;"><em>13 competencies. ~5 MCQ-assessable. ~8 LLM-assessed.</em></p>
+  </div>
+
+  <!-- PILLAR 4 -->
+  <div class="pillar-block p4-bg">
+    <h3 class="p4">Pillar 4: Math + Logic + Reasoning</h3>
+    <p style="font-size:13.5px; color:#555; margin-bottom:16px;">Two capability groups: <strong>Reasoning</strong> (from blended curriculum) and <strong>Math Foundations</strong> (expandable Math module). They share the pillar but activate independently.</p>
+
+    <h4>Capability M: Logical Reasoning</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C4.1</strong></td><td>Pattern recognition</td><td>Identifies rules in visual/numeric sequences</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.2</strong></td><td>Logic gates (AND/OR/NOT)</td><td>Applies boolean logic correctly</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.3</strong></td><td>Decision tree construction</td><td>Builds valid if/else trees</td><td><span class="source-tag src-mcq">MCQ</span> + Short answer</td></tr>
+        <tr><td><strong>C4.4</strong></td><td>If/then chain reasoning</td><td>Follows multi-step implications</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.5</strong></td><td>Cognitive bias identification</td><td>Recognizes biases in thinking</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability N: Probabilistic &amp; Statistical Reasoning</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C4.6</strong></td><td>Set theory &amp; Venn reasoning</td><td>Classifies correctly, handles overlaps</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.7</strong></td><td>Basic probability</td><td>Calculates simple probabilities correctly</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.8</strong></td><td>Conditional probability</td><td>Handles Monty Hall, avoids gambler&rsquo;s fallacy</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.9</strong></td><td>Correlation vs. causation</td><td>Distinguishes correlation from causation</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+        <tr><td><strong>C4.10</strong></td><td>Data interpretation</td><td>Reads graphs, identifies trends, predicts</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability O: Abstract &amp; Strategic Reasoning</h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C4.11</strong></td><td>Variables &amp; functions</td><td>Understands input&rarr;output rules, generalizes</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.12</strong></td><td>Game theory basics</td><td>Dominant strategies, Nash equilibrium intuition</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-llm">LLM</span></td></tr>
+        <tr><td><strong>C4.13</strong></td><td>Cost-benefit analysis</td><td>Weighs trade-offs quantitatively</td><td><span class="source-tag src-mcq">MCQ</span> + <span class="source-tag src-artifact">ARTIFACT</span></td></tr>
+      </tbody>
+    </table>
+
+    <h4>Capability P: Math Foundations <span style="font-size:11px; font-weight:400; color:#999;">(expandable &mdash; Math module plugs in here)</span></h4>
+    <table>
+      <thead><tr><th>ID</th><th>Competency</th><th>Description</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td><strong>C4.14</strong></td><td>Number sense &amp; estimation</td><td>Quick mental math, reasonable estimates</td><td><span class="source-tag src-mcq">MCQ</span> + response time</td></tr>
+        <tr><td><strong>C4.15</strong></td><td>Fraction operations</td><td>Equivalence, addition, subtraction, multiplication</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.16</strong></td><td>Decimal &amp; percentage reasoning</td><td>Converts between forms, applies to problems</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.17</strong></td><td>Ratio &amp; proportional reasoning</td><td>Direct/inverse proportion in real contexts</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.18</strong></td><td>Algebraic thinking</td><td>Variables, expressions, simple equations</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+        <tr><td><strong>C4.19</strong></td><td>Geometric reasoning</td><td>Shape properties, spatial reasoning, area/perimeter</td><td><span class="source-tag src-mcq">MCQ</span> Clean BKT</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px; color:#777; margin-top:12px;"><em>19 competencies. ~15 MCQ-assessable (the BKT sweet spot). ~4 need LLM assessment.</em></p>
+  </div>
+
+  <hr>
+
+  <!-- ===================== 3. SKILL GRAPH ===================== -->
+  <h2>3. Skill Graph</h2>
+
+  <p class="section-intro">The skill graph defines how competencies relate to each other. Two types of edges: <strong>prerequisite</strong> (must master before progressing) and <strong>co-development</strong> (evidence for one provides partial evidence for the other).</p>
+
+  <h3>3.1 Prerequisite Edges (Within-Pillar)</h3>
+
+  <div class="grid-2">
+    <div class="card" style="border-top: 4px solid #c0392b;">
+      <h4 class="p1">Communication</h4>
+      <ul class="clean">
+        <li>C1.1 (listen) &rarr; C1.3 (claim + reason)</li>
+        <li>C1.3 &rarr; C1.5 (argument chains)</li>
+        <li>C1.4 (fact/opinion) &rarr; C1.6 (fallacies)</li>
+        <li>C1.5 &rarr; C1.10 (argue opposite side)</li>
+        <li>C1.5 + C1.6 &rarr; C1.11 (justified change)</li>
+        <li>C1.7 (adapt) &rarr; C1.8 (ethical persuasion)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top: 4px solid #2980b9;">
+      <h4 class="p2">Creativity</h4>
+      <ul class="clean">
+        <li>C2.1 (fluency) &rarr; C2.2 (flexible categorization)</li>
+        <li>C2.2 &rarr; C2.3 (hypothetical reasoning)</li>
+        <li>C2.7 (questions) &rarr; C2.8 (sustained exploration)</li>
+        <li>C2.5 (evaluation) &rarr; C2.11 (design under constraints)</li>
+        <li>C2.4 + C2.10 &rarr; C2.11</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top: 4px solid #27ae60;">
+      <h4 class="p3">AI / Systems / Builder</h4>
+      <ul class="clean">
+        <li>C3.1 (AI as tool) &rarr; C3.2 (instruction clarity)</li>
+        <li>C3.2 &rarr; C3.3 (CLEAR framework)</li>
+        <li>C3.3 &rarr; C3.5 (prompt iteration)</li>
+        <li>C3.5 &rarr; C3.6 (agent workflows)</li>
+        <li>C3.4 (hallucination) &rarr; C3.7 (AI collaborator)</li>
+        <li>C3.8 (I&rarr;P&rarr;O) &rarr; C3.9 (feedback loops)</li>
+        <li>C3.9 + C3.10 &rarr; C3.12 (trade-off reasoning)</li>
+        <li>C3.11 + C3.12 &rarr; C3.13 (product delivery)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top: 4px solid #8e44ad;">
+      <h4 class="p4">Math / Logic</h4>
+      <ul class="clean">
+        <li>C4.1 (patterns) &rarr; C4.4 (if/then chains)</li>
+        <li>C4.2 (logic gates) &rarr; C4.3 (decision trees)</li>
+        <li>C4.6 (sets) &rarr; C4.7 (basic probability)</li>
+        <li>C4.7 &rarr; C4.8 (conditional probability)</li>
+        <li>C4.7 + C4.11 &rarr; C4.9 (correlation vs causation)</li>
+        <li>C4.11 &rarr; C4.12 (game theory)</li>
+        <li>C4.14 &rarr; C4.15 &rarr; C4.16 &rarr; C4.17 &rarr; C4.18</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>3.2 Co-Development Edges (Cross-Pillar)</h3>
+  <p>When a student demonstrates one competency, it&rsquo;s partial evidence for the linked competency. Transfer weights start as hand-set priors; after 6+ months of data, they become learnable.</p>
+
+  <table>
+    <thead><tr><th>Source Competency</th><th>Target Competency</th><th>Weight</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pillar-tag pt1">C1.5</span> Argument chains</td><td><span class="pillar-tag pt4">C4.4</span> If/then reasoning</td><td><strong>0.30</strong></td><td>Same logical structure</td></tr>
+      <tr><td><span class="pillar-tag pt1">C1.4</span> Fact/opinion</td><td><span class="pillar-tag pt3">C3.10</span> Fairness/bias</td><td><strong>0.25</strong></td><td>Both evaluate truth claims</td></tr>
+      <tr><td><span class="pillar-tag pt1">C1.10</span> Argue opposite</td><td><span class="pillar-tag pt3">C3.10</span> Fairness/bias</td><td><strong>0.20</strong></td><td>Perspective-taking is the shared skill</td></tr>
+      <tr><td><span class="pillar-tag pt2">C2.3</span> Hypothetical reasoning</td><td><span class="pillar-tag pt4">C4.8</span> Conditional probability</td><td><strong>0.25</strong></td><td>&ldquo;What if&rdquo; thinking underlies both</td></tr>
+      <tr><td><span class="pillar-tag pt2">C2.10</span> Problem framing</td><td><span class="pillar-tag pt3">C3.11</span> User needs</td><td><strong>0.40</strong></td><td>Nearly the same competency, different lens</td></tr>
+      <tr><td><span class="pillar-tag pt2">C2.12</span> Human vs AI</td><td><span class="pillar-tag pt3">C3.7</span> AI collaborator</td><td><strong>0.30</strong></td><td>Understanding AI limits = using it better</td></tr>
+      <tr><td><span class="pillar-tag pt4">C4.13</span> Cost-benefit</td><td><span class="pillar-tag pt3">C3.12</span> Trade-off reasoning</td><td><strong>0.35</strong></td><td>Quantitative vs. qualitative trade-offs</td></tr>
+      <tr><td><span class="pillar-tag pt1">C1.6</span> Fallacies</td><td><span class="pillar-tag pt4">C4.5</span> Cognitive bias</td><td><strong>0.30</strong></td><td>Fallacies and biases overlap heavily</td></tr>
+      <tr><td><span class="pillar-tag pt2">C2.9</span> Understanding-seeking</td><td><span class="pillar-tag pt4">C4.9</span> Correlation vs causation</td><td><strong>0.20</strong></td><td>Both require asking &ldquo;why&rdquo; not &ldquo;what&rdquo;</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>All edges are bidirectional.</strong> Co-development propagation is limited to <strong>1 hop</strong> to prevent cascade loops. Weights are stored as data (not code) and become learnable after 6+ months.
+  </div>
+
+  <h3>3.3 Stage Thresholds</h3>
+  <table>
+    <thead><tr><th>Stage</th><th>Label</th><th>P(L) Range</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1</strong></td><td>Novice</td><td>0.00 &ndash; 0.20</td><td>No evidence of competency</td></tr>
+      <tr><td><strong>2</strong></td><td>Emerging</td><td>0.20 &ndash; 0.40</td><td>Beginning to show understanding</td></tr>
+      <tr><td><strong>3</strong></td><td>Developing</td><td>0.40 &ndash; 0.65</td><td>Can do it with support</td></tr>
+      <tr><td><strong>4</strong></td><td>Proficient</td><td>0.65 &ndash; 0.85</td><td>Can do it independently</td></tr>
+      <tr><td><strong>5</strong></td><td>Mastered</td><td>0.85 &ndash; 1.00</td><td>Fluent, can teach others</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ===================== 4. MASTERY ENGINE ===================== -->
+  <h2>4. Mastery Engine</h2>
+
+  <p class="section-intro">The mastery engine is the brain of the learning graph. It processes evidence events, maintains per-student per-competency mastery states, and exposes a stable interface that never changes &mdash; even when the underlying model is swapped.</p>
+
+  <h3>4.1 Interface Contract</h3>
+  <p>Any model that implements this interface is a valid mastery model:</p>
+
+  <pre>
+<span class="ty">MasteryEngine</span> {
+  <span class="cm">// Student lifecycle</span>
+  <span class="fn">initStudent</span>(studentId, diagnosticProfile) &rarr; <span class="ty">StudentState</span>
+
+  <span class="cm">// Core: process evidence, return updated state</span>
+  <span class="fn">processEvidence</span>(studentId, evidence: <span class="ty">EvidenceEvent</span>) &rarr; <span class="ty">StudentState</span>
+
+  <span class="cm">// Read state</span>
+  <span class="fn">getStudentState</span>(studentId) &rarr; <span class="ty">StudentState</span>
+  <span class="fn">getCompetencyState</span>(studentId, competencyId) &rarr; <span class="ty">CompetencyState</span>
+  <span class="fn">getCapabilityState</span>(studentId, capabilityId) &rarr; <span class="ty">CapabilityState</span>
+
+  <span class="cm">// Predictions</span>
+  <span class="fn">predictPerformance</span>(studentId, competencyId) &rarr; { probability, confidence }
+
+  <span class="cm">// Temporal</span>
+  <span class="fn">applyDecay</span>(studentId) &rarr; <span class="ty">StudentState</span>
+
+  <span class="cm">// Graph</span>
+  <span class="fn">getPrerequisites</span>(competencyId) &rarr; <span class="ty">CompetencyId</span>[]
+  <span class="fn">getReadyCompetencies</span>(studentId) &rarr; <span class="ty">CompetencyId</span>[]
+}
+</pre>
+
+  <h3>4.2 BKT Node State</h3>
+
+  <pre>
+<span class="ty">BKTNodeState</span> {
+  pLearned:          <span class="ty">number</span>    <span class="cm">// P(L) &mdash; current mastery [0, 1]</span>
+  pGuess:            <span class="ty">number</span>    <span class="cm">// P(G) &mdash; personal guess rate</span>
+  pSlip:             <span class="ty">number</span>    <span class="cm">// P(S) &mdash; personal slip rate</span>
+  pTransit:          <span class="ty">number</span>    <span class="cm">// P(T) &mdash; personal learning rate</span>
+
+  totalEvidence:     <span class="ty">number</span>    <span class="cm">// count of all evidence events</span>
+  positiveEvidence:  <span class="ty">number</span>    <span class="cm">// count of positive outcomes</span>
+  consecutiveFails:  <span class="ty">number</span>
+  isStuck:           <span class="ty">boolean</span>
+
+  lastEvidenceAt:    <span class="ty">Date</span>
+  stability:         <span class="ty">number</span>    <span class="cm">// forgetting half-life (days)</span>
+
+  <span class="cm">// Derived</span>
+  stage:             <span class="num">1</span> | <span class="num">2</span> | <span class="num">3</span> | <span class="num">4</span> | <span class="num">5</span>
+  trend:             <span class="str">"improving"</span> | <span class="str">"stable"</span> | <span class="str">"declining"</span>
+  confidence:        <span class="ty">number</span>    <span class="cm">// how reliable is this P(L) estimate</span>
+}
+</pre>
+
+  <h3>4.3 The BKT Update Algorithm (10 Steps)</h3>
+
+  <div class="step">
+    <span class="step-num">1</span>
+    <h4>DECAY &mdash; Apply forgetting since last evidence</h4>
+    <pre>daysSince = (now - lastEvidenceAt) / days
+pL = pL0 + (pL - pL0) &times; e^(-daysSince / stability)</pre>
+    <p style="font-size:13px; color:#666;">Knowledge decays exponentially toward the prior. High stability = slower decay.</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">2</span>
+    <h4>OBSERVE &mdash; Bayesian posterior update</h4>
+    <pre><span class="cm">// Positive evidence (outcome &ge; 0.5):</span>
+pCorrectGivenL = (1 - pSlip)
+pCorrectGivenNotL = pGuess
+pL_posterior = (pL &times; pCorrectGivenL) /
+               (pL &times; pCorrectGivenL + (1-pL) &times; pCorrectGivenNotL)
+
+<span class="cm">// Negative evidence (outcome &lt; 0.5):</span>
+pWrongGivenL = pSlip
+pWrongGivenNotL = (1 - pGuess)
+pL_posterior = (pL &times; pWrongGivenL) /
+               (pL &times; pWrongGivenL + (1-pL) &times; pWrongGivenNotL)</pre>
+  </div>
+
+  <div class="step">
+    <span class="step-num">3</span>
+    <h4>WEIGHT &mdash; Source reliability + response time</h4>
+    <pre>pL_weighted = pL + (pL_posterior - pL) &times; event.weight &times; speedModifier</pre>
+    <table style="font-size:13px; margin-top:8px;">
+      <thead><tr><th>Speed &times; Outcome</th><th>Modifier</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Fast + Correct</td><td>1.3</td><td>Confident mastery</td></tr>
+        <tr><td>Slow + Correct</td><td>0.6</td><td>Effortful, maybe guessing</td></tr>
+        <tr><td>Fast + Wrong</td><td>0.7</td><td>Careless slip</td></tr>
+        <tr><td>Slow + Wrong</td><td>1.2</td><td>Genuine gap</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="step">
+    <span class="step-num">4</span>
+    <h4>LEARN &mdash; Learning transition P(T)</h4>
+    <pre>pT_adjusted = pTransit
+<span class="kw">if</span> aiInteraction == <span class="str">"hint"</span>:         pT &times; 1.5
+<span class="kw">if</span> aiInteraction == <span class="str">"conversation"</span>: pT &times; 2.0
+
+pL_new = pL_weighted + (1 - pL_weighted) &times; pT_adjusted</pre>
+    <p style="font-size:13px; color:#666;">AI-assisted learning accelerates the transition.</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">5</span>
+    <h4>CONFIDENCE MODIFIER</h4>
+    <pre><span class="kw">if</span> confident + wrong:      amplify negative &times; 1.3
+<span class="kw">if</span> unconfident + right:    dampen positive &times; 0.8
+Update personal confidenceBias over time</pre>
+  </div>
+
+  <div class="step">
+    <span class="step-num">6</span>
+    <h4>STUCK DETECTION</h4>
+    <pre><span class="kw">if</span> outcome &lt; 0.5: consecutiveFails++
+<span class="kw">else</span>: consecutiveFails = 0
+isStuck = consecutiveFails &ge; 4</pre>
+    <p style="font-size:13px; color:#666;">Triggers teacher dashboard alert and possible SPARK intervention.</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">7</span>
+    <h4>STABILITY UPDATE</h4>
+    <pre><span class="kw">if</span> positive evidence AND pL &gt; 0.7:
+  stability = min(60, stability &times; 1.4)</pre>
+    <p style="font-size:13px; color:#666;">Successfully demonstrated mastery increases forgetting half-life.</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">8</span>
+    <h4>CO-DEVELOPMENT PROPAGATION</h4>
+    <pre><span class="kw">for</span> each co-development edge from this competency:
+  Generate derived EvidenceEvent for linked competency
+  weight = original_weight &times; transfer_weight
+  Process through same pipeline (max 1 hop)</pre>
+  </div>
+
+  <div class="step">
+    <span class="step-num">9</span>
+    <h4>DERIVE STAGE</h4>
+    <pre>stage = f(pL)   <span class="cm">// Stage 1-5 threshold function</span>
+trend = compare pL to pL from 5 evidence events ago</pre>
+  </div>
+
+  <div class="step">
+    <span class="step-num">10</span>
+    <h4>DERIVE CONFIDENCE</h4>
+    <pre>confidence = f(totalEvidence, recency, variance)
+<span class="cm">// More evidence + recent + low variance = high confidence</span></pre>
+  </div>
+
+  <h3>4.4 LLM Assessment &rarr; Evidence Event Conversion</h3>
+
+  <pre>
+<span class="cm">// LLM receives transcript + rubric prompt, returns:</span>
+{
+  assessments: [
+    {
+      competencyId: <span class="str">"C1.5"</span>,
+      rating: <span class="num">0.7</span>,
+      evidence: <span class="str">"Student said: 'I think the ad is misleading because
+                it uses emotional language to hide the fact that the
+                product doesn't actually work'"</span>,
+      confidence: <span class="str">"high"</span>
+    }
+  ]
+}
+
+<span class="cm">// Each assessment becomes a standard EvidenceEvent:</span>
+{
+  studentId: <span class="str">"..."</span>,
+  competencyId: <span class="str">"C1.5"</span>,
+  source: <span class="str">"llm_transcript"</span>,
+  outcome: <span class="num">0.7</span>,
+  weight: <span class="num">0.7</span>,    <span class="cm">// transcript source weight</span>
+  meta: { evidenceText: <span class="str">"Student said: ..."</span> }
+}
+</pre>
+
+  <div class="callout">
+    <strong>Model swappability:</strong> To swap BKT for DKT &mdash; implement the same interface, accept the same EvidenceEvent format, return the same StudentState format. Run both in parallel, compare predictions. When the new model wins, the swap is a config change, not a code change.
+  </div>
+
+  <hr>
+
+  <!-- ===================== 5. EVIDENCE PIPELINE ===================== -->
+  <h2>5. Evidence Pipeline</h2>
+
+  <p class="section-intro">Every signal source produces evidence events in a universal format. This is what flows through the processing queue and feeds the mastery engine.</p>
+
+  <h3>5.1 EvidenceEvent Schema</h3>
+
+  <pre>
+<span class="kw">interface</span> <span class="ty">EvidenceEvent</span> {
+  id:            <span class="ty">string</span>         <span class="cm">// unique event ID</span>
+  studentId:     <span class="ty">string</span>
+  competencyId:  <span class="ty">string</span>         <span class="cm">// target competency (C1.1 through C4.19)</span>
+  timestamp:     <span class="ty">Date</span>
+
+  <span class="cm">// Source</span>
+  source:        <span class="str">"mcq"</span> | <span class="str">"llm_transcript"</span> | <span class="str">"llm_spark"</span> |
+                 <span class="str">"facilitator"</span> | <span class="str">"artifact"</span> | <span class="str">"diagnostic"</span>
+  moduleId:      <span class="ty">string</span>         <span class="cm">// "level_1" | "math_v1" | "spark"</span>
+  sessionId:     <span class="ty">string</span> | <span class="kw">null</span>
+
+  <span class="cm">// The observation</span>
+  outcome:       <span class="ty">number</span>         <span class="cm">// 0-1 (binary for MCQ, continuous for LLM)</span>
+  weight:        <span class="ty">number</span>         <span class="cm">// source reliability (0.5-1.0)</span>
+
+  <span class="cm">// Metadata</span>
+  meta: {
+    responseTimeMs?:  <span class="ty">number</span>
+    confidence?:      <span class="str">"got_it"</span> | <span class="str">"kinda"</span> | <span class="str">"lost"</span>
+    attempts?:        <span class="ty">number</span>
+    aiInteraction?:   <span class="str">"none"</span> | <span class="str">"hint"</span> | <span class="str">"conversation"</span>
+    evidenceText?:    <span class="ty">string</span>    <span class="cm">// actual quote (for audit)</span>
+  }
+}
+</pre>
+
+  <h3>5.2 Seven Signal Sources</h3>
+
+  <table>
+    <thead><tr><th>#</th><th>Source</th><th>Raw Format</th><th>What It Produces</th><th>Pillars</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><span class="source-tag src-mcq">MCQ</span> <strong>MCQ Response</strong></td>
+        <td><code>{ questionId, correct, responseTimeMs }</code></td>
+        <td>Binary outcome + response time &rarr; direct BKT update</td>
+        <td><span class="pillar-tag pt4">Math</span> <span class="pillar-tag pt3">AI/Sys</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><span class="source-tag src-diagnostic">CONFIDENCE</span> <strong>Confidence Self-Report</strong></td>
+        <td><code>{ questionId, level: got_it|kinda|lost }</code></td>
+        <td>Modifier on BKT update weight (0.6x to 1.35x)</td>
+        <td>All (modifier)</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><span class="source-tag src-spark">DIAGNOSTIC</span> <strong>SPARK Diagnostic</strong></td>
+        <td>Conversation + AI analysis per capability</td>
+        <td>Seeds P(L&#x2080;), P(G), P(S) per student per competency</td>
+        <td><span class="pillar-tag pt1">Comm</span> <span class="pillar-tag pt2">Create</span> <span class="pillar-tag pt3">AI</span> <span class="pillar-tag pt4">Math</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><span class="source-tag src-llm">TRANSCRIPT</span> <strong>Session Transcript</strong></td>
+        <td>Speaker-diarised text of full live session</td>
+        <td>Batch LLM assessment &rarr; multiple evidence events</td>
+        <td><span class="pillar-tag pt1">Comm</span> <span class="pillar-tag pt2">Create</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><span class="source-tag src-spark">SPARK</span> <strong>SPARK Chat Log</strong></td>
+        <td>Full student-AI conversation (turns + timestamps)</td>
+        <td>LLM assessment: curiosity, depth, prompt quality</td>
+        <td><span class="pillar-tag pt2">Create</span> <span class="pillar-tag pt3">AI/Sys</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><span class="source-tag src-facilitator">FACILITATOR</span> <strong>Facilitator Notes</strong></td>
+        <td><code>{ engagement: 1|2|3, notableMoment? }</code></td>
+        <td>Engagement &rarr; P(T) modifier. Intervention &rarr; alert.</td>
+        <td>All (modifier)</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><span class="source-tag src-artifact">ARTIFACT</span> <strong>Project Artifacts</strong></td>
+        <td>Product cards, pitch decks, system maps</td>
+        <td>Joint AI + facilitator rubric evaluation</td>
+        <td><span class="pillar-tag pt3">AI</span> <span class="pillar-tag pt2">Create</span> <span class="pillar-tag pt1">Comm</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5.3 Source Reliability Weights</h3>
+
+  <table>
+    <thead><tr><th>Source</th><th>Weight</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td>MCQ</td><td><strong>1.0</strong></td><td>Binary correct/incorrect. Most precise signal.</td></tr>
+      <tr><td>Confidence</td><td><strong>Modifier</strong></td><td>Not separate &mdash; modifies MCQ update (0.6x to 1.35x).</td></tr>
+      <tr><td>Diagnostic</td><td><strong>Init only</strong></td><td>Seeds parameters. No ongoing updates.</td></tr>
+      <tr><td>Transcript</td><td><strong>0.7</strong></td><td>LLM-derived. Rich but noisy. Batch post-session.</td></tr>
+      <tr><td>SPARK</td><td><strong>0.6</strong></td><td>Self-directed. High variance. Best for curiosity.</td></tr>
+      <tr><td>Facilitator</td><td><strong>0.5</strong></td><td>Subjective. Valuable for what algorithms can&rsquo;t see.</td></tr>
+      <tr><td>Artifact</td><td><strong>0.9</strong></td><td>Capstone. Infrequent but high-weight. Joint scoring.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>5.4 Processing Latency Tiers</h3>
+
+  <table>
+    <thead><tr><th>Tier</th><th>Latency</th><th>Events</th><th>Processing</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Hot Path</strong></td><td>&lt; 200ms</td><td>MCQ + confidence</td><td>Direct BKT update &rarr; immediate P(L) change &rarr; next question. Must not block the student.</td></tr>
+      <tr><td><strong>Warm Path</strong></td><td>1&ndash;30s</td><td>SPARK turn, facilitator note</td><td>Near-real-time. Topic classification, engagement modifier.</td></tr>
+      <tr><td><strong>Cold Path</strong></td><td>1&ndash;10 min</td><td>Transcript, artifact</td><td>Batch LLM assessment. Produces multiple EvidenceEvents per session.</td></tr>
+      <tr><td><strong>Scheduled</strong></td><td>Daily / Weekly</td><td>Decay, reports</td><td>Cron: temporal decay on all P(L). Weekly parent reports.</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ===================== 6. SPARK DIAGNOSTIC ===================== -->
+  <h2>6. SPARK Diagnostic</h2>
+
+  <p class="section-intro">A 10-minute conversational assessment that seeds the learning graph before a student&rsquo;s first class. Without it, every student starts at P(L) = 0.10 for all 56 competencies &mdash; the first 3&ndash;4 sessions would be wasted on calibration.</p>
+
+  <h3>6.1 Flow</h3>
+
+  <div class="phase">
+    <div class="phase-item active"><span class="phase-num">1</span>Student opens SPARK for the first time</div>
+    <div class="phase-item"><span class="phase-num">2</span>SPARK introduces itself as friendly AI companion</div>
+    <div class="phase-item active"><span class="phase-num">3</span>~15-20 adaptive questions over ~10 minutes</div>
+    <div class="phase-item"><span class="phase-num">4</span>DiagnosticProfile generated, graph seeded</div>
+    <div class="phase-item active"><span class="phase-num">5</span>Seamless transition to companion mode</div>
+  </div>
+
+  <h3>6.2 Adaptive Question Selection</h3>
+
+  <p><strong>Information-theoretic approach:</strong> At each step, SPARK picks the question that maximally reduces uncertainty across unassessed capabilities.</p>
+
+  <pre>
+<span class="kw">for</span> each candidate question Q:
+  expectedInfoGain(Q) = &Sigma; over capabilities C that Q assesses:
+    H(C_current) - E[H(C_after_answer)]
+
+  <span class="kw">where</span> H(C) = entropy of current stage estimate
+
+Pick Q with highest expectedInfoGain
+</pre>
+
+  <p>Early questions target multiple capabilities (high info gain per question). Later questions target capabilities with the most remaining uncertainty. If a student is clearly strong in one area, SPARK doesn&rsquo;t waste time confirming.</p>
+
+  <h3>6.3 Output: DiagnosticProfile</h3>
+
+  <pre>
+<span class="ty">DiagnosticProfile</span> {
+  capabilityEstimates: {
+    <span class="str">"A_listening"</span>:         { stage: <span class="num">2</span>, confidence: <span class="str">"medium"</span> },
+    <span class="str">"B_arguments"</span>:         { stage: <span class="num">2</span>, confidence: <span class="str">"high"</span> },
+    <span class="str">"E_idea_generation"</span>:   { stage: <span class="num">3</span>, confidence: <span class="str">"high"</span> },
+    <span class="str">"M_logical_reasoning"</span>: { stage: <span class="num">2</span>, confidence: <span class="str">"medium"</span> },
+    <span class="str">"P_math_foundations"</span>:  { stage: <span class="num">2</span>, confidence: <span class="str">"high"</span> },
+    ...  <span class="cm">// all 16 capabilities</span>
+  },
+
+  competencyOverrides: [
+    { competencyId: <span class="str">"C4.8"</span>, estimatedPL: <span class="num">0.15</span>,
+      reason: <span class="str">"gambler's fallacy on coin flip"</span> },
+    { competencyId: <span class="str">"C2.3"</span>, estimatedPL: <span class="num">0.65</span>,
+      reason: <span class="str">"strong hypothetical reasoning"</span> },
+  ],
+
+  confidenceBias: <span class="num">+0.3</span>,      <span class="cm">// tends overconfident</span>
+  responseLatency: <span class="str">"medium"</span>,
+  curiosityTopics: [<span class="str">"space exploration"</span>, <span class="str">"AI emotions"</span>, <span class="str">"game design"</span>],
+}
+</pre>
+
+  <h3>6.4 Graph Seeding</h3>
+
+  <table>
+    <thead><tr><th>Capability Stage</th><th>P(L&#x2080;) Prior</th></tr></thead>
+    <tbody>
+      <tr><td>Stage 1</td><td>0.10</td></tr>
+      <tr><td>Stage 2</td><td>0.30</td></tr>
+      <tr><td>Stage 3</td><td>0.50</td></tr>
+      <tr><td>Stage 4</td><td>0.70</td></tr>
+      <tr><td>Stage 5</td><td>0.85</td></tr>
+    </tbody>
+  </table>
+
+  <p>For each competency under a capability: (1) Start with capability stage &rarr; P(L&#x2080;). (2) Apply competency override if one exists. (3) Ensure prerequisite consistency &mdash; bump prerequisites up if a downstream competency is estimated higher. (4) Set personal BKT parameters from diagnostic. (5) Set confidence = &ldquo;low&rdquo; for everything (10 minutes &ne; reliable estimates).</p>
+
+  <div class="callout">
+    <strong>Within 3&ndash;4 sessions</strong>, real evidence starts overriding the diagnostic priors. The diagnostic just ensures the student isn&rsquo;t bored (everything too easy) or lost (everything too hard) during those first sessions.
+  </div>
+
+  <hr>
+
+  <!-- ===================== 7. CURRICULUM PREDICTOR ===================== -->
+  <h2>7. Curriculum Predictor</h2>
+
+  <p class="section-intro">Given a student&rsquo;s state across 56 competencies + a registry of available activities, what should they do next? The predictor evolves from rule-based (MVP) to contextual bandit (month 3&ndash;6) to RL path planner (month 12+).</p>
+
+  <h3>7.1 Activity Registry</h3>
+
+  <pre>
+<span class="ty">Activity</span> {
+  id:             <span class="ty">string</span>
+  moduleId:       <span class="ty">string</span>          <span class="cm">// "level_1" | "math_v1" | ...</span>
+  name:           <span class="ty">string</span>
+  type:           <span class="str">"warmup"</span> | <span class="str">"key_topic"</span> | <span class="str">"diy"</span> | <span class="str">"ai_lab"</span> | <span class="str">"artifact"</span>
+
+  primaryCompetencies:   { competencyId, expectedGain }[]
+  secondaryCompetencies: { competencyId, expectedGain }[]
+  prerequisites:         { competencyId, minStage }[]
+
+  duration:       <span class="ty">number</span>          <span class="cm">// minutes</span>
+  gradeBands:     (<span class="str">"4-5"</span> | <span class="str">"6-7"</span> | <span class="str">"8-9"</span>)[]
+  signalSources:  (<span class="str">"mcq"</span> | <span class="str">"short_answer"</span> | <span class="str">"transcript"</span> | <span class="str">"spark"</span> | <span class="str">"artifact"</span>)[]
+}
+</pre>
+
+  <h3>7.2 Phase 1 &mdash; Rule-Based (MVP, Day 1)</h3>
+
+  <div class="card" style="border-left: 4px solid #27ae60;">
+    <h4 style="color:#27ae60;">Scoring Function</h4>
+    <pre>Score(activity, student) =
+  &Sigma; (competency_gap &times; expected_gain &times; prerequisite_met)
+
+Where:
+  competency_gap  = 1.0 - P(L)  <span class="cm">// bigger gap = more room to grow</span>
+  expected_gain   = activity's expected improvement for this competency
+  prerequisite_met = 1 if all prereqs &ge; Stage 2, else 0</pre>
+  </div>
+
+  <p><strong>Expert curriculum as default.</strong> The 14-session Level 1 sequence is the default path. The predictor makes <em>deviations</em>: if SPARK diagnostic shows Stage 3+ on a competency that Session 2 targets &rarr; skip or enrich. If Stage 1 on a prerequisite &rarr; scaffold first.</p>
+
+  <p><strong>Within-activity adaptation:</strong> For MCQ activities, select questions in the student&rsquo;s zone of proximal development (P(L) 0.3&ndash;0.7). Too easy (&gt;0.85): skip. Too hard (prereqs not met): scaffold.</p>
+
+  <h3>7.3 Phase 2 &mdash; Contextual Bandit (Month 3&ndash;6)</h3>
+
+  <div class="card" style="border-left: 4px solid #e67e22;">
+    <h4 style="color:#e67e22;">Bandit Formulation</h4>
+    <pre>Context = student state vector (56-dim P(L) + metadata)
+Arms    = available activities
+Reward  = learning gain (P(L) delta after activity)</pre>
+    <p style="font-size:13.5px;">Training data: every MVP session produces (student_state_before, activity, student_state_after). Thompson sampling or epsilon-greedy for exploration.</p>
+  </div>
+
+  <h3>7.4 Phase 3 &mdash; RL Path Planner (Month 12+)</h3>
+
+  <div class="card" style="border-left: 4px solid #8e44ad;">
+    <h4 style="color:#8e44ad;">RL Formulation</h4>
+    <pre>State   = student competency vector + session history
+Action  = next activity
+Reward  = mastery gain + engagement + Demo Day readiness</pre>
+    <p style="font-size:13.5px;">Plans multi-session sequences. Optimizes long-term outcomes with a compound objective.</p>
+  </div>
+
+  <h3>7.5 Data Instrumentation (From Day 1)</h3>
+
+  <p>To enable Phase 2 and 3, the MVP must log:</p>
+  <table>
+    <thead><tr><th>#</th><th>What to Log</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Student state snapshot <strong>before</strong> every activity</td><td>Context for bandit training</td></tr>
+      <tr><td>2</td><td>Activity assignment + rule-based score</td><td>Baseline policy for comparison</td></tr>
+      <tr><td>3</td><td>Student state snapshot <strong>after</strong> every activity</td><td>Computing learning deltas</td></tr>
+      <tr><td>4</td><td>Facilitator engagement rating</td><td>Engagement signal for reward</td></tr>
+      <tr><td>5</td><td>Time-on-task</td><td>Efficiency metric</td></tr>
+      <tr><td>6</td><td>Activity completion</td><td>Drop-off signal</td></tr>
+      <tr><td>7</td><td>Student choice data (when offered options)</td><td>Preference learning</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ===================== 8. CONSUMER SURFACES ===================== -->
+  <h2>8. Consumer Surfaces</h2>
+
+  <div class="grid-2">
+    <div class="card" style="border-top: 4px solid #3498db;">
+      <h4>Student App</h4>
+      <p><strong>Live Class View:</strong> Video (100ms) left, Live Activity (questions) right, confidence bar below, SPARK chat at bottom.</p>
+      <p><strong>Adaptive Practice:</strong> Post-session flow driven by BKT scheduler. Questions target zone of proximal development.</p>
+      <p><strong>Skill Map:</strong> 4-pillar spider/web. Tap to see capabilities. Node states: locked &rarr; ready &rarr; learning &rarr; mastered.</p>
+      <p><strong>SPARK Companion:</strong> Free-range AI chat. Curiosity tracking. Guided mode for in-activity hints.</p>
+    </div>
+    <div class="card" style="border-top: 4px solid #8e44ad;">
+      <h4>Teacher Dashboard</h4>
+      <p><strong>Live Class Grid:</strong> Real-time P(L) per student per current competency. Color-coded: red &rarr; yellow &rarr; green.</p>
+      <p><strong>Stuck Alerts:</strong> Real-time when any student hits 4+ consecutive failures. Suggested interventions.</p>
+      <p><strong>Suggested Questions:</strong> &ldquo;Push this &mdash; 60% of students are in the sweet spot for C4.7.&rdquo;</p>
+      <p><strong>Post-Session Form:</strong> 3-tap per student: engagement. Optional notable moment. Intervention flag. &lt;2 min.</p>
+      <p><strong>Class Trends:</strong> Week-over-week competency progress. Class-wide gap identification.</p>
+    </div>
+    <div class="card" style="border-top: 4px solid #27ae60;">
+      <h4>Parent Report (Weekly, AI-Generated)</h4>
+      <p><strong>Narrative Summary:</strong> 3&ndash;4 sentence AI-generated highlight reel in accessible language.</p>
+      <p><strong>4-Pillar Web:</strong> Spider chart, Stage 1&ndash;5 per pillar, with last week overlaid.</p>
+      <p><strong>Curiosity Map:</strong> Topics explored in SPARK this week.</p>
+      <p><strong>Home Activities:</strong> &ldquo;Your child showed interest in X &mdash; try Y at home.&rdquo;</p>
+    </div>
+    <div class="card" style="border-top: 4px solid #e67e22;">
+      <h4>Admin Analytics</h4>
+      <p><strong>Cohort Metrics:</strong> Aggregate competency distributions, progress rates, stuck rates.</p>
+      <p><strong>Signal Health:</strong> Are all 7 sources producing data? Latency monitoring. LLM quality checks.</p>
+      <p><strong>Model Accuracy:</strong> BKT prediction accuracy on held-out questions. Calibration curves.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ===================== 9. INFRASTRUCTURE ===================== -->
+  <h2>9. Infrastructure &amp; Data (AWS)</h2>
+
+  <h3>9.1 Architecture</h3>
+
+  <div class="arch-diagram">
+    <div class="layer">
+      <span class="layer-title">Frontend</span>
+      <div class="boxes">
+        <div class="box box-blue">Next.js on<br>AWS Amplify</div>
+        <div class="box box-blue">Student App</div>
+        <div class="box box-purple">Teacher<br>Dashboard</div>
+        <div class="box box-green">Parent<br>Report</div>
+        <div class="box box-orange">Admin<br>Analytics</div>
+      </div>
+    </div>
+
+    <div class="arrow-down">&darr; HTTPS via API Gateway</div>
+
+    <div class="layer" style="border-color: #27ae60;">
+      <span class="layer-title" style="color: #a9dfbf;">Backend &mdash; Python (FastAPI)</span>
+      <div class="boxes">
+        <div class="box box-green">REST API<br>(Lambda/Mangum<br>or Fargate)</div>
+        <div class="box box-green">BKT Engine<br>(NumPy/SciPy)</div>
+        <div class="box box-green">Evidence<br>Processor</div>
+        <div class="box box-green">Curriculum<br>Predictor</div>
+      </div>
+    </div>
+
+    <div class="arrow-down">&darr;</div>
+
+    <div class="layer">
+      <span class="layer-title">Data &amp; Compute Services</span>
+      <div class="boxes">
+        <div class="box box-blue">RDS<br>PostgreSQL</div>
+        <div class="box box-red">ElastiCache<br>Redis</div>
+        <div class="box box-gold">SQS<br>Job Queue</div>
+        <div class="box box-blue">S3<br>Storage</div>
+        <div class="box box-orange">Lambda<br>Cold Path</div>
+        <div class="box box-gold">Bedrock<br>Claude API</div>
+      </div>
+    </div>
+
+    <div class="arrow-down" style="margin-top:8px;">&darr;</div>
+
+    <div class="layer" style="border-color: #555;">
+      <span class="layer-title">Auth &amp; Observability</span>
+      <div class="boxes">
+        <div class="box box-purple">Amplify Auth<br>(Cognito)</div>
+        <div class="box box-purple">CloudWatch<br>Monitoring</div>
+        <div class="box box-purple">CloudWatch<br>Events (Cron)</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>9.2 Technology Stack</h3>
+
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Frontend</td><td>Next.js + AWS Amplify</td><td>Hosting, CI/CD, custom domains</td></tr>
+      <tr><td>Backend</td><td>Python (FastAPI)</td><td>Single language for API, BKT, ML pipeline, future models</td></tr>
+      <tr><td>API</td><td>API Gateway + Lambda (Mangum)</td><td>Serverless API. Alt: ECS/Fargate for persistent.</td></tr>
+      <tr><td>Database</td><td>Amazon RDS (PostgreSQL)</td><td>Entities, skill graph, student states, evidence events</td></tr>
+      <tr><td>Cache</td><td>ElastiCache (Redis)</td><td>Hot-path BKT reads during live class (&lt;200ms)</td></tr>
+      <tr><td>Storage</td><td>Amazon S3</td><td>Transcripts, chat logs, recordings, artifacts</td></tr>
+      <tr><td>Queue</td><td>Amazon SQS</td><td>Async: evidence processing, LLM triggers, reports</td></tr>
+      <tr><td>Compute</td><td>AWS Lambda</td><td>Cold-path: transcript assessment, decay, reports</td></tr>
+      <tr><td>AI/LLM</td><td>Bedrock (Claude) or Anthropic API</td><td>SPARK, LLM assessments, report generation</td></tr>
+      <tr><td>Auth</td><td>Amplify Auth (Cognito)</td><td>Student/teacher/parent auth with roles</td></tr>
+    </tbody>
+  </table>
+
+  <h3>9.3 Scale Estimates</h3>
+
+  <table>
+    <thead><tr><th>Metric</th><th>100 Students</th><th>1,000 Students</th><th>10,000 Students</th></tr></thead>
+    <tbody>
+      <tr><td>MCQ events/day</td><td>~500</td><td>~5,000</td><td>~50,000</td></tr>
+      <tr><td>Transcript assessments/day</td><td>~10</td><td>~100</td><td>~1,000</td></tr>
+      <tr><td>SPARK chat turns/day</td><td>~1,000</td><td>~10,000</td><td>~100,000</td></tr>
+      <tr><td>BKT state reads/day</td><td>~2,000</td><td>~20,000</td><td>~200,000</td></tr>
+      <tr><td>LLM API calls/day</td><td>~50</td><td>~500</td><td>~5,000</td></tr>
+      <tr><td>Storage growth/month</td><td>~1 GB</td><td>~10 GB</td><td>~100 GB</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note">
+    <strong>At 100 students</strong>, a single Lambda handles everything. At 10,000, Redis caching and SQS queuing are needed, but still well within AWS managed service limits.
+  </div>
+
+  <h3>9.4 Privacy &amp; Compliance</h3>
+
+  <table>
+    <thead><tr><th>Concern</th><th>Approach</th></tr></thead>
+    <tbody>
+      <tr><td><strong>COPPA</strong></td><td>Students are minors (ages 9&ndash;15). Parental consent required. No direct marketing.</td></tr>
+      <tr><td><strong>Data Retention</strong></td><td>Evidence events: retained for model training. Transcripts: per policy (e.g., 2 years). Deletable on request.</td></tr>
+      <tr><td><strong>Consent</strong></td><td>Parents opt-in to: SPARK companion, transcript recording, LLM assessment.</td></tr>
+      <tr><td><strong>Data Residency</strong></td><td>AWS region selected per requirements (e.g., ap-south-1 for India).</td></tr>
+      <tr><td><strong>Access Control</strong></td><td>Role-based: students own data, teachers see cohort, parents see children, admins see aggregate.</td></tr>
+      <tr><td><strong>Encryption</strong></td><td>At rest (RDS, S3) and in transit (HTTPS, TLS).</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ===================== 10. IMPLEMENTATION PHASES ===================== -->
+  <h2>10. Implementation Phases</h2>
+
+  <div class="phase" style="margin-bottom: 32px;">
+    <div class="phase-item active"><span class="phase-num">1</span>MVP<br><span style="font-size:11px; opacity:0.7;">Month 1&ndash;3</span></div>
+    <div class="phase-item"><span class="phase-num">2</span>LLM Integration<br><span style="font-size:11px; opacity:0.7;">Month 3&ndash;6</span></div>
+    <div class="phase-item"><span class="phase-num">3</span>ML Pipeline<br><span style="font-size:11px; opacity:0.7;">Month 6&ndash;12</span></div>
+    <div class="phase-item"><span class="phase-num">4</span>Full Personalization<br><span style="font-size:11px; opacity:0.7;">Month 12+</span></div>
+  </div>
+
+  <h3>Phase 1: MVP (Month 1&ndash;3)</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td>Competency Model</td><td>All 56 competencies defined and stored as data</td></tr>
+      <tr><td>Mastery Engine</td><td>BKT with full 10-step algorithm</td></tr>
+      <tr><td>Evidence Pipeline</td><td>MCQ (hot path) + facilitator notes (warm path)</td></tr>
+      <tr><td>SPARK Diagnostic</td><td>Basic diagnostic flow, seeds learning graph</td></tr>
+      <tr><td>Curriculum Predictor</td><td>Rule-based: expert curriculum + diagnostic deviations</td></tr>
+      <tr><td>Student App</td><td>Live class view + basic skill map</td></tr>
+      <tr><td>Teacher Dashboard</td><td>Live class grid + post-session form</td></tr>
+      <tr><td>Infrastructure</td><td>RDS + Redis + S3 + SQS + Lambda + Amplify</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Phase 2: LLM Integration (Month 3&ndash;6)</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td>LLM Transcript Assessment</td><td>Cold-path processing via Bedrock/Claude</td></tr>
+      <tr><td>SPARK Companion</td><td>Free-range AI chat with curiosity tracking</td></tr>
+      <tr><td>Parent Reports</td><td>Weekly AI-generated narrative reports</td></tr>
+      <tr><td>Math Module</td><td>Capability P with dedicated question bank</td></tr>
+      <tr><td>Contextual Bandit</td><td>Begin training on accumulated data</td></tr>
+      <tr><td>Confidence Self-Reports</td><td>Added to MCQ flow, feeding BKT modifier</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Phase 3: ML Pipeline (Month 6&ndash;12)</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td>Full NLP Pipeline</td><td>All 7 signal sources operational</td></tr>
+      <tr><td>Contextual Bandit</td><td>Replace rule-based for activity selection</td></tr>
+      <tr><td>Advanced Analytics</td><td>Model accuracy, cohort trends, signal health</td></tr>
+      <tr><td>Model Comparison</td><td>BKT vs DKT running in parallel</td></tr>
+      <tr><td>Artifact Assessment</td><td>Joint LLM + facilitator rubric evaluation</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Phase 4: Full Personalization (Month 12+)</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Scope</th></tr></thead>
+    <tbody>
+      <tr><td>Model Swap</td><td>If DKT outperforms BKT, swap (config change)</td></tr>
+      <tr><td>RL Path Planner</td><td>Multi-session sequence optimization</td></tr>
+      <tr><td>Personalized Paths</td><td>Each student gets a unique activity sequence</td></tr>
+      <tr><td>Scale Infrastructure</td><td>Optimize for 10,000+ students</td></tr>
+      <tr><td>Co-development Learning</td><td>Transfer weights learned from data</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <div class="callout">
+    <strong>Reference Documents:</strong><br>
+    Signal Design v2: <code>ground_zero_signal_design_v3.html</code><br>
+    System Design v1: <code>ground_zero_system_design.html</code><br>
+    Level 1 Curriculum: <code>Ground Zero Curriculum - Level 1.csv</code><br>
+    BKT Simulation: <code>bkt-simulation.jsx</code><br>
+    ML/KT Research: <code>ML_Knowledge_Tracing_Research.pdf</code>
+  </div>
+
+</div>
+
+</body>
+</html>

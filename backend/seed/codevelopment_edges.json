@@ -1,0 +1,56 @@
+[
+  {
+    "source_id": "C1.5",
+    "target_id": "C4.4",
+    "transfer_weight": 0.30,
+    "rationale": "Same logical structure. Strong argument = strong logic."
+  },
+  {
+    "source_id": "C1.4",
+    "target_id": "C3.10",
+    "transfer_weight": 0.25,
+    "rationale": "Both require evaluating truth claims."
+  },
+  {
+    "source_id": "C1.10",
+    "target_id": "C3.10",
+    "transfer_weight": 0.20,
+    "rationale": "Perspective-taking is the shared skill."
+  },
+  {
+    "source_id": "C2.3",
+    "target_id": "C4.8",
+    "transfer_weight": 0.25,
+    "rationale": "'What if' thinking underlies both."
+  },
+  {
+    "source_id": "C2.10",
+    "target_id": "C3.11",
+    "transfer_weight": 0.40,
+    "rationale": "Nearly the same competency, different lens."
+  },
+  {
+    "source_id": "C2.12",
+    "target_id": "C3.7",
+    "transfer_weight": 0.30,
+    "rationale": "Understanding AI's creative limits = using it better."
+  },
+  {
+    "source_id": "C4.13",
+    "target_id": "C3.12",
+    "transfer_weight": 0.35,
+    "rationale": "Quantitative vs. qualitative trade-off analysis."
+  },
+  {
+    "source_id": "C1.6",
+    "target_id": "C4.5",
+    "transfer_weight": 0.30,
+    "rationale": "Logical fallacies and cognitive biases overlap heavily."
+  },
+  {
+    "source_id": "C2.9",
+    "target_id": "C4.9",
+    "transfer_weight": 0.20,
+    "rationale": "Both require asking 'why' not 'what.'"
+  }
+]
