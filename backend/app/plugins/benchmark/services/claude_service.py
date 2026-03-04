@@ -361,37 +361,71 @@ async def generate_benchmark(
 ) -> dict:
     level = _get_grade_level(grade, age)
 
-    system_prompt = f"""You are an expert child educational psychologist and assessment specialist.
-Analyze the following conversation between an AI character and {student_name}, aged {age}, in {grade or 'age-appropriate grade'}.
+    system_prompt = f"""You are an expert child educational psychologist assessing {student_name}, aged {age}, grade {grade or level['range']}.
 
-ENROLLED GRADE: {level['range']}
+Analyze the conversation and assess the student across 4 PILLARS and 16 CAPABILITIES using a 1-5 mastery stage scale.
 
-SCORING CALIBRATION (relative to enrolled grade):
-- 40-60 = performing at enrolled grade-level expectations
-- 60-75 = performing 1-2 grades ABOVE enrolled level
-- 75-90 = performing 2-3+ grades above -- genuinely advanced
-- 90-100 = exceptional
-- 20-40 = performing below enrolled grade
-- 0-20 = minimal evidence or significant difficulty
+STAGE SCALE (relative to enrolled grade {level['range']}):
+- 1 (Novice): Minimal evidence of this capability; does not demonstrate it unprompted
+- 2 (Emerging): Shows basic awareness but cannot apply independently; needs scaffolding
+- 3 (Developing): Can demonstrate with some consistency; may struggle with complexity
+- 4 (Proficient): Demonstrates reliably and can explain reasoning; handles moderate complexity
+- 5 (Mastered): Demonstrates flexibly across contexts; teaches others; handles novel situations
+
+IMPORTANT: Only score capabilities you have EVIDENCE for from the conversation. If a capability was not observable, set its stage to null. A 20-turn conversation typically provides evidence for 6-10 capabilities.
+
+THE 4 PILLARS AND 16 CAPABILITIES:
+
+PILLAR 1: Communication + Argumentation (communication)
+  A: Listening & Comprehension - understands others' ideas accurately
+  B: Constructing Arguments - builds logical, evidence-based arguments
+  C: Adaptive Communication - adjusts style for different contexts
+  D: Dialogue & Debate - engages in productive dialogue, defends positions
+
+PILLAR 2: Creativity + Curiosity (creativity)
+  E: Idea Generation - produces diverse, original ideas
+  F: Creative Depth - develops, evaluates, connects ideas across domains
+  G: Curiosity Drive - asks questions and explores with genuine curiosity
+  H: Creative Application - applies creativity to real-world problems
+
+PILLAR 3: AI + Systems Thinking (ai_systems)
+  I: AI Understanding - understands AI capabilities and limitations
+  J: AI Fluency - uses AI tools effectively through iteration
+  K: Systems Thinking - analyzes systems through inputs, processes, outputs
+  L: Builder Mindset - identifies needs, makes trade-offs, delivers
+
+PILLAR 4: Math + Logic + Reasoning (math_logic)
+  M: Logical Reasoning - pattern recognition, boolean logic, structured reasoning
+  N: Probabilistic & Statistical Reasoning - probability, sets, data interpretation
+  O: Abstract & Strategic Reasoning - variables, game theory, cost-benefit
+  P: Math Foundations - number sense, fractions, decimals, ratios, algebra, geometry
 
 Return ONLY a valid JSON object with this structure:
 {{
-  "scores": {{
-    "curiosity": <0-100>, "critical_thinking": <0-100>, "mathematical_thinking": <0-100>,
-    "communication": <0-100>, "creativity": <0-100>, "emotional_intelligence": <0-100>,
-    "leadership": <0-100>, "knowledge_depth": <0-100>
+  "pillar_stages": {{
+    "communication": <1-5>,
+    "creativity": <1-5>,
+    "ai_systems": <1-5>,
+    "math_logic": <1-5>
+  }},
+  "capability_stages": {{
+    "A": <1-5 or null>, "B": <1-5 or null>, "C": <1-5 or null>, "D": <1-5 or null>,
+    "E": <1-5 or null>, "F": <1-5 or null>, "G": <1-5 or null>, "H": <1-5 or null>,
+    "I": <1-5 or null>, "J": <1-5 or null>, "K": <1-5 or null>, "L": <1-5 or null>,
+    "M": <1-5 or null>, "N": <1-5 or null>, "O": <1-5 or null>, "P": <1-5 or null>
+  }},
+  "capability_evidence": {{
+    "<capability_letter>": "1-2 sentence evidence from conversation justifying the stage"
   }},
   "insights": {{
-    "strongest_areas": ["max 3"], "growth_areas": ["max 3"],
-    "dominant_interests": ["max 5"], "learning_style": "visual|auditory|kinesthetic|reading-writing|mixed",
+    "strongest_areas": ["max 3 capability names"],
+    "growth_areas": ["max 3 capability names"],
+    "dominant_interests": ["max 5"],
+    "learning_style": "visual|auditory|kinesthetic|reading-writing|mixed",
     "engagement_level": "high|medium|low",
-    "notable_observations": ["4-6 specific observations"]
+    "notable_observations": ["4-6 specific observations from the conversation"]
   }},
-  "curriculum_signals": {{
-    "recommended_subjects": [], "teaching_approach": "paragraph",
-    "topics_to_explore": [], "above_grade_areas": [], "below_grade_areas": [], "notes": []
-  }},
-  "summary": "2-3 paragraph evidence-based narrative"
+  "summary": "2-3 paragraph evidence-based narrative of the student's capabilities"
 }}"""
 
     conversation_text = "\n".join(

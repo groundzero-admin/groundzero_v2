@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth import get_current_user
 from app.database import async_session_maker as async_session_factory, get_db
@@ -29,7 +30,7 @@ from app.plugins.benchmark.schemas import (
     BenchmarkEndRequest,
     BenchmarkInsights,
     BenchmarkResultOut,
-    BenchmarkScores,
+    PillarStages,
     BenchmarkSessionCreate,
     BenchmarkSessionOut,
     BenchmarkTurnRequest,
@@ -342,23 +343,50 @@ async def end_session(data: BenchmarkEndRequest, background_tasks: BackgroundTas
 # ─── Benchmark result endpoints ───
 
 
+def _compute_scores(pillar_stages: dict, capability_stages: dict) -> dict[str, int]:
+    """Derive percentage scores (0-100) from pillar stages (1-5) and capability stages."""
+    ps = pillar_stages or {}
+    cs = capability_stages or {}
+
+    def _pct(val: int | None) -> int:
+        if val is None:
+            return 0
+        return min(100, max(0, int(val) * 20))
+
+    def _avg_caps(*keys: str) -> int:
+        vals = [int(cs[k]) for k in keys if cs.get(k) is not None]
+        if not vals:
+            return 0
+        return min(100, max(0, round(sum(vals) / len(vals) * 20)))
+
+    return {
+        "communication": _pct(ps.get("communication")),
+        "creativity": _pct(ps.get("creativity")),
+        "mathematical_thinking": _pct(ps.get("math_logic")),
+        "critical_thinking": _avg_caps("B", "D", "K") or _pct(ps.get("communication")),
+        "curiosity": _pct(cs.get("G")) or _pct(ps.get("creativity")),
+        "leadership": _pct(cs.get("L")) or _pct(ps.get("ai_systems")),
+        "emotional_intelligence": _pct(cs.get("C")) or _pct(ps.get("communication")),
+        "knowledge_depth": _pct(ps.get("ai_systems")),
+    }
+
+
 def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
     session = b.session
     student = session.student if session else None
+    ps = b.pillar_stages or {}
     return BenchmarkResultOut(
         id=b.id,
         session_id=b.session_id,
         generated_at=b.generated_at,
-        scores=BenchmarkScores(
-            curiosity=b.score_curiosity or 0,
-            critical_thinking=b.score_critical_thinking or 0,
-            mathematical_thinking=b.score_mathematical_thinking or 0,
-            knowledge_depth=b.score_knowledge_depth or 0,
-            communication=b.score_communication or 0,
-            creativity=b.score_creativity or 0,
-            emotional_intelligence=b.score_emotional_intelligence or 0,
-            leadership=b.score_leadership or 0,
+        pillar_stages=PillarStages(
+            communication=ps.get("communication", 1),
+            creativity=ps.get("creativity", 1),
+            ai_systems=ps.get("ai_systems", 1),
+            math_logic=ps.get("math_logic", 1),
         ),
+        capability_stages=b.capability_stages or {},
+        capability_evidence=b.capability_evidence or {},
         insights=BenchmarkInsights(
             strongest_areas=b.strongest_areas or [],
             growth_areas=b.growth_areas or [],
@@ -367,7 +395,7 @@ def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
             engagement_level=b.engagement_level,
             notable_observations=b.notable_observations or [],
         ),
-        curriculum_signals=b.curriculum_signals,
+        scores=_compute_scores(b.pillar_stages, b.capability_stages),
         summary=b.summary,
         conversation_snapshot=b.conversation_snapshot,
         student_name=student.name if student else None,
@@ -375,6 +403,7 @@ def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
         character=session.character if session else None,
         total_turns=session.total_turns if session else None,
         session_started_at=session.started_at if session else None,
+        bkt_seeded=b.bkt_seeded,
     )
 
 
@@ -395,7 +424,13 @@ async def get_benchmark_result(
     if not sess:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    result = await db.execute(select(BenchmarkResult).where(BenchmarkResult.session_id == session_id))
+    result = await db.execute(
+        select(BenchmarkResult)
+        .where(BenchmarkResult.session_id == session_id)
+        .options(
+            selectinload(BenchmarkResult.session).selectinload(BenchmarkSession.student)
+        )
+    )
     benchmark = result.scalar_one_or_none()
     if not benchmark:
         if sess.status == "benchmark_failed":
@@ -415,6 +450,9 @@ async def list_benchmark_results(
     query = (
         select(BenchmarkResult)
         .join(BenchmarkSession, BenchmarkResult.session_id == BenchmarkSession.id)
+        .options(
+            selectinload(BenchmarkResult.session).selectinload(BenchmarkSession.student)
+        )
         .where(BenchmarkSession.student_id == student.id)
         .order_by(BenchmarkResult.generated_at.desc())
         .offset(offset)

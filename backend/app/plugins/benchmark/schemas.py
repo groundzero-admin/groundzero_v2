@@ -41,15 +41,11 @@ class BenchmarkEndRequest(BaseModel):
     session_id: UUID
 
 
-class BenchmarkScores(BaseModel):
-    curiosity: int = 0
-    critical_thinking: int = 0
-    mathematical_thinking: int = 0
-    knowledge_depth: int = 0
-    communication: int = 0
-    creativity: int = 0
-    emotional_intelligence: int = 0
-    leadership: int = 0
+class PillarStages(BaseModel):
+    communication: int = 1
+    creativity: int = 1
+    ai_systems: int = 1
+    math_logic: int = 1
 
 
 class BenchmarkInsights(BaseModel):
@@ -65,9 +61,11 @@ class BenchmarkResultOut(BaseModel):
     id: UUID
     session_id: UUID
     generated_at: datetime
-    scores: BenchmarkScores
+    pillar_stages: PillarStages
+    capability_stages: dict[str, Optional[int]] = {}
+    capability_evidence: dict[str, str] = {}
     insights: BenchmarkInsights
-    curriculum_signals: Optional[dict[str, Any]] = None
+    scores: dict[str, int] = {}
     summary: Optional[str] = None
     conversation_snapshot: Optional[list[dict[str, Any]]] = None
     student_name: Optional[str] = None
@@ -75,5 +73,6 @@ class BenchmarkResultOut(BaseModel):
     character: Optional[str] = None
     total_turns: Optional[int] = None
     session_started_at: Optional[datetime] = None
+    bkt_seeded: Optional[str] = None
 
     model_config = {"from_attributes": True}

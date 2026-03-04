@@ -4,12 +4,11 @@ import { CHARACTERS } from "../constants/characters";
 import { benchmarkApi } from "../api";
 import { Eye, Search, Plus } from "lucide-react";
 
-const SCORE_COLS = [
-  { key: "critical_thinking", label: "Critical", color: "#3182CE" },
-  { key: "mathematical_thinking", label: "Math", color: "#805AD5" },
-  { key: "creativity", label: "Creative", color: "#ED64A6" },
-  { key: "curiosity", label: "Curious", color: "#805AD5" },
-  { key: "communication", label: "Comms", color: "#ED8936" },
+const PILLAR_COLS = [
+  { key: "communication", label: "Comms", color: "#E53E3E" },
+  { key: "creativity", label: "Creative", color: "#3182CE" },
+  { key: "ai_systems", label: "AI/Sys", color: "#38A169" },
+  { key: "math_logic", label: "Math", color: "#805AD5" },
 ];
 
 export default function BenchmarkHistoryPage() {
@@ -23,38 +22,44 @@ export default function BenchmarkHistoryPage() {
     try {
       const { data } = await benchmarkApi.listResults({ limit: 50, search: search || undefined });
       setBenchmarks(data);
-    } catch { /* silent */ }
+    } catch { /* empty */ }
     setLoading(false);
   }, [search]);
 
   useEffect(() => { fetchBenchmarks(); }, [fetchBenchmarks]);
 
   return (
-    <div style={{ padding: "32px 24px", maxWidth: 1100, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#26221D", fontFamily: "'Nunito', sans-serif" }}>Assessment History</h1>
+    <div style={{ maxWidth: 960, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontSize: "1.25rem", fontFamily: "'Nunito', sans-serif", fontWeight: 800, color: "#26221D" }}>
+          Assessment History
+        </h1>
         <button
           onClick={() => navigate("/benchmark")}
           style={{
-            display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 10,
-            border: "none", backgroundColor: "#805AD5", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600,
+            display: "flex", alignItems: "center", gap: 6, padding: "8px 16px",
+            borderRadius: 10, border: "none", backgroundColor: "#805AD5",
+            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}
         >
-          <Plus size={14} /> New Session
+          <Plus size={14} /> New
         </button>
       </div>
 
-      <div style={{ position: "relative", marginBottom: 20, maxWidth: 320 }}>
-        <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#A89E94" }} />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by student name..."
-          style={{
-            width: "100%", padding: "8px 12px 8px 36px", borderRadius: 10, border: "1px solid #E8E0D8",
-            fontSize: 13, outline: "none", backgroundColor: "#fff", color: "#26221D",
-          }}
-        />
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ position: "relative" }}>
+          <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#A89E94" }} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name..."
+            style={{
+              width: "100%", padding: "10px 16px 10px 32px", borderRadius: 10,
+              border: "1px solid #E8E0D8",
+              fontSize: 13, outline: "none", backgroundColor: "#fff", color: "#26221D",
+            }}
+          />
+        </div>
       </div>
 
       <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -65,7 +70,7 @@ export default function BenchmarkHistoryPage() {
               <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#7A7168" }}>Character</th>
               <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#7A7168" }}>Date</th>
               <th style={{ padding: "10px 12px", textAlign: "center", fontWeight: 600, color: "#7A7168" }}>Turns</th>
-              {SCORE_COLS.map((s) => (
+              {PILLAR_COLS.map((s) => (
                 <th key={s.key} style={{ padding: "10px 8px", textAlign: "center", fontWeight: 600, color: "#7A7168" }}>{s.label}</th>
               ))}
               <th style={{ padding: "10px 12px", width: 50 }}></th>
@@ -73,12 +78,13 @@ export default function BenchmarkHistoryPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8 + SCORE_COLS.length} style={{ padding: 40, textAlign: "center", color: "#A89E94" }}>Loading...</td></tr>
+              <tr><td colSpan={5 + PILLAR_COLS.length} style={{ padding: 40, textAlign: "center", color: "#A89E94" }}>Loading...</td></tr>
             ) : benchmarks.length === 0 ? (
-              <tr><td colSpan={8 + SCORE_COLS.length} style={{ padding: 40, textAlign: "center", color: "#A89E94" }}>No assessments yet</td></tr>
+              <tr><td colSpan={5 + PILLAR_COLS.length} style={{ padding: 40, textAlign: "center", color: "#A89E94" }}>No assessments yet</td></tr>
             ) : (
               benchmarks.map((b) => {
                 const char = CHARACTERS.find((c) => c.id === b.character);
+                const ps = b.pillar_stages || {};
                 return (
                   <tr
                     key={b.id}
@@ -107,13 +113,15 @@ export default function BenchmarkHistoryPage() {
                       {new Date(b.generated_at).toLocaleDateString()}
                     </td>
                     <td style={{ padding: "10px 12px", textAlign: "center", color: "#5A524A" }}>{b.total_turns}</td>
-                    {SCORE_COLS.map((s) => (
+                    {PILLAR_COLS.map((s) => (
                       <td key={s.key} style={{ padding: "10px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                          <div style={{ width: 40, height: 4, backgroundColor: "#E8E0D8", borderRadius: 999, overflow: "hidden" }}>
-                            <div style={{ height: "100%", borderRadius: 999, width: `${b.scores?.[s.key] || 0}%`, backgroundColor: s.color }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
+                          <div style={{ display: "flex", gap: 2 }}>
+                            {[1, 2, 3, 4, 5].map((st) => (
+                              <div key={st} style={{ width: 8, height: 4, borderRadius: 2, backgroundColor: st <= (ps[s.key] || 1) ? s.color : "#E8E0D8" }} />
+                            ))}
                           </div>
-                          <span style={{ fontSize: 11, color: "#7A7168", fontWeight: 500 }}>{b.scores?.[s.key] || 0}</span>
+                          <span style={{ fontSize: 11, color: "#7A7168", fontWeight: 600, minWidth: 12, textAlign: "center" }}>{ps[s.key] || 1}</span>
                         </div>
                       </td>
                     ))}

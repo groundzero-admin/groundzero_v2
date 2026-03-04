@@ -63,14 +63,9 @@ class BenchmarkResult(Base):
     session_id = Column(PGUUID(as_uuid=True), ForeignKey("bm_sessions.id"), unique=True, nullable=False)
     generated_at = Column(DateTime(timezone=True), default=_utcnow)
 
-    score_curiosity = Column(Integer)
-    score_critical_thinking = Column(Integer)
-    score_mathematical_thinking = Column(Integer)
-    score_knowledge_depth = Column(Integer)
-    score_communication = Column(Integer)
-    score_creativity = Column(Integer)
-    score_emotional_intelligence = Column(Integer)
-    score_leadership = Column(Integer)
+    pillar_stages = Column(JSONB)
+    capability_stages = Column(JSONB)
+    capability_evidence = Column(JSONB)
 
     strongest_areas = Column(JSONB)
     growth_areas = Column(JSONB)
@@ -78,8 +73,9 @@ class BenchmarkResult(Base):
     learning_style = Column(String(50))
     engagement_level = Column(String(20))
     notable_observations = Column(JSONB)
-    curriculum_signals = Column(JSONB)
     summary = Column(Text)
     conversation_snapshot = Column(JSONB)
 
-    session = relationship("BenchmarkSession", back_populates="result")
+    bkt_seeded = Column(String(10), default="pending")
+
+    session = relationship("BenchmarkSession", back_populates="result", lazy="selectin")

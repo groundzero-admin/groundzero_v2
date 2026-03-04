@@ -1,20 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
-import BenchmarkRadar from "../components/BenchmarkRadar";
+import BenchmarkRadar, { PILLAR_LABELS, PILLAR_COLORS } from "../components/BenchmarkRadar";
 import { CHARACTERS } from "../constants/characters";
 import { benchmarkApi } from "../api";
-import { ArrowLeft, Printer, Plus, History } from "lucide-react";
+import { ArrowLeft, Printer, Plus, History, CheckCircle2 } from "lucide-react";
 
-const METRICS = [
-  { key: "critical_thinking", label: "Critical Thinking", color: "#3182CE" },
-  { key: "mathematical_thinking", label: "Math & Logic", color: "#805AD5" },
-  { key: "leadership", label: "Leadership", color: "#38B2AC" },
-  { key: "creativity", label: "Creativity", color: "#ED64A6" },
-  { key: "curiosity", label: "Curiosity", color: "#805AD5" },
-  { key: "communication", label: "Communication", color: "#ED8936" },
-  { key: "emotional_intelligence", label: "Emotional IQ", color: "#E53E3E" },
-  { key: "knowledge_depth", label: "Knowledge", color: "#38A169" },
-];
+const CAPABILITY_NAMES: Record<string, string> = {
+  A: "Listening & Comprehension", B: "Constructing Arguments",
+  C: "Adaptive Communication", D: "Dialogue & Debate",
+  E: "Idea Generation", F: "Creative Depth",
+  G: "Curiosity Drive", H: "Creative Application",
+  I: "AI Understanding", J: "AI Fluency",
+  K: "Systems Thinking", L: "Builder Mindset",
+  M: "Logical Reasoning", N: "Probabilistic Reasoning",
+  O: "Abstract & Strategic Reasoning", P: "Math Foundations",
+};
+
+const CAPABILITY_TO_PILLAR: Record<string, string> = {
+  A: "communication", B: "communication", C: "communication", D: "communication",
+  E: "creativity", F: "creativity", G: "creativity", H: "creativity",
+  I: "ai_systems", J: "ai_systems", K: "ai_systems", L: "ai_systems",
+  M: "math_logic", N: "math_logic", O: "math_logic", P: "math_logic",
+};
+
+const STAGE_LABELS = ["", "Novice", "Emerging", "Developing", "Proficient", "Mastered"];
+const STAGE_COLORS = ["", "#E53E3E", "#ED8936", "#ECC94B", "#38A169", "#3182CE"];
 
 export default function BenchmarkReportPage() {
   const { sessionId } = useParams();
@@ -75,7 +85,9 @@ export default function BenchmarkReportPage() {
     );
   }
 
-  const scores = benchmark.scores || {};
+  const pillarStages = benchmark.pillar_stages || {};
+  const capStages = benchmark.capability_stages || {};
+  const capEvidence = benchmark.capability_evidence || {};
   const insights = benchmark.insights || {};
   const char = CHARACTERS.find((c) => c.id === benchmark.character) || CHARACTERS[0];
 
@@ -87,7 +99,14 @@ export default function BenchmarkReportPage() {
           <button onClick={() => navigate("/home")} style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "transparent", border: "none", cursor: "pointer", color: "#7A7168", fontSize: 13 }}>
             <ArrowLeft size={16} /> Back
           </button>
-          <span style={{ fontSize: 14, fontWeight: 700, color: "#26221D", fontFamily: "'Nunito', sans-serif" }}>Assessment Report</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#26221D", fontFamily: "'Nunito', sans-serif" }}>Assessment Report</span>
+            {benchmark.bkt_seeded === "done" && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, color: "#38A169", backgroundColor: "#C6F6D520", padding: "2px 8px", borderRadius: 6 }}>
+                <CheckCircle2 size={10} /> BKT Updated
+              </span>
+            )}
+          </div>
           <button onClick={() => window.print()} style={{ display: "flex", alignItems: "center", gap: 6, backgroundColor: "transparent", border: "1px solid #E8E0D8", borderRadius: 8, padding: "6px 12px", cursor: "pointer", color: "#7A7168", fontSize: 12 }}>
             <Printer size={14} /> Export
           </button>
@@ -108,30 +127,84 @@ export default function BenchmarkReportPage() {
           </div>
         </div>
 
-        {/* Score grid */}
+        {/* Pillar stages - 4 cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
-          {METRICS.map((m) => (
-            <div key={m.key} style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-              <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 12px" }}>
-                <svg viewBox="0 0 72 72" style={{ transform: "rotate(-90deg)" }}>
-                  <circle cx="36" cy="36" r="30" fill="none" stroke="#E8E0D8" strokeWidth="5" />
-                  <circle cx="36" cy="36" r="30" fill="none" stroke={m.color} strokeWidth="5" strokeLinecap="round"
-                    strokeDasharray={`${(scores[m.key] || 0) * 1.885} 188.5`}
-                  />
-                </svg>
-                <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#26221D" }}>
-                  {scores[m.key] || 0}
-                </span>
+          {Object.entries(PILLAR_LABELS).map(([key, label]) => {
+            const stage = pillarStages[key] || 1;
+            const color = PILLAR_COLORS[key];
+            return (
+              <div key={key} style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, textAlign: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 4 }}>{stage}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: STAGE_COLORS[stage], textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>
+                  {STAGE_LABELS[stage]}
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#5A524A" }}>{label}</div>
+                {/* Stage bar */}
+                <div style={{ display: "flex", gap: 3, marginTop: 10, justifyContent: "center" }}>
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <div key={s} style={{ width: 16, height: 4, borderRadius: 2, backgroundColor: s <= stage ? color : "#E8E0D8" }} />
+                  ))}
+                </div>
               </div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#5A524A" }}>{m.label}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Radar */}
         <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 16, padding: 24, marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#26221D", marginBottom: 16, fontFamily: "'Nunito', sans-serif" }}>Score Distribution</div>
-          <BenchmarkRadar scores={scores} characterColor={char.color} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#26221D", marginBottom: 16, fontFamily: "'Nunito', sans-serif" }}>Pillar Overview</div>
+          <BenchmarkRadar pillarStages={pillarStages} characterColor={char.color} />
+        </div>
+
+        {/* Capability breakdown by pillar */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#26221D", marginBottom: 12, fontFamily: "'Nunito', sans-serif" }}>Capability Breakdown</div>
+          {Object.entries(PILLAR_LABELS).map(([pillarKey, pillarLabel]) => {
+            const caps = Object.entries(CAPABILITY_TO_PILLAR).filter(([, p]) => p === pillarKey).map(([c]) => c);
+            const color = PILLAR_COLORS[pillarKey];
+            return (
+              <div key={pillarKey} style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, marginBottom: 12, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: color }} />
+                  {pillarLabel}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {caps.map((capId) => {
+                    const stage = capStages[capId];
+                    const evidence = capEvidence[capId];
+                    if (stage == null) return (
+                      <div key={capId} style={{ display: "flex", alignItems: "center", gap: 12, opacity: 0.4 }}>
+                        <div style={{ width: 28, fontSize: 11, fontWeight: 600, color: "#A89E94" }}>{capId}</div>
+                        <div style={{ flex: 1, fontSize: 12, color: "#A89E94" }}>{CAPABILITY_NAMES[capId]}</div>
+                        <span style={{ fontSize: 10, color: "#D4C9BD" }}>Not observed</span>
+                      </div>
+                    );
+                    return (
+                      <div key={capId}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ width: 28, fontSize: 11, fontWeight: 700, color }}>{capId}</div>
+                          <div style={{ flex: 1, fontSize: 12, fontWeight: 500, color: "#3D3730" }}>{CAPABILITY_NAMES[capId]}</div>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: STAGE_COLORS[stage], padding: "2px 8px", borderRadius: 6, backgroundColor: STAGE_COLORS[stage] + "15" }}>
+                            {STAGE_LABELS[stage]}
+                          </span>
+                          <div style={{ display: "flex", gap: 2 }}>
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <div key={s} style={{ width: 10, height: 4, borderRadius: 2, backgroundColor: s <= stage ? color : "#E8E0D8" }} />
+                            ))}
+                          </div>
+                        </div>
+                        {evidence && (
+                          <div style={{ marginLeft: 40, marginTop: 4, fontSize: 11, color: "#7A7168", fontStyle: "italic", lineHeight: 1.5 }}>
+                            {evidence}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Insights */}
@@ -154,22 +227,6 @@ export default function BenchmarkReportPage() {
           ))}
         </div>
 
-        {/* Learning style + Engagement */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-          <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#A89E94", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px", marginBottom: 8 }}>Learning Style</div>
-            <span style={{ display: "inline-block", padding: "4px 16px", borderRadius: 8, backgroundColor: char.color, color: "#fff", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>
-              {insights.learning_style || "N/A"}
-            </span>
-          </div>
-          <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#A89E94", textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.5px", marginBottom: 8 }}>Engagement</div>
-            <span style={{ display: "inline-block", padding: "4px 16px", borderRadius: 8, backgroundColor: insights.engagement_level === "high" ? "#38A169" : insights.engagement_level === "medium" ? "#ED8936" : "#E53E3E", color: "#fff", fontSize: 13, fontWeight: 600, textTransform: "capitalize" }}>
-              {insights.engagement_level || "N/A"}
-            </span>
-          </div>
-        </div>
-
         {/* Observations */}
         {insights.notable_observations?.length > 0 && (
           <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 14, padding: 20, marginBottom: 20 }}>
@@ -185,7 +242,7 @@ export default function BenchmarkReportPage() {
         {/* Summary */}
         <div style={{ backgroundColor: "#805AD508", border: "1px solid #805AD520", borderRadius: 14, padding: 24, marginBottom: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: "#26221D", marginBottom: 4, fontFamily: "'Nunito', sans-serif" }}>Assessment Summary</div>
-          <div style={{ fontSize: 11, color: "#A89E94", marginBottom: 16 }}>Benchmark assessment - not a curriculum recommendation</div>
+          <div style={{ fontSize: 11, color: "#A89E94", marginBottom: 16 }}>AI-powered diagnostic assessment across 4 pillars</div>
           {benchmark.summary?.split("\n").map((p: string, i: number) => (
             <p key={i} style={{ fontSize: 14, color: "#5A524A", lineHeight: 1.7, marginBottom: 8 }}>{p}</p>
           ))}
