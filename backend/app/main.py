@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,6 +13,7 @@ from app.api.sessions import cohort_router, router as sessions_router
 from app.api.spark import router as spark_router
 from app.api.students import router as students_router
 from app.api.teacher import router as teacher_router
+from app.plugins.benchmark import benchmark_router  # Plugin: remove this line to disable benchmark
 from app.config import settings
 
 app = FastAPI(
@@ -45,3 +49,4 @@ app.include_router(cohort_router, prefix=settings.API_V1_PREFIX)
 app.include_router(spark_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(teacher_router, prefix=settings.API_V1_PREFIX)
+app.include_router(benchmark_router, prefix=settings.API_V1_PREFIX)  # Plugin: remove this line to disable benchmark

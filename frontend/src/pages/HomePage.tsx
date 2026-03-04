@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
-import { Palette, BookOpen, Radio } from "lucide-react";
+import { Palette, BookOpen, Radio, Star } from "lucide-react";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 import { useActiveSession } from "@/api/hooks/useActiveSession";
@@ -38,6 +38,17 @@ const MODES = [
     gradient: "linear-gradient(135deg, #E53E3E, #FC8181)",
     route: "/live",
     stats: "",
+    enabled: true,
+  },
+  {
+    id: "benchmark",
+    name: "AI Benchmark",
+    desc: "Discover your strengths with AI",
+    icon: <Star size={24} />,
+    color: "#38A169",
+    gradient: "linear-gradient(135deg, #38A169, #68D391)",
+    route: "/benchmark",
+    stats: "8 dimensions",
     enabled: true,
   },
 ] as const;
