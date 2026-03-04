@@ -1,6 +1,7 @@
 """Claude AI service for benchmark conversations and assessment generation.
 
-Ported from the standalone benchmark project with no changes to the prompts or logic.
+Supports direct Anthropic API (local dev) and AWS Bedrock (production).
+Set CLAUDE_PROVIDER=bedrock to use Bedrock, otherwise uses direct API.
 """
 
 import json
@@ -8,6 +9,28 @@ import os
 import re
 
 import anthropic
+from anthropic import AsyncAnthropicBedrock
+
+BEDROCK_DEFAULT_MODEL = "anthropic.claude-3-haiku-20240307-v1:0"
+
+
+def _get_claude_client():
+    """Return the appropriate async Anthropic client based on CLAUDE_PROVIDER env var."""
+    provider = os.getenv("CLAUDE_PROVIDER", "direct").lower()
+    if provider == "bedrock":
+        return AsyncAnthropicBedrock(
+            aws_region=os.getenv("AWS_REGION", "us-west-2"),
+        )
+    return anthropic.AsyncAnthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+
+
+def _get_claude_model():
+    """Return the model ID for the current provider."""
+    provider = os.getenv("CLAUDE_PROVIDER", "direct").lower()
+    if provider == "bedrock":
+        return os.getenv("BENCHMARK_CLAUDE_MODEL", BEDROCK_DEFAULT_MODEL)
+    return os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307")
+
 
 CHARACTER_PROMPTS = {
     "harry_potter": {
@@ -349,10 +372,10 @@ async def get_ai_response(
     char = CHARACTER_PROMPTS.get(character, CHARACTER_PROMPTS["harry_potter"])
     system_prompt = _build_conversation_system_prompt(char, student_name, age, grade)
 
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+    client = _get_claude_client()
     response = await client.messages.create(
-        model=os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307"),
-        max_tokens=200,
+        model=_get_claude_model(),
+        max_tokens=500,
         system=system_prompt,
         messages=conversation_history,
     )
@@ -369,10 +392,10 @@ async def stream_ai_response(
     char = CHARACTER_PROMPTS.get(character, CHARACTER_PROMPTS["harry_potter"])
     system_prompt = _build_conversation_system_prompt(char, student_name, age, grade)
 
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+    client = _get_claude_client()
     async with client.messages.stream(
-        model=os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307"),
-        max_tokens=200,
+        model=_get_claude_model(),
+        max_tokens=500,
         system=system_prompt,
         messages=conversation_history,
     ) as stream:
@@ -461,9 +484,10 @@ Return ONLY a valid JSON object with this structure:
         for m in conversation_history
     )
 
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+    client = _get_claude_client()
+    model = _get_claude_model()
     response = await client.messages.create(
-        model=os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307"),
+        model=model,
         max_tokens=3000,
         system=system_prompt,
         messages=[{"role": "user", "content": f"Here is the full conversation to analyze:\n\n{conversation_text}"}],
@@ -475,7 +499,7 @@ Return ONLY a valid JSON object with this structure:
         return parsed
 
     retry_resp = await client.messages.create(
-        model=os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307"),
+        model=model,
         max_tokens=3000,
         system="You are a JSON repair tool. Return ONLY a valid JSON object.",
         messages=[{"role": "user", "content": f"Fix this JSON:\n\n{raw_text}"}],

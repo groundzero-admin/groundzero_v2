@@ -36,9 +36,6 @@ async def sarvam_tts(text: str, character: str) -> bytes:
     if not clean_text:
         raise ValueError("No speakable text after cleaning")
 
-    if len(clean_text) > 500:
-        clean_text = clean_text[:497] + "..."
-
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             "https://api.sarvam.ai/text-to-speech",
@@ -93,7 +90,7 @@ async def sarvam_stt(audio_bytes: bytes, language_code: str = "en-IN") -> str:
     if not api_key:
         raise ValueError("SARVAM_API_KEY not configured")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=300.0) as client:
         response = await client.post(
             "https://api.sarvam.ai/speech-to-text",
             headers={"api-subscription-key": api_key},
