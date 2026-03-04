@@ -12,7 +12,7 @@ export const benchmarkApi = {
     api.post("/benchmark/conversation/end", { session_id }),
 
   getResult: (sessionId: string) =>
-    api.get(`/benchmark/results/${sessionId}`, { validateStatus: (s: number) => s < 600 }),
+    api.get(`/benchmark/results/${sessionId}`, { validateStatus: (s: number) => s !== 401 && s < 600 }),
 
   listResults: (params?: { limit?: number; offset?: number; search?: string }) =>
     api.get("/benchmark/results", { params }),

@@ -37,7 +37,7 @@ from app.plugins.benchmark.schemas import (
     BenchmarkTurnResponse,
 )
 from app.plugins.benchmark.services import claude_service, voice_service
-from app.plugins.benchmark.services.claude_service import CHARACTER_PROMPTS, _build_opener
+from app.plugins.benchmark.services.claude_service import CHARACTER_PROMPTS, _build_opener, _build_farewell
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +153,12 @@ async def conversation_turn_stream(data: BenchmarkTurnRequest, db: AsyncSession 
         char = CHARACTER_PROMPTS.get(character_id, CHARACTER_PROMPTS["harry_potter"])
         opener_text = _build_opener(char, student_name, student_age, student_grade)
         ai_turn_number = 1
+        conversation_history = None
+        await db.commit()
+    elif data.student_text == "[END]":
+        char = CHARACTER_PROMPTS.get(character_id, CHARACTER_PROMPTS["harry_potter"])
+        opener_text = _build_farewell(char, student_name)
+        ai_turn_number = session.total_turns + 1
         conversation_history = None
         await db.commit()
     else:

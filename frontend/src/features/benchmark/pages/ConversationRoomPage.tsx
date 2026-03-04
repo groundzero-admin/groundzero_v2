@@ -51,7 +51,11 @@ export default function ConversationRoomPage() {
     setTextValue("");
     try {
       const data = await sendTurnStream(sessionId, text, turnCount + 1);
-      if (data && data.turn_number >= 20) { await endSession(sessionId); navigate(`/benchmark/report/${sessionId}`); }
+      if (data && data.turn_number >= 20) {
+        await sendTurnStream(sessionId, "[END]", data.turn_number + 1);
+        await endSession(sessionId);
+        navigate(`/benchmark/report/${sessionId}`);
+      }
     } catch { alert("Failed to send message"); }
   }, [textValue, isLoading, sessionId, turnCount, sendTurnStream, endSession, navigate]);
 
@@ -63,14 +67,22 @@ export default function ConversationRoomPage() {
       const transcript = await startRecording();
       if (!transcript) { setStatus("idle"); return; }
       const data = await sendTurnStream(sessionId!, transcript, turnCount + 1);
-      if (data && data.turn_number >= 20) { await endSession(sessionId!); navigate(`/benchmark/report/${sessionId}`); }
+      if (data && data.turn_number >= 20) {
+        await sendTurnStream(sessionId!, "[END]", data.turn_number + 1);
+        await endSession(sessionId!);
+        navigate(`/benchmark/report/${sessionId}`);
+      }
     } catch { setStatus("idle"); }
   }, [isRecording, isLoading, status, sessionId, turnCount, stopRecording, startRecording, sendTurnStream, endSession, navigate, setStatus]);
 
   const handleEnd = useCallback(async () => {
     if (!sessionId) return;
-    try { await endSession(sessionId); navigate(`/benchmark/report/${sessionId}`); } catch { alert("Failed to end session"); }
-  }, [endSession, sessionId, navigate]);
+    try {
+      await sendTurnStream(sessionId, "[END]", turnCount + 1);
+      await endSession(sessionId);
+      navigate(`/benchmark/report/${sessionId}`);
+    } catch { alert("Failed to end session"); }
+  }, [endSession, sessionId, navigate, sendTurnStream, turnCount]);
 
   return (
     <div style={{ height: "100vh", display: "flex", backgroundColor: "#FAF7F4" }}>

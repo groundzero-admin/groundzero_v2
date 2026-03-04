@@ -41,7 +41,7 @@ export default function useConversation() {
       setStatus("thinking");
       setIsLoading(true);
 
-      if (studentText !== "[START]") {
+      if (studentText !== "[START]" && studentText !== "[END]") {
         setHistory((prev) => [...prev, { speaker: "student", text: studentText, turn_number: turnNumber }]);
       }
       setHistory((prev) => [...prev, { speaker: "ai", text: "", turn_number: 0 }]);

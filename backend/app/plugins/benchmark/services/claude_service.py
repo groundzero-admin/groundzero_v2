@@ -311,6 +311,34 @@ def _build_opener(char: dict, student_name: str, age: int, grade: str) -> str:
     return openers.get(char.get("id", ""), openers["harry_potter"])
 
 
+def _build_farewell(char: dict, student_name: str) -> str:
+    farewells = {
+        "harry_potter": (
+            f"This was really brilliant, {student_name}! I had so much fun chatting with you. "
+            f"You've got a wonderfully curious mind -- just the kind Dumbledore would be proud of. "
+            f"Until next time, take care!"
+        ),
+        "doraemon": (
+            f"Wow, {student_name}, that was so much fun! You've got some truly amazing ideas -- "
+            f"I bet even my best gadgets couldn't come up with some of those! "
+            f"I'll see you next time. Bye bye!"
+        ),
+        "peppa_pig": (
+            f"That was so much fun, {student_name}! I really liked talking with you. "
+            f"You're such a great thinker! See you next time! Bye bye!"
+        ),
+        "simba": (
+            f"This was a great adventure, {student_name}! You've got the heart of a true leader. "
+            f"Remember, keep being curious and brave! Until next time!"
+        ),
+        "dora": (
+            f"What an amazing conversation, {student_name}! You'd be an awesome explorer. "
+            f"Keep asking great questions and thinking big! Adios, amigo -- see you next time!"
+        ),
+    }
+    return farewells.get(char.get("id", ""), farewells["harry_potter"])
+
+
 async def get_ai_response(
     character: str,
     student_name: str,
