@@ -6,9 +6,6 @@ from pydantic import BaseModel, Field
 
 
 class BenchmarkSessionCreate(BaseModel):
-    student_name: str
-    student_age: int = Field(ge=5, le=16)
-    student_grade: str
     character: str
     voice_provider: str = "sarvam"
 
@@ -16,9 +13,8 @@ class BenchmarkSessionCreate(BaseModel):
 class BenchmarkSessionOut(BaseModel):
     id: UUID
     student_id: UUID
-    student_name: str
-    student_age: Optional[int] = None
-    student_grade: Optional[str] = None
+    student_name: Optional[str] = None
+    student_grade: Optional[int] = None
     character: str
     voice_provider: str
     status: str
@@ -75,8 +71,7 @@ class BenchmarkResultOut(BaseModel):
     summary: Optional[str] = None
     conversation_snapshot: Optional[list[dict[str, Any]]] = None
     student_name: Optional[str] = None
-    student_age: Optional[int] = None
-    student_grade: Optional[str] = None
+    student_grade: Optional[int] = None
     character: Optional[str] = None
     total_turns: Optional[int] = None
     session_started_at: Optional[datetime] = None

@@ -24,10 +24,15 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
         for turn in turns
     ]
 
+    student = session.student
+    student_name = student.name if student else "Student"
+    student_age = (student.grade + 5) if student else 10
+    student_grade = str(student.grade) if student else ""
+
     benchmark_data = await claude_service.generate_benchmark(
-        student_name=session.student_name,
-        age=session.student_age or 10,
-        grade=session.student_grade or "",
+        student_name=student_name,
+        age=student_age,
+        grade=student_grade,
         character=session.character,
         conversation_history=conversation_history,
     )

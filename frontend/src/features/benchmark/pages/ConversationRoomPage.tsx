@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { useStudent } from "@/context/StudentContext";
+import { useStudentById } from "@/api/hooks/useStudents";
 import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
 import useConversation from "../hooks/useConversation";
 import useVoiceRecording from "../hooks/useVoiceRecording";
@@ -23,7 +25,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ConversationRoomPage() {
   const navigate = useNavigate();
-  const { studentName, selectedCharacter, sessionId } = useBenchmarkSession();
+  const { studentId } = useStudent();
+  const { data: student } = useStudentById(studentId);
+  const { selectedCharacter, sessionId } = useBenchmarkSession();
   const { sendTurnStream, endSession, history, status, setStatus, turnCount, isLoading } = useConversation();
   const { startRecording, stopRecording, isRecording, isSupported, interimTranscript } = useVoiceRecording();
 
@@ -100,7 +104,7 @@ export default function ConversationRoomPage() {
           </div>
           <div style={{ backgroundColor: "#FAF7F4", borderRadius: 10, padding: "10px 12px", border: "1px solid #E8E0D8" }}>
             <div style={{ fontSize: 10, color: "#A89E94", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, marginBottom: 4 }}>Student</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#3D3730" }}>{studentName}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#3D3730" }}>{student?.name || "Student"}</div>
           </div>
         </div>
 

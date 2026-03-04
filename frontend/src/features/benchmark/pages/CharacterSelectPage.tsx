@@ -7,8 +7,7 @@ import { benchmarkApi } from "../api";
 
 export default function CharacterSelectPage() {
   const navigate = useNavigate();
-  const { studentName, studentAge, studentGrade, voiceProvider, setCharacter, setSession } =
-    useBenchmarkSession();
+  const { voiceProvider, setCharacter, setSession } = useBenchmarkSession();
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,9 +19,6 @@ export default function CharacterSelectPage() {
 
     try {
       const { data: session } = await benchmarkApi.createSession({
-        student_name: studentName,
-        student_age: studentAge,
-        student_grade: studentGrade,
         character: character.id,
         voice_provider: voiceProvider,
       });
@@ -59,9 +55,7 @@ export default function CharacterSelectPage() {
           Select a Conversation Guide
         </h1>
         <p style={{ color: "#7A7168", fontSize: 14 }}>
-          Choose a character for{" "}
-          <span style={{ fontWeight: 600, color: "#3D3730" }}>{studentName}</span>'s
-          assessment session
+          Choose a character for the assessment session
         </p>
       </div>
 

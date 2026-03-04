@@ -1,22 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
-import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
 
 export default function BenchmarkLandingPage() {
   const navigate = useNavigate();
   const { studentId } = useStudent();
   const { data: student } = useStudentById(studentId);
-  const { setStudentInfo } = useBenchmarkSession();
-  const [age, setAge] = useState(10);
-
-  const handleStart = () => {
-    const name = student?.name || "Student";
-    const grade = student?.grade || "Grade 6";
-    setStudentInfo(name, age, grade);
-    navigate("/benchmark/select");
-  };
 
   return (
     <div
@@ -78,7 +67,7 @@ export default function BenchmarkLandingPage() {
       >
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: "#7A7168", display: "block", marginBottom: 6 }}>
-            Student Name
+            Student
           </label>
           <div
             style={{
@@ -97,32 +86,6 @@ export default function BenchmarkLandingPage() {
 
         <div style={{ marginBottom: 24 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: "#7A7168", display: "block", marginBottom: 6 }}>
-            Age
-          </label>
-          <select
-            value={age}
-            onChange={(e) => setAge(Number(e.target.value))}
-            style={{
-              width: "100%",
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: "1px solid #E8E0D8",
-              backgroundColor: "#fff",
-              fontSize: 14,
-              color: "#26221D",
-              outline: "none",
-              cursor: "pointer",
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 5).map((a) => (
-              <option key={a} value={a}>{a} years</option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: "#7A7168", display: "block", marginBottom: 6 }}>
             Grade
           </label>
           <div
@@ -136,12 +99,12 @@ export default function BenchmarkLandingPage() {
               fontWeight: 500,
             }}
           >
-            {student?.grade || "Grade 6"}
+            {student?.grade ? `Grade ${student.grade}` : "Loading..."}
           </div>
         </div>
 
         <button
-          onClick={handleStart}
+          onClick={() => navigate("/benchmark/select")}
           disabled={!student}
           style={{
             width: "100%",

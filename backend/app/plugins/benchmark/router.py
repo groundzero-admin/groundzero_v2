@@ -20,7 +20,10 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import get_current_user
 from app.database import async_session_maker as async_session_factory, get_db
+from app.models.student import Student
+from app.models.user import User
 from app.plugins.benchmark.models import BenchmarkResult, BenchmarkSession, BenchmarkTurn
 from app.plugins.benchmark.schemas import (
     BenchmarkEndRequest,
@@ -42,32 +45,67 @@ router = APIRouter(prefix="/benchmark", tags=["benchmark"])
 _SENTENCE_END = re.compile(r'[.!?]["\')\]]?\s*$')
 
 
+async def _get_student_for_user(user: User, db: AsyncSession) -> Student:
+    result = await db.execute(select(Student).where(Student.user_id == user.id))
+    student = result.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="No student profile linked to this user")
+    return student
+
+
+def _session_to_out(session: BenchmarkSession) -> BenchmarkSessionOut:
+    student = session.student
+    return BenchmarkSessionOut(
+        id=session.id,
+        student_id=session.student_id,
+        student_name=student.name if student else None,
+        student_grade=student.grade if student else None,
+        character=session.character,
+        voice_provider=session.voice_provider,
+        status=session.status,
+        started_at=session.started_at,
+        total_turns=session.total_turns,
+    )
+
+
 # ─── Session endpoints ───
 
 
 @router.post("/sessions", response_model=BenchmarkSessionOut, status_code=201)
-async def create_session(data: BenchmarkSessionCreate, db: AsyncSession = Depends(get_db)):
+async def create_session(
+    data: BenchmarkSessionCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await _get_student_for_user(user, db)
     session = BenchmarkSession(
-        student_id=UUID("00000000-0000-0000-0000-000000000000"),
-        student_name=data.student_name,
-        student_age=data.student_age,
-        student_grade=data.student_grade,
+        student_id=student.id,
         character=data.character,
         voice_provider=data.voice_provider,
     )
     db.add(session)
     await db.commit()
     await db.refresh(session)
-    return session
+    return _session_to_out(session)
 
 
 @router.get("/sessions/{session_id}", response_model=BenchmarkSessionOut)
-async def get_session(session_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == session_id))
+async def get_session(
+    session_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await _get_student_for_user(user, db)
+    result = await db.execute(
+        select(BenchmarkSession).where(
+            BenchmarkSession.id == session_id,
+            BenchmarkSession.student_id == student.id,
+        )
+    )
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    return session
+    return _session_to_out(session)
 
 
 @router.get("/sessions", response_model=list[BenchmarkSessionOut])
@@ -75,14 +113,20 @@ async def list_sessions(
     status: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(BenchmarkSession).order_by(BenchmarkSession.started_at.desc())
+    student = await _get_student_for_user(user, db)
+    query = (
+        select(BenchmarkSession)
+        .where(BenchmarkSession.student_id == student.id)
+        .order_by(BenchmarkSession.started_at.desc())
+    )
     if status:
         query = query.where(BenchmarkSession.status == status)
     query = query.offset(offset).limit(limit)
     result = await db.execute(query)
-    return result.scalars().all()
+    return [_session_to_out(s) for s in result.scalars().all()]
 
 
 # ─── Conversation endpoints ───
@@ -98,9 +142,10 @@ async def conversation_turn_stream(data: BenchmarkTurnRequest, db: AsyncSession 
         raise HTTPException(status_code=400, detail="Session already ended")
 
     session_id = session.id
-    student_name = session.student_name
-    student_age = session.student_age or 10
-    student_grade = session.student_grade or ""
+    student = session.student
+    student_name = student.name if student else "Student"
+    student_age = (student.grade + 5) if student else 10
+    student_grade = str(student.grade) if student else ""
     character_id = session.character
 
     if data.student_text == "[START]":
@@ -221,9 +266,14 @@ async def conversation_turn(data: BenchmarkTurnRequest, db: AsyncSession = Depen
     if session.status in ("completed", "benchmark_ready"):
         raise HTTPException(status_code=400, detail="Session already ended")
 
+    student = session.student
+    student_name = student.name if student else "Student"
+    student_age = (student.grade + 5) if student else 10
+    student_grade = str(student.grade) if student else ""
+
     if data.student_text == "[START]":
         char = CHARACTER_PROMPTS.get(session.character, CHARACTER_PROMPTS["harry_potter"])
-        ai_text = _build_opener(char, session.student_name, session.student_age or 10, session.student_grade or "")
+        ai_text = _build_opener(char, student_name, student_age, student_grade)
         ai_turn = BenchmarkTurn(session_id=session.id, turn_number=1, speaker="ai", text=ai_text)
         db.add(ai_turn)
         session.total_turns = 1
@@ -240,9 +290,9 @@ async def conversation_turn(data: BenchmarkTurnRequest, db: AsyncSession = Depen
 
         ai_text = await claude_service.get_ai_response(
             character=session.character,
-            student_name=session.student_name,
-            age=session.student_age or 10,
-            grade=session.student_grade or "",
+            student_name=student_name,
+            age=student_age,
+            grade=student_grade,
             conversation_history=conversation_history,
         )
         ai_turn_number = data.turn_number + 1
@@ -294,6 +344,7 @@ async def end_session(data: BenchmarkEndRequest, background_tasks: BackgroundTas
 
 def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
     session = b.session
+    student = session.student if session else None
     return BenchmarkResultOut(
         id=b.id,
         session_id=b.session_id,
@@ -319,9 +370,8 @@ def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
         curriculum_signals=b.curriculum_signals,
         summary=b.summary,
         conversation_snapshot=b.conversation_snapshot,
-        student_name=session.student_name if session else None,
-        student_age=session.student_age if session else None,
-        student_grade=session.student_grade if session else None,
+        student_name=student.name if student else None,
+        student_grade=student.grade if student else None,
         character=session.character if session else None,
         total_turns=session.total_turns if session else None,
         session_started_at=session.started_at if session else None,
@@ -329,13 +379,26 @@ def _result_to_out(b: BenchmarkResult) -> BenchmarkResultOut:
 
 
 @router.get("/results/{session_id}", response_model=BenchmarkResultOut)
-async def get_benchmark_result(session_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_benchmark_result(
+    session_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await _get_student_for_user(user, db)
+    sess_result = await db.execute(
+        select(BenchmarkSession).where(
+            BenchmarkSession.id == session_id,
+            BenchmarkSession.student_id == student.id,
+        )
+    )
+    sess = sess_result.scalar_one_or_none()
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+
     result = await db.execute(select(BenchmarkResult).where(BenchmarkResult.session_id == session_id))
     benchmark = result.scalar_one_or_none()
     if not benchmark:
-        sess_result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == session_id))
-        session = sess_result.scalar_one_or_none()
-        if session and session.status == "benchmark_failed":
+        if sess.status == "benchmark_failed":
             return JSONResponse(status_code=500, content={"status": "failed", "detail": "Benchmark generation failed"})
         return JSONResponse(status_code=202, content={"status": "pending"})
     return _result_to_out(benchmark)
@@ -345,15 +408,18 @@ async def get_benchmark_result(session_id: UUID, db: AsyncSession = Depends(get_
 async def list_benchmark_results(
     limit: int = 20,
     offset: int = 0,
-    search: Optional[str] = None,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(BenchmarkResult).order_by(BenchmarkResult.generated_at.desc())
-    if search:
-        query = query.join(BenchmarkSession, BenchmarkResult.session_id == BenchmarkSession.id).where(
-            BenchmarkSession.student_name.ilike(f"%{search}%")
-        )
-    query = query.offset(offset).limit(limit)
+    student = await _get_student_for_user(user, db)
+    query = (
+        select(BenchmarkResult)
+        .join(BenchmarkSession, BenchmarkResult.session_id == BenchmarkSession.id)
+        .where(BenchmarkSession.student_id == student.id)
+        .order_by(BenchmarkResult.generated_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
     result = await db.execute(query)
     return [_result_to_out(b) for b in result.scalars().all()]
 

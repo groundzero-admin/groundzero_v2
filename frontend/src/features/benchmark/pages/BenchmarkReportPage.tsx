@@ -103,7 +103,7 @@ export default function BenchmarkReportPage() {
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#26221D", fontFamily: "'Nunito', sans-serif" }}>{benchmark.student_name}</div>
             <div style={{ fontSize: 13, color: "#A89E94" }}>
-              Age {benchmark.student_age} &middot; {benchmark.student_grade} &middot; {char.name} &middot; {benchmark.total_turns} turns
+              Grade {benchmark.student_grade} &middot; {char.name} &middot; {benchmark.total_turns} turns
             </div>
           </div>
         </div>

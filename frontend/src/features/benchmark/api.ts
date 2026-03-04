@@ -2,9 +2,6 @@ import { api } from "@/api/client";
 
 export const benchmarkApi = {
   createSession: (data: {
-    student_name: string;
-    student_age: number;
-    student_grade: string;
     character: string;
     voice_provider: string;
   }) => api.post("/benchmark/sessions", data),

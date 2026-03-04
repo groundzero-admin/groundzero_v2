@@ -90,7 +90,7 @@ export default function BenchmarkHistoryPage() {
                     <td style={{ padding: "10px 16px", fontWeight: 600, color: "#26221D" }}>
                       {b.student_name}
                       <div style={{ fontSize: 11, color: "#A89E94", fontWeight: 400 }}>
-                        Age {b.student_age} &middot; {b.student_grade}
+                        Grade {b.student_grade}
                       </div>
                     </td>
                     <td style={{ padding: "10px 12px" }}>

@@ -16,10 +16,7 @@ class BenchmarkSession(Base):
     __tablename__ = "bm_sessions"
 
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    student_id = Column(PGUUID(as_uuid=True), nullable=False)
-    student_name = Column(String(100), nullable=False)
-    student_age = Column(Integer, nullable=True)
-    student_grade = Column(String(20), nullable=True)
+    student_id = Column(PGUUID(as_uuid=True), ForeignKey("students.id"), nullable=False)
     character = Column(String(50), nullable=False)
     voice_provider = Column(String(20), nullable=False, default="sarvam")
     status = Column(String(20), default="active")
@@ -27,6 +24,7 @@ class BenchmarkSession(Base):
     ended_at = Column(DateTime(timezone=True), nullable=True)
     total_turns = Column(Integer, default=0)
 
+    student = relationship("Student", lazy="selectin")
     turns = relationship(
         "BenchmarkTurn",
         back_populates="session",
