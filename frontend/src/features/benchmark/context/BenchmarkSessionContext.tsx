@@ -17,7 +17,7 @@ export function BenchmarkSessionProvider({ children }: { children: ReactNode }) 
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [voiceProvider, setVoiceProviderState] = useState(
-    () => localStorage.getItem("bm_voiceProvider") || "sarvam"
+    () => localStorage.getItem("bm_voiceProvider") || "sarvam_realtime"
   );
 
   const setProvider = (p: string) => {

@@ -41,6 +41,24 @@ class BenchmarkEndRequest(BaseModel):
     session_id: UUID
 
 
+class RealtimeStartResponse(BaseModel):
+    session_id: UUID
+    signed_url: str
+    agent_id: str
+    system_prompt: str
+    first_message: str
+
+
+class TranscriptTurn(BaseModel):
+    speaker: str
+    text: str
+
+
+class SaveTranscriptRequest(BaseModel):
+    session_id: UUID
+    transcript: list[TranscriptTurn]
+
+
 class PillarStages(BaseModel):
     communication: int = 1
     creativity: int = 1

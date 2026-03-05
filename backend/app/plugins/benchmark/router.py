@@ -35,9 +35,16 @@ from app.plugins.benchmark.schemas import (
     BenchmarkSessionOut,
     BenchmarkTurnRequest,
     BenchmarkTurnResponse,
+    RealtimeStartResponse,
+    SaveTranscriptRequest,
 )
 from app.plugins.benchmark.services import claude_service, voice_service
 from app.plugins.benchmark.services.claude_service import CHARACTER_PROMPTS, _build_opener, _build_farewell
+from app.plugins.benchmark.services.elevenlabs_conversation import (
+    get_or_create_agent,
+    get_signed_url,
+    build_session_prompt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +353,82 @@ async def end_session(data: BenchmarkEndRequest, background_tasks: BackgroundTas
     return {"message": "Session ended, benchmark generating", "session_id": str(data.session_id)}
 
 
+# ─── Realtime (ElevenLabs Conversational AI) endpoints ───
+
+
+@router.post("/conversation/start-realtime", response_model=RealtimeStartResponse)
+async def start_realtime_conversation(
+    data: BenchmarkSessionCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a session and return an ElevenLabs signed URL for real-time voice conversation."""
+    student = await _get_student_for_user(user, db)
+    session = BenchmarkSession(
+        student_id=student.id,
+        character=data.character,
+        voice_provider="elevenlabs",
+    )
+    db.add(session)
+    await db.commit()
+    await db.refresh(session)
+
+    agent_id = await get_or_create_agent(data.character)
+    signed_url = await get_signed_url(agent_id)
+
+    student_name = student.name or "Student"
+    student_age = (student.grade + 5) if student.grade else 10
+    student_grade = str(student.grade) if student.grade else ""
+
+    system_prompt = build_session_prompt(data.character, student_name, student_age, student_grade)
+    char = CHARACTER_PROMPTS.get(data.character, CHARACTER_PROMPTS["harry_potter"])
+    first_message = _build_opener(char, student_name, student_age, student_grade)
+
+    return RealtimeStartResponse(
+        session_id=session.id,
+        signed_url=signed_url,
+        agent_id=agent_id,
+        system_prompt=system_prompt,
+        first_message=first_message,
+    )
+
+
+@router.post("/conversation/save-transcript")
+async def save_transcript(
+    data: SaveTranscriptRequest,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Save the transcript from a realtime conversation and trigger benchmark generation."""
+    student = await _get_student_for_user(user, db)
+    result = await db.execute(
+        select(BenchmarkSession).where(
+            BenchmarkSession.id == data.session_id,
+            BenchmarkSession.student_id == student.id,
+        )
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    for i, turn in enumerate(data.transcript):
+        db.add(BenchmarkTurn(
+            session_id=session.id,
+            turn_number=i + 1,
+            speaker="student" if turn.speaker == "user" else "ai",
+            text=turn.text,
+        ))
+
+    session.total_turns = len(data.transcript)
+    session.status = "completed"
+    session.ended_at = datetime.now(timezone.utc)
+    await db.commit()
+
+    background_tasks.add_task(_run_benchmark_background, data.session_id)
+    return {"message": "Transcript saved, benchmark generating", "session_id": str(data.session_id)}
+
+
 # ─── Benchmark result endpoints ───
 
 
@@ -558,13 +641,116 @@ async def websocket_stt(websocket: WebSocket):
             interim_task.cancel()
 
 
+@router.websocket("/voice/ws/realtime")
+async def websocket_realtime_sarvam(websocket: WebSocket):
+    """Real-time conversational voice via Sarvam streaming STT + Claude + Sarvam streaming TTS."""
+    await websocket.accept()
+
+    from app.plugins.benchmark.services.sarvam_realtime import SarvamConversationPipeline
+
+    pipeline: SarvamConversationPipeline | None = None
+    stt_listener_task: asyncio.Task | None = None
+    session_id: str | None = None
+
+    try:
+        # Wait for init message with session config
+        init_raw = await websocket.receive_text()
+        init_data = json.loads(init_raw)
+        character = init_data["character"]
+        student_name = init_data.get("student_name", "Student")
+        student_age = init_data.get("student_age", 10)
+        student_grade = init_data.get("student_grade", "")
+        session_id = init_data.get("session_id")
+
+        async def on_user_transcript(text: str):
+            await websocket.send_json({"type": "user_transcript", "text": text})
+
+        async def on_agent_text(text: str, delta: bool = False):
+            await websocket.send_json({
+                "type": "agent_text_delta" if delta else "agent_text",
+                "text": text,
+            })
+
+        async def on_agent_audio(audio_b64: str):
+            await websocket.send_json({"type": "agent_audio", "audio": audio_b64})
+
+        async def on_turn_complete(turn_count: int):
+            await websocket.send_json({"type": "turn_complete", "turn_count": turn_count})
+
+        pipeline = SarvamConversationPipeline(
+            character=character,
+            student_name=student_name,
+            student_age=student_age,
+            student_grade=student_grade,
+            on_user_transcript=on_user_transcript,
+            on_agent_text=on_agent_text,
+            on_agent_audio=on_agent_audio,
+            on_turn_complete=on_turn_complete,
+        )
+
+        # Send opener text immediately, TTS runs in background
+        await pipeline.send_opener_text()
+        await websocket.send_json({"type": "ready"})
+
+        # Start TTS for opener in background while we set up STT
+        opener_tts_task = asyncio.create_task(pipeline.synthesize_opener())
+
+        # Connect streaming STT
+        await pipeline.connect_stt()
+        stt_listener_task = asyncio.create_task(pipeline.listen_stt())
+
+        # Wait for opener TTS to finish before entering audio loop
+        await opener_tts_task
+
+        # Forward audio from frontend to Sarvam STT
+        audio_frame_count = 0
+        while True:
+            message = await websocket.receive()
+            if message["type"] == "websocket.receive":
+                if "bytes" in message and message["bytes"]:
+                    audio_frame_count += 1
+                    if audio_frame_count == 1:
+                        logger.info("First audio frame received (%d bytes)", len(message["bytes"]))
+                    elif audio_frame_count % 100 == 0:
+                        logger.info("Audio frames received: %d", audio_frame_count)
+                    await pipeline.feed_audio(message["bytes"])
+                elif "text" in message and message["text"]:
+                    data = json.loads(message["text"])
+                    if data.get("action") == "end":
+                        await pipeline.generate_farewell()
+                        transcript = pipeline.get_transcript()
+                        await websocket.send_json({
+                            "type": "ended",
+                            "transcript": transcript,
+                            "turn_count": pipeline.turn_count,
+                        })
+                        break
+            elif message["type"] == "websocket.disconnect":
+                break
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error("Realtime Sarvam WS error: %s", e)
+        try:
+            await websocket.send_json({"type": "error", "detail": str(e)})
+        except Exception:
+            pass
+    finally:
+        if stt_listener_task:
+            stt_listener_task.cancel()
+        if pipeline:
+            await pipeline.stop()
+
+
 @router.get("/voice/providers")
 async def get_providers():
-    default = os.getenv("DEFAULT_VOICE_PROVIDER", "sarvam")
+    default = os.getenv("DEFAULT_VOICE_PROVIDER", "sarvam_realtime")
     return {
         "providers": [
-            {"id": "sarvam", "name": "Sarvam AI (Bulbul v3)", "tier": "test"},
-            {"id": "elevenlabs", "name": "ElevenLabs", "tier": "production"},
+            {"id": "sarvam_realtime", "name": "Sarvam Conversational AI", "mode": "realtime"},
+            {"id": "sarvam", "name": "Sarvam Turn-based", "mode": "turn_based"},
+            {"id": "elevenlabs_realtime", "name": "ElevenLabs Conversational AI", "mode": "realtime"},
+            {"id": "elevenlabs", "name": "ElevenLabs Turn-based", "mode": "turn_based"},
         ],
         "default": default,
     }

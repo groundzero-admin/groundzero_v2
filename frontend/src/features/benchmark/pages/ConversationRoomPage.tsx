@@ -4,16 +4,29 @@ import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
 import useConversation from "../hooks/useConversation";
+import useRealtimeConversation from "../hooks/useRealtimeConversation";
+import useSarvamRealtimeConversation from "../hooks/useSarvamRealtimeConversation";
 import useVoiceRecording from "../hooks/useVoiceRecording";
 import TranscriptPanel from "../components/TranscriptPanel";
 import VoiceVisualizer from "../components/VoiceVisualizer";
-import { Mic, Type, Send } from "lucide-react";
+import { Mic, Type, Send, Phone } from "lucide-react";
+
+const PROVIDER_LABELS: Record<string, string> = {
+  sarvam_realtime: "Sarvam Conversational AI",
+  sarvam: "Sarvam Turn-based",
+  elevenlabs_realtime: "ElevenLabs Conversational AI",
+  elevenlabs: "ElevenLabs Turn-based",
+};
 
 const STATUS_LABELS: Record<string, string> = {
   idle: "Ready",
   listening: "Listening",
   thinking: "Processing",
   speaking: "Speaking",
+  connecting: "Connecting...",
+  connected: "Live",
+  disconnected: "Not connected",
+  ended: "Ended",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -21,14 +34,26 @@ const STATUS_COLORS: Record<string, string> = {
   listening: "#38A169",
   thinking: "#ED8936",
   speaking: "#3182CE",
+  connecting: "#ED8936",
+  connected: "#38A169",
+  disconnected: "#D4C9BD",
+  ended: "#D4C9BD",
 };
 
 export default function ConversationRoomPage() {
   const navigate = useNavigate();
   const { studentId } = useStudent();
   const { data: student } = useStudentById(studentId);
-  const { selectedCharacter, sessionId } = useBenchmarkSession();
-  const { sendTurnStream, endSession, history, status, setStatus, turnCount, isLoading } = useConversation();
+  const { selectedCharacter, sessionId, voiceProvider } = useBenchmarkSession();
+
+  const isRealtime = voiceProvider === "sarvam_realtime" || voiceProvider === "elevenlabs_realtime";
+  const isElevenLabsRealtime = voiceProvider === "elevenlabs_realtime";
+  const isSarvamRealtime = voiceProvider === "sarvam_realtime";
+
+  // Hooks (all called unconditionally per React rules)
+  const turnBased = useConversation();
+  const elevenlabsRt = useRealtimeConversation();
+  const sarvamRt = useSarvamRealtimeConversation();
   const { startRecording, stopRecording, isRecording, isSupported, interimTranscript } = useVoiceRecording();
 
   const [useTextInput, setUseTextInput] = useState(!isSupported);
@@ -36,64 +61,127 @@ export default function ConversationRoomPage() {
   const [initialized, setInitialized] = useState(false);
   const initRef = useRef(false);
 
-  const character = selectedCharacter || { initial: "AI", name: "Guide", color: "#805AD5", accent: "#B794F4", tagline: "" };
+  const character = selectedCharacter || { id: "", initial: "AI", name: "Guide", color: "#805AD5", accent: "#B794F4", tagline: "" };
+
+  // ─── Derive unified state from active hook ───
+
+  let currentStatus: string;
+  let transcriptHistory: { speaker: "student" | "ai"; text: string }[];
+  let turnCount: number;
+  let isLoadingAny: boolean;
+  let isSpeakingNow: boolean;
+
+  if (isElevenLabsRealtime) {
+    currentStatus = elevenlabsRt.status;
+    transcriptHistory = elevenlabsRt.transcript.map((t) => ({
+      speaker: t.speaker === "user" ? "student" as const : "ai" as const,
+      text: t.text,
+    }));
+    turnCount = elevenlabsRt.transcript.length;
+    isLoadingAny = elevenlabsRt.status === "connecting" || elevenlabsRt.isSaving;
+    isSpeakingNow = elevenlabsRt.isSpeaking;
+  } else if (isSarvamRealtime) {
+    currentStatus = sarvamRt.status;
+    transcriptHistory = sarvamRt.transcript.map((t) => ({
+      speaker: t.speaker === "user" ? "student" as const : "ai" as const,
+      text: t.text,
+    }));
+    turnCount = sarvamRt.turnCount;
+    isLoadingAny = sarvamRt.status === "connecting" || sarvamRt.isSaving;
+    isSpeakingNow = sarvamRt.isSpeaking;
+  } else {
+    currentStatus = turnBased.status;
+    transcriptHistory = turnBased.history;
+    turnCount = turnBased.turnCount;
+    isLoadingAny = turnBased.isLoading;
+    isSpeakingNow = turnBased.status === "speaking";
+  }
+
   const progress = Math.round((turnCount / 20) * 100);
 
+  // ─── ElevenLabs realtime init ───
   useEffect(() => {
-    if (!sessionId || initRef.current) return;
+    if (!isElevenLabsRealtime || initRef.current || !selectedCharacter) return;
     initRef.current = true;
-    sendTurnStream(sessionId, "[START]", 1).then(() => setInitialized(true)).catch(() => alert("Failed to start"));
-  }, [sessionId, sendTurnStream]);
+    elevenlabsRt.startConversation(selectedCharacter.id).then(() => setInitialized(true)).catch(() => alert("Failed to start ElevenLabs conversation"));
+  }, [isElevenLabsRealtime, selectedCharacter, elevenlabsRt.startConversation]);
 
+  // ─── Sarvam realtime init ───
+  useEffect(() => {
+    if (!isSarvamRealtime || initRef.current || !selectedCharacter || !sessionId || !student) return;
+    initRef.current = true;
+    sarvamRt
+      .startConversation(selectedCharacter.id, student.name || "Student", 10, String(student.grade || ""), sessionId)
+      .then(() => setInitialized(true))
+      .catch(() => alert("Failed to start Sarvam conversation"));
+  }, [isSarvamRealtime, selectedCharacter, sessionId, student, sarvamRt.startConversation]);
+
+  // ─── Turn-based init ───
+  useEffect(() => {
+    if (isRealtime || !sessionId || initRef.current) return;
+    initRef.current = true;
+    turnBased.sendTurnStream(sessionId, "[START]", 1).then(() => setInitialized(true)).catch(() => alert("Failed to start"));
+  }, [sessionId, turnBased.sendTurnStream, isRealtime]);
+
+  // ─── Turn-based: send text ───
   const handleSendText = useCallback(async () => {
-    if (!textValue.trim() || isLoading || !sessionId) return;
+    if (isRealtime || !textValue.trim() || turnBased.isLoading || !sessionId) return;
     const text = textValue.trim();
     setTextValue("");
     try {
-      const data = await sendTurnStream(sessionId, text, turnCount + 1);
+      const data = await turnBased.sendTurnStream(sessionId, text, turnBased.turnCount + 1);
       if (data && data.turn_number >= 20) {
-        await sendTurnStream(sessionId, "[END]", data.turn_number + 1);
-        await endSession(sessionId);
+        await turnBased.sendTurnStream(sessionId, "[END]", data.turn_number + 1);
+        await turnBased.endSession(sessionId);
         navigate(`/benchmark/report/${sessionId}`);
       }
     } catch { alert("Failed to send message"); }
-  }, [textValue, isLoading, sessionId, turnCount, sendTurnStream, endSession, navigate]);
+  }, [isRealtime, textValue, turnBased, sessionId, navigate]);
 
+  // ─── Turn-based: mic toggle ───
   const handleMicToggle = useCallback(async () => {
+    if (isRealtime) return;
     if (isRecording) { stopRecording(); return; }
-    if (isLoading || (status !== "idle" && status !== "listening")) return;
+    if (turnBased.isLoading || (turnBased.status !== "idle" && turnBased.status !== "listening")) return;
     try {
-      setStatus("listening");
+      turnBased.setStatus("listening");
       const transcript = await startRecording();
-      if (!transcript) { setStatus("idle"); return; }
-      const data = await sendTurnStream(sessionId!, transcript, turnCount + 1);
+      if (!transcript) { turnBased.setStatus("idle"); return; }
+      const data = await turnBased.sendTurnStream(sessionId!, transcript, turnBased.turnCount + 1);
       if (data && data.turn_number >= 20) {
-        await sendTurnStream(sessionId!, "[END]", data.turn_number + 1);
-        await endSession(sessionId!);
+        await turnBased.sendTurnStream(sessionId!, "[END]", data.turn_number + 1);
+        await turnBased.endSession(sessionId!);
         navigate(`/benchmark/report/${sessionId}`);
       }
-    } catch { setStatus("idle"); }
-  }, [isRecording, isLoading, status, sessionId, turnCount, stopRecording, startRecording, sendTurnStream, endSession, navigate, setStatus]);
+    } catch { turnBased.setStatus("idle"); }
+  }, [isRealtime, isRecording, turnBased, sessionId, stopRecording, startRecording, navigate]);
 
+  // ─── End conversation (all modes) ───
   const handleEnd = useCallback(async () => {
-    if (!sessionId) return;
     try {
-      await sendTurnStream(sessionId, "[END]", turnCount + 1);
-      await endSession(sessionId);
-      navigate(`/benchmark/report/${sessionId}`);
+      if (isElevenLabsRealtime) {
+        const sid = await elevenlabsRt.endConversation();
+        if (sid) navigate(`/benchmark/report/${sid}`);
+      } else if (isSarvamRealtime) {
+        const sid = await sarvamRt.endConversation();
+        if (sid) navigate(`/benchmark/report/${sid}`);
+      } else {
+        if (!sessionId) return;
+        await turnBased.sendTurnStream(sessionId, "[END]", turnBased.turnCount + 1);
+        await turnBased.endSession(sessionId);
+        navigate(`/benchmark/report/${sessionId}`);
+      }
     } catch { alert("Failed to end session"); }
-  }, [endSession, sessionId, navigate, sendTurnStream, turnCount]);
+  }, [isElevenLabsRealtime, isSarvamRealtime, elevenlabsRt, sarvamRt, turnBased, sessionId, navigate]);
 
   return (
     <div style={{ height: "100vh", display: "flex", backgroundColor: "#FAF7F4" }}>
       {/* Sidebar */}
       <div
         style={{
-          width: 260,
-          minWidth: 240,
+          width: 260, minWidth: 240,
           borderRight: "1px solid #E8E0D8",
-          display: "flex",
-          flexDirection: "column",
+          display: "flex", flexDirection: "column",
           backgroundColor: "#FFFFFF",
         }}
       >
@@ -132,123 +220,161 @@ export default function ConversationRoomPage() {
 
         <div style={{ padding: "16px 20px", borderBottom: "1px solid #E8E0D8" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: STATUS_COLORS[status] || "#D4C9BD" }} />
-            <span style={{ fontSize: 12, color: "#7A7168", fontWeight: 500 }}>{STATUS_LABELS[status] || "Ready"}</span>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: STATUS_COLORS[currentStatus] || "#D4C9BD" }} />
+            <span style={{ fontSize: 12, color: "#7A7168", fontWeight: 500 }}>{STATUS_LABELS[currentStatus] || "Ready"}</span>
           </div>
           <div style={{ marginTop: 12 }}>
-            <VoiceVisualizer isActive={status === "speaking"} color={character.color} />
+            <VoiceVisualizer isActive={isSpeakingNow} color={character.color} />
           </div>
         </div>
 
         <div style={{ marginTop: "auto", padding: 16, borderTop: "1px solid #E8E0D8" }}>
-          <div style={{ fontSize: 10, color: "#A89E94", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, marginBottom: 8 }}>Voice Provider</div>
-          <div style={{ display: "flex", gap: 4 }}>
-            {["sarvam", "elevenlabs"].map((p) => (
-              <button
-                key={p}
-                style={{
-                  flex: 1, padding: "4px 8px", fontSize: 11, fontWeight: 500, borderRadius: 6,
-                  border: "1px solid #E8E0D8", cursor: "pointer",
-                  backgroundColor: "#FAF7F4", color: "#7A7168",
-                  textTransform: "capitalize",
-                }}
-              >
-                {p === "sarvam" ? "Sarvam" : "ElevenLabs"}
-              </button>
-            ))}
+          <div style={{ fontSize: 10, color: "#A89E94", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600, marginBottom: 8 }}>
+            Voice Mode
+          </div>
+          <div style={{
+            padding: "6px 10px", borderRadius: 6, border: "1px solid #E8E0D8",
+            backgroundColor: "#FAF7F4", fontSize: 11, color: "#7A7168", fontWeight: 500, textAlign: "center",
+          }}>
+            {PROVIDER_LABELS[voiceProvider] || voiceProvider}
           </div>
         </div>
       </div>
 
       {/* Main chat */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
-        {isLoading && !initialized && (
+        {isLoadingAny && !initialized && (
           <div style={{
             position: "absolute", inset: 0, zIndex: 50, backgroundColor: "rgba(250,247,244,0.95)",
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           }}>
             <div style={{ width: 32, height: 32, border: "3px solid #E8E0D8", borderTopColor: "#805AD5", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-            <p style={{ color: "#A89E94", marginTop: 16, fontSize: 14 }}>Starting conversation...</p>
+            <p style={{ color: "#A89E94", marginTop: 16, fontSize: 14 }}>
+              {isRealtime ? "Connecting to voice agent..." : "Starting conversation..."}
+            </p>
           </div>
         )}
 
-        <TranscriptPanel history={history} characterInitial={character.initial} characterColor={character.color} />
+        <TranscriptPanel history={transcriptHistory} characterInitial={character.initial} characterColor={character.color} />
 
         {/* Input bar */}
         <div style={{ borderTop: "1px solid #E8E0D8", padding: "12px 24px", backgroundColor: "#FFFFFF", display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={() => setUseTextInput(!useTextInput)}
-            style={{
-              width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
-              backgroundColor: "transparent", border: "1px solid #E8E0D8", cursor: "pointer", color: "#A89E94",
-            }}
-            title={useTextInput ? "Switch to voice" : "Switch to text"}
-          >
-            {useTextInput ? <Mic size={16} /> : <Type size={16} />}
-          </button>
-
-          {useTextInput ? (
-            <div style={{ flex: 1, display: "flex", gap: 8 }}>
-              <input
-                value={textValue}
-                onChange={(e) => setTextValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSendText()}
-                placeholder="Type a message..."
-                disabled={isLoading || status !== "idle"}
-                style={{
-                  flex: 1, padding: "10px 16px", borderRadius: 10, border: "1px solid #E8E0D8",
-                  fontSize: 14, outline: "none", backgroundColor: "#FAF7F4", color: "#26221D",
-                  fontFamily: "'Inter', sans-serif",
-                }}
-              />
-              <button
-                onClick={handleSendText}
-                disabled={isLoading || !textValue.trim()}
-                style={{
-                  width: 40, height: 40, borderRadius: 10, border: "none",
-                  backgroundColor: character.color, color: "#fff", cursor: "pointer",
+          {isRealtime ? (
+            /* ─── Realtime modes (Sarvam / ElevenLabs) ─── */
+            <>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: 16, border: "none",
+                  backgroundColor: currentStatus === "connected" ? character.color + "15" : "#FAF7F4",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  opacity: isLoading || !textValue.trim() ? 0.4 : 1,
-                }}
-              >
-                <Send size={16} />
-              </button>
-            </div>
-          ) : (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              {interimTranscript && (
-                <div style={{ fontSize: 12, color: "#7A7168" }}>"{interimTranscript}"</div>
+                  boxShadow: isSpeakingNow ? `0 0 30px ${character.color}40` : "none",
+                  transition: "box-shadow 300ms",
+                }}>
+                  {isSpeakingNow ? (
+                    <VoiceVisualizer isActive color={character.color} />
+                  ) : (
+                    <Mic size={24} color={currentStatus === "connected" ? character.color : "#A89E94"} />
+                  )}
+                </div>
+                <span style={{ fontSize: 11, color: "#A89E94" }}>
+                  {currentStatus === "connected"
+                    ? isSpeakingNow ? "Agent speaking..." : "Listening..."
+                    : currentStatus === "connecting" ? "Connecting..." : "Disconnected"}
+                </span>
+              </div>
+              {currentStatus === "connected" && (
+                <button
+                  onClick={handleEnd}
+                  disabled={isLoadingAny}
+                  style={{
+                    padding: "8px 20px", borderRadius: 10, border: "none",
+                    backgroundColor: "#E53E3E", color: "#fff", fontSize: 13, fontWeight: 600,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                    opacity: isLoadingAny ? 0.4 : 1,
+                  }}
+                >
+                  <Phone size={14} /> End Call
+                </button>
               )}
+            </>
+          ) : (
+            /* ─── Turn-based modes (Sarvam / ElevenLabs) ─── */
+            <>
               <button
-                onClick={handleMicToggle}
-                disabled={isLoading || (status !== "idle" && status !== "listening" && !isRecording)}
+                onClick={() => setUseTextInput(!useTextInput)}
                 style={{
-                  width: 48, height: 48, borderRadius: 12, border: "none",
-                  backgroundColor: isRecording ? "#E53E3E" : character.color,
-                  color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: isRecording ? "0 0 20px rgba(229,62,62,0.3)" : `0 0 15px ${character.color}30`,
+                  width: 36, height: 36, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+                  backgroundColor: "transparent", border: "1px solid #E8E0D8", cursor: "pointer", color: "#A89E94",
                 }}
+                title={useTextInput ? "Switch to voice" : "Switch to text"}
               >
-                <Mic size={20} />
+                {useTextInput ? <Mic size={16} /> : <Type size={16} />}
               </button>
-              <span style={{ fontSize: 11, color: "#A89E94" }}>
-                {isRecording ? "Click to stop" : "Click to record"}
-              </span>
-            </div>
-          )}
 
-          {turnCount >= 5 && (
-            <button
-              onClick={handleEnd}
-              disabled={isLoading}
-              style={{
-                padding: "6px 16px", borderRadius: 8, border: "1px solid #E8E0D8",
-                backgroundColor: "transparent", color: "#7A7168", fontSize: 13, fontWeight: 500,
-                cursor: "pointer", opacity: isLoading ? 0.4 : 1,
-              }}
-            >
-              End
-            </button>
+              {useTextInput ? (
+                <div style={{ flex: 1, display: "flex", gap: 8 }}>
+                  <input
+                    value={textValue}
+                    onChange={(e) => setTextValue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendText()}
+                    placeholder="Type a message..."
+                    disabled={turnBased.isLoading || turnBased.status !== "idle"}
+                    style={{
+                      flex: 1, padding: "10px 16px", borderRadius: 10, border: "1px solid #E8E0D8",
+                      fontSize: 14, outline: "none", backgroundColor: "#FAF7F4", color: "#26221D",
+                      fontFamily: "'Inter', sans-serif",
+                    }}
+                  />
+                  <button
+                    onClick={handleSendText}
+                    disabled={turnBased.isLoading || !textValue.trim()}
+                    style={{
+                      width: 40, height: 40, borderRadius: 10, border: "none",
+                      backgroundColor: character.color, color: "#fff", cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      opacity: turnBased.isLoading || !textValue.trim() ? 0.4 : 1,
+                    }}
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                  {interimTranscript && (
+                    <div style={{ fontSize: 12, color: "#7A7168" }}>"{interimTranscript}"</div>
+                  )}
+                  <button
+                    onClick={handleMicToggle}
+                    disabled={turnBased.isLoading || (turnBased.status !== "idle" && turnBased.status !== "listening" && !isRecording)}
+                    style={{
+                      width: 48, height: 48, borderRadius: 12, border: "none",
+                      backgroundColor: isRecording ? "#E53E3E" : character.color,
+                      color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: isRecording ? "0 0 20px rgba(229,62,62,0.3)" : `0 0 15px ${character.color}30`,
+                    }}
+                  >
+                    <Mic size={20} />
+                  </button>
+                  <span style={{ fontSize: 11, color: "#A89E94" }}>
+                    {isRecording ? "Click to stop" : "Click to record"}
+                  </span>
+                </div>
+              )}
+
+              {turnBased.turnCount >= 5 && (
+                <button
+                  onClick={handleEnd}
+                  disabled={turnBased.isLoading}
+                  style={{
+                    padding: "6px 16px", borderRadius: 8, border: "1px solid #E8E0D8",
+                    backgroundColor: "transparent", color: "#7A7168", fontSize: 13, fontWeight: 500,
+                    cursor: "pointer", opacity: turnBased.isLoading ? 0.4 : 1,
+                  }}
+                >
+                  End
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

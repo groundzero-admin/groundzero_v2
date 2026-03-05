@@ -16,4 +16,12 @@ export const benchmarkApi = {
 
   listResults: (params?: { limit?: number; offset?: number; search?: string }) =>
     api.get("/benchmark/results", { params }),
+
+  startRealtime: (data: { character: string }) =>
+    api.post("/benchmark/conversation/start-realtime", data),
+
+  saveTranscript: (data: {
+    session_id: string;
+    transcript: { speaker: string; text: string }[];
+  }) => api.post("/benchmark/conversation/save-transcript", data),
 };

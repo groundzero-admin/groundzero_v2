@@ -1,0 +1,31 @@
+---
+description: Benchmark conversation AI plugin - protected code and architecture context
+globs: backend/app/plugins/benchmark/**,frontend/src/features/benchmark/**
+alwaysApply: false
+---
+
+# Benchmark Plugin (Conversation AI)
+
+This is the conversation AI feature. **Do NOT delete this code.**
+
+## What It Does
+Students have voice/text conversations with AI characters (Harry Potter, Doraemon, Peppa Pig, Simba, Dora) for developmental assessment across 4 pillars and 16 capabilities.
+
+## Voice Providers (both are real-time conversational)
+- **Sarvam AI** (default): Real-time pipeline - streaming STT (Saaras v3 with VAD) → Claude → streaming TTS (Bulbul v3) orchestrated on our backend via WebSocket
+- **ElevenLabs Conversational AI**: Real-time agent - full voice agent via ElevenLabs platform (STT + LLM + TTS end-to-end)
+
+## AI Model Providers
+- **Direct Anthropic API**: Local development (`CLAUDE_API_KEY`)
+- **AWS Bedrock**: Production (`CLAUDE_PROVIDER=bedrock`, uses IAM auth)
+
+## Key Files
+- `backend/app/plugins/benchmark/services/claude_service.py` - AI conversation + benchmark generation
+- `backend/app/plugins/benchmark/services/sarvam_realtime.py` - Sarvam real-time conversational pipeline (streaming STT + Claude + streaming TTS)
+- `backend/app/plugins/benchmark/services/voice_service.py` - TTS/STT helpers (legacy turn-based)
+- `backend/app/plugins/benchmark/services/elevenlabs_conversation.py` - ElevenLabs Conversational AI agent management
+- `backend/app/plugins/benchmark/router.py` - All API endpoints (incl. WS /voice/ws/realtime for Sarvam)
+- `backend/app/plugins/benchmark/services/benchmark_service.py` - Scoring + BKT seeding
+- `frontend/src/features/benchmark/hooks/useSarvamRealtimeConversation.ts` - Sarvam real-time conversation hook (WebSocket + audio streaming)
+- `frontend/src/features/benchmark/hooks/useRealtimeConversation.ts` - ElevenLabs real-time conversation hook
+- `frontend/src/features/benchmark/pages/ConversationRoomPage.tsx` - Unified conversation room (both providers)
