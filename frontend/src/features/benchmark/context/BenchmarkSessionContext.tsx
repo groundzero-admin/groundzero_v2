@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { api } from "@/api/client";
 import type { Character } from "../constants/characters";
 
 interface BenchmarkSessionState {
@@ -16,13 +17,16 @@ const BenchmarkSessionContext = createContext<BenchmarkSessionState | null>(null
 export function BenchmarkSessionProvider({ children }: { children: ReactNode }) {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [voiceProvider, setVoiceProviderState] = useState(
-    () => localStorage.getItem("bm_voiceProvider") || "sarvam_realtime"
-  );
+  const [voiceProvider, setVoiceProviderState] = useState("sarvam_realtime");
+
+  useEffect(() => {
+    api.get("/benchmark/voice/providers").then(({ data }) => {
+      if (data?.default) setVoiceProviderState(data.default);
+    }).catch(() => {});
+  }, []);
 
   const setProvider = (p: string) => {
     setVoiceProviderState(p);
-    localStorage.setItem("bm_voiceProvider", p);
   };
 
   const reset = () => {
