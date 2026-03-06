@@ -17,6 +17,12 @@ import StudioPage from "@/pages/StudioPage";
 import StudioPlayerPage from "@/pages/StudioPlayerPage";
 import TeacherShell from "@/components/layout/TeacherShell";
 import TeacherDashboardPage from "@/pages/teacher/TeacherDashboardPage";
+import AdminShell from "@/components/layout/AdminShell";
+import TemplateCohortListPage from "@/pages/admin/TemplateCohortListPage";
+import TemplateCohortDetailPage from "@/pages/admin/TemplateCohortDetailPage";
+import LiveBatchListPage from "@/pages/admin/LiveBatchListPage";
+import LiveBatchDetailPage from "@/pages/admin/LiveBatchDetailPage";
+import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,6 +48,7 @@ function RootRedirect() {
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === "teacher") return <Navigate to="/teacher" replace />;
+  if (user?.role === "admin") return <Navigate to="/admin" replace />;
   return <Navigate to="/home" replace />;
 }
 
@@ -121,6 +128,22 @@ export default function App() {
                 }
               >
                 <Route path="/teacher" element={<TeacherDashboardPage />} />
+              </Route>
+
+              {/* ── Admin routes ── */}
+              <Route
+                element={
+                  <RequireAuth allowedRoles={["admin"]}>
+                    <AdminShell />
+                  </RequireAuth>
+                }
+              >
+                <Route path="/admin" element={<Navigate to="/admin/templates" replace />} />
+                <Route path="/admin/templates" element={<TemplateCohortListPage />} />
+                <Route path="/admin/templates/:id" element={<TemplateCohortDetailPage />} />
+                <Route path="/admin/batches" element={<LiveBatchListPage />} />
+                <Route path="/admin/batches/:id" element={<LiveBatchDetailPage />} />
+                <Route path="/admin/students" element={<AdminStudentsPage />} />
               </Route>
 
               {/* ── Root redirect ── */}

@@ -6,3 +6,4 @@ export * from "./activity";
 export * from "./curriculum";
 export * from "./evidence";
 export * from "./spark";
+export * from "./admin";
