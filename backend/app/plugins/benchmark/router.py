@@ -1,22 +1,20 @@
 """Benchmark plugin router - all API endpoints.
 
-Combines session management, conversation, benchmark retrieval, and voice endpoints.
-All routes are prefixed with /benchmark.
+Predefined diagnostic Q&A flow:
+1. Create session (select character)
+2. Fetch questions for student's grade band
+3. Submit answers one at a time
+4. Complete session -> triggers AI evaluation + BKT seeding
 """
 
-import asyncio
-import base64
-import json
 import logging
-import os
-import re
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+import fastapi
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -25,32 +23,23 @@ from app.auth import get_current_user
 from app.database import async_session_maker as async_session_factory, get_db
 from app.models.student import Student
 from app.models.user import User
-from app.plugins.benchmark.models import BenchmarkResult, BenchmarkSession, BenchmarkTurn
+from app.plugins.benchmark.models import BenchmarkQuestion, BenchmarkResult, BenchmarkSession, BenchmarkTurn
 from app.plugins.benchmark.schemas import (
-    BenchmarkEndRequest,
+    AnswerOut,
+    AnswerSubmit,
     BenchmarkInsights,
     BenchmarkResultOut,
-    PillarStages,
     BenchmarkSessionCreate,
     BenchmarkSessionOut,
-    BenchmarkTurnRequest,
-    BenchmarkTurnResponse,
-    RealtimeStartResponse,
-    SaveTranscriptRequest,
+    PillarStages,
+    QuestionOut,
+    SessionCompleteRequest,
 )
-from app.plugins.benchmark.services import claude_service, voice_service
-from app.plugins.benchmark.services.claude_service import CHARACTER_PROMPTS, _build_opener, _build_farewell
-from app.plugins.benchmark.services.elevenlabs_conversation import (
-    get_or_create_agent,
-    get_signed_url,
-    build_session_prompt,
-)
+from app.plugins.benchmark.seed_questions import get_grade_band, seed_questions
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/benchmark", tags=["benchmark"])
-
-_SENTENCE_END = re.compile(r'[.!?]["\')\]]?\s*$')
 
 
 async def _get_student_for_user(user: User, db: AsyncSession) -> Student:
@@ -69,7 +58,6 @@ def _session_to_out(session: BenchmarkSession) -> BenchmarkSessionOut:
         student_name=student.name if student else None,
         student_grade=student.grade if student else None,
         character=session.character,
-        voice_provider=session.voice_provider,
         status=session.status,
         started_at=session.started_at,
         total_turns=session.total_turns,
@@ -89,7 +77,7 @@ async def create_session(
     session = BenchmarkSession(
         student_id=student.id,
         character=data.character,
-        voice_provider=data.voice_provider,
+        voice_provider="text",
     )
     db.add(session)
     await db.commit()
@@ -137,185 +125,158 @@ async def list_sessions(
     return [_session_to_out(s) for s in result.scalars().all()]
 
 
-# ─── Conversation endpoints ───
+# ─── Question endpoints ───
 
 
-@router.post("/conversation/turn/stream")
-async def conversation_turn_stream(data: BenchmarkTurnRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == data.session_id))
-    session = result.scalar_one_or_none()
+@router.get("/questions", response_model=list[QuestionOut])
+async def get_questions(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the 20 diagnostic questions for the current student's grade band."""
+    student = await _get_student_for_user(user, db)
+    grade_band = get_grade_band(student.grade or 6)
+
+    result = await db.execute(
+        select(BenchmarkQuestion)
+        .where(
+            BenchmarkQuestion.grade_band == grade_band,
+            BenchmarkQuestion.is_active == True,
+        )
+        .order_by(BenchmarkQuestion.question_number)
+    )
+    questions = result.scalars().all()
+
+    if not questions:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No questions found for grade band {grade_band}. Run the seed script first.",
+        )
+
+    return [
+        QuestionOut(
+            id=q.id,
+            question_number=q.question_number,
+            text=q.text,
+            curriculum_anchor=q.curriculum_anchor,
+            pillars=q.pillars or [],
+        )
+        for q in questions
+    ]
+
+
+@router.post("/questions/seed")
+async def seed_questions_endpoint(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Seed/update the question bank from code. Admin utility."""
+    count = await seed_questions(db)
+    return {"message": f"Seeded {count} questions"}
+
+
+# ─── Answer endpoints ───
+
+
+@router.post("/answers", response_model=AnswerOut)
+async def submit_answer(
+    data: AnswerSubmit,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit a student's answer to a specific question."""
+    student = await _get_student_for_user(user, db)
+
+    sess_result = await db.execute(
+        select(BenchmarkSession).where(
+            BenchmarkSession.id == data.session_id,
+            BenchmarkSession.student_id == student.id,
+        )
+    )
+    session = sess_result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    if session.status in ("completed", "benchmark_ready"):
-        raise HTTPException(status_code=400, detail="Session already ended")
+    if session.status != "active":
+        raise HTTPException(status_code=400, detail="Session is no longer active")
 
-    session_id = session.id
-    student = session.student
-    student_name = student.name if student else "Student"
-    student_age = (student.grade + 5) if student else 10
-    student_grade = str(student.grade) if student else ""
-    character_id = session.character
+    q_result = await db.execute(
+        select(BenchmarkQuestion).where(BenchmarkQuestion.id == data.question_id)
+    )
+    question = q_result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
 
-    if data.student_text == "[START]":
-        char = CHARACTER_PROMPTS.get(character_id, CHARACTER_PROMPTS["harry_potter"])
-        opener_text = _build_opener(char, student_name, student_age, student_grade)
-        ai_turn_number = 1
-        conversation_history = None
-        await db.commit()
-    elif data.student_text == "[END]":
-        char = CHARACTER_PROMPTS.get(character_id, CHARACTER_PROMPTS["harry_potter"])
-        opener_text = _build_farewell(char, student_name)
-        ai_turn_number = session.total_turns + 1
-        conversation_history = None
-        await db.commit()
-    else:
-        student_turn = BenchmarkTurn(
-            session_id=session_id,
-            turn_number=data.turn_number,
-            speaker="student",
-            text=data.student_text,
+    existing = await db.execute(
+        select(BenchmarkTurn).where(
+            BenchmarkTurn.session_id == session.id,
+            BenchmarkTurn.question_id == data.question_id,
         )
-        db.add(student_turn)
-        await db.flush()
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Answer already submitted for this question")
 
-        turns_result = await db.execute(
-            select(BenchmarkTurn)
-            .where(BenchmarkTurn.session_id == session_id)
-            .order_by(BenchmarkTurn.turn_number)
-        )
-        turns = turns_result.scalars().all()
-        conversation_history = [
-            {"role": "user" if t.speaker == "student" else "assistant", "content": t.text}
-            for t in turns
-        ]
-        opener_text = None
-        ai_turn_number = data.turn_number + 1
-        await db.commit()
+    turn = BenchmarkTurn(
+        session_id=session.id,
+        turn_number=data.question_number,
+        speaker="student",
+        text=data.answer_text,
+        question_id=data.question_id,
+    )
+    db.add(turn)
+    session.total_turns = data.question_number
+    await db.commit()
 
-    async def event_generator():
-        queue: asyncio.Queue = asyncio.Queue()
-
-        async def tts_worker(sentence: str, idx: int):
-            try:
-                audio_bytes = await voice_service.text_to_speech(sentence, character_id)
-                audio_b64 = base64.b64encode(audio_bytes).decode()
-                await queue.put(("audio", {"audio_base64": audio_b64, "index": idx}))
-            except Exception as e:
-                logger.warning("TTS failed for sentence %d: %s", idx, e)
-
-        async def produce():
-            full_text = ""
-            sentence_buffer = ""
-            tts_tasks: list[asyncio.Task] = []
-            sentence_idx = 0
-
-            if opener_text:
-                full_text = opener_text
-                await queue.put(("text_delta", {"token": opener_text}))
-                tts_tasks.append(asyncio.create_task(tts_worker(opener_text, 0)))
-            else:
-                async for token in claude_service.stream_ai_response(
-                    character=character_id,
-                    student_name=student_name,
-                    age=student_age,
-                    grade=student_grade,
-                    conversation_history=conversation_history,
-                ):
-                    full_text += token
-                    sentence_buffer += token
-                    await queue.put(("text_delta", {"token": token}))
-
-                    stripped = sentence_buffer.strip()
-                    if stripped and _SENTENCE_END.search(stripped):
-                        tts_tasks.append(asyncio.create_task(tts_worker(stripped, sentence_idx)))
-                        sentence_idx += 1
-                        sentence_buffer = ""
-
-                if sentence_buffer.strip():
-                    tts_tasks.append(asyncio.create_task(tts_worker(sentence_buffer.strip(), sentence_idx)))
-
-            if tts_tasks:
-                await asyncio.gather(*tts_tasks, return_exceptions=True)
-
-            try:
-                async with async_session_factory() as db_save:
-                    ai_turn = BenchmarkTurn(
-                        session_id=session_id,
-                        turn_number=ai_turn_number,
-                        speaker="ai",
-                        text=full_text,
-                    )
-                    db_save.add(ai_turn)
-                    res = await db_save.execute(select(BenchmarkSession).where(BenchmarkSession.id == session_id))
-                    sess = res.scalar_one_or_none()
-                    if sess:
-                        sess.total_turns = ai_turn_number
-                    await db_save.commit()
-            except Exception as e:
-                logger.error("Failed to save AI turn: %s", e)
-
-            await queue.put(("done", {"turn_number": ai_turn_number, "session_id": str(session_id), "ai_text": full_text}))
-
-        task = asyncio.create_task(produce())
-        while True:
-            event_type, payload = await queue.get()
-            yield f"event: {event_type}\ndata: {json.dumps(payload)}\n\n"
-            if event_type == "done":
-                break
-        await task
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    return AnswerOut(
+        turn_number=data.question_number,
+        question_id=question.id,
+        question_number=question.question_number,
+        question_text=question.text,
+        answer_text=data.answer_text,
     )
 
 
-@router.post("/conversation/turn", response_model=BenchmarkTurnResponse)
-async def conversation_turn(data: BenchmarkTurnRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == data.session_id))
-    session = result.scalar_one_or_none()
-    if not session:
+@router.get("/answers/{session_id}", response_model=list[AnswerOut])
+async def get_answers(
+    session_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get all answers submitted for a session."""
+    student = await _get_student_for_user(user, db)
+
+    sess_result = await db.execute(
+        select(BenchmarkSession).where(
+            BenchmarkSession.id == session_id,
+            BenchmarkSession.student_id == student.id,
+        )
+    )
+    if not sess_result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Session not found")
-    if session.status in ("completed", "benchmark_ready"):
-        raise HTTPException(status_code=400, detail="Session already ended")
 
-    student = session.student
-    student_name = student.name if student else "Student"
-    student_age = (student.grade + 5) if student else 10
-    student_grade = str(student.grade) if student else ""
-
-    if data.student_text == "[START]":
-        char = CHARACTER_PROMPTS.get(session.character, CHARACTER_PROMPTS["harry_potter"])
-        ai_text = _build_opener(char, student_name, student_age, student_grade)
-        ai_turn = BenchmarkTurn(session_id=session.id, turn_number=1, speaker="ai", text=ai_text)
-        db.add(ai_turn)
-        session.total_turns = 1
-    else:
-        student_turn = BenchmarkTurn(session_id=session.id, turn_number=data.turn_number, speaker="student", text=data.student_text)
-        db.add(student_turn)
-        await db.flush()
-
-        turns_result = await db.execute(
-            select(BenchmarkTurn).where(BenchmarkTurn.session_id == session.id).order_by(BenchmarkTurn.turn_number)
+    result = await db.execute(
+        select(BenchmarkTurn)
+        .where(
+            BenchmarkTurn.session_id == session_id,
+            BenchmarkTurn.speaker == "student",
+            BenchmarkTurn.question_id.isnot(None),
         )
-        turns = turns_result.scalars().all()
-        conversation_history = [{"role": "user" if t.speaker == "student" else "assistant", "content": t.text} for t in turns]
+        .order_by(BenchmarkTurn.turn_number)
+    )
+    turns = result.scalars().all()
 
-        ai_text = await claude_service.get_ai_response(
-            character=session.character,
-            student_name=student_name,
-            age=student_age,
-            grade=student_grade,
-            conversation_history=conversation_history,
+    return [
+        AnswerOut(
+            turn_number=t.turn_number,
+            question_id=t.question_id,
+            question_number=t.question.question_number if t.question else t.turn_number,
+            question_text=t.question.text if t.question else "",
+            answer_text=t.text,
         )
-        ai_turn_number = data.turn_number + 1
-        ai_turn = BenchmarkTurn(session_id=session.id, turn_number=ai_turn_number, speaker="ai", text=ai_text)
-        db.add(ai_turn)
-        session.total_turns = ai_turn_number
+        for t in turns
+    ]
 
-    await db.commit()
-    return BenchmarkTurnResponse(ai_text=ai_text, audio_base64="", turn_number=session.total_turns, session_id=session.id)
+
+# ─── Session completion ───
 
 
 async def _run_benchmark_background(session_id: UUID):
@@ -338,70 +299,16 @@ async def _run_benchmark_background(session_id: UUID):
             pass
 
 
-@router.post("/conversation/end")
-async def end_session(data: BenchmarkEndRequest, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == data.session_id))
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    session.status = "completed"
-    session.ended_at = datetime.now(timezone.utc)
-    await db.commit()
-
-    background_tasks.add_task(_run_benchmark_background, data.session_id)
-    return {"message": "Session ended, benchmark generating", "session_id": str(data.session_id)}
-
-
-# ─── Realtime (ElevenLabs Conversational AI) endpoints ───
-
-
-@router.post("/conversation/start-realtime", response_model=RealtimeStartResponse)
-async def start_realtime_conversation(
-    data: BenchmarkSessionCreate,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Create a session and return an ElevenLabs signed URL for real-time voice conversation."""
-    student = await _get_student_for_user(user, db)
-    session = BenchmarkSession(
-        student_id=student.id,
-        character=data.character,
-        voice_provider="elevenlabs",
-    )
-    db.add(session)
-    await db.commit()
-    await db.refresh(session)
-
-    agent_id = await get_or_create_agent(data.character)
-    signed_url = await get_signed_url(agent_id)
-
-    student_name = student.name or "Student"
-    student_age = (student.grade + 5) if student.grade else 10
-    student_grade = str(student.grade) if student.grade else ""
-
-    system_prompt = build_session_prompt(data.character, student_name, student_age, student_grade)
-    char = CHARACTER_PROMPTS.get(data.character, CHARACTER_PROMPTS["harry_potter"])
-    first_message = _build_opener(char, student_name, student_age, student_grade)
-
-    return RealtimeStartResponse(
-        session_id=session.id,
-        signed_url=signed_url,
-        agent_id=agent_id,
-        system_prompt=system_prompt,
-        first_message=first_message,
-    )
-
-
-@router.post("/conversation/save-transcript")
-async def save_transcript(
-    data: SaveTranscriptRequest,
+@router.post("/complete")
+async def complete_session(
+    data: SessionCompleteRequest,
     background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Save the transcript from a realtime conversation and trigger benchmark generation."""
+    """Mark session complete and trigger benchmark evaluation."""
     student = await _get_student_for_user(user, db)
+
     result = await db.execute(
         select(BenchmarkSession).where(
             BenchmarkSession.id == data.session_id,
@@ -412,32 +319,40 @@ async def save_transcript(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    for i, turn in enumerate(data.transcript):
-        db.add(BenchmarkTurn(
-            session_id=session.id,
-            turn_number=i + 1,
-            speaker="student" if turn.speaker == "user" else "ai",
-            text=turn.text,
-        ))
+    if session.status not in ("active",):
+        raise HTTPException(status_code=400, detail=f"Session status is '{session.status}', cannot complete")
 
-    session.total_turns = len(data.transcript)
+    answers_result = await db.execute(
+        select(BenchmarkTurn).where(
+            BenchmarkTurn.session_id == session.id,
+            BenchmarkTurn.speaker == "student",
+            BenchmarkTurn.question_id.isnot(None),
+        )
+    )
+    answer_count = len(answers_result.scalars().all())
+    if answer_count < 1:
+        raise HTTPException(status_code=400, detail="No answers submitted yet")
+
     session.status = "completed"
     session.ended_at = datetime.now(timezone.utc)
     await db.commit()
 
     background_tasks.add_task(_run_benchmark_background, data.session_id)
-    return {"message": "Transcript saved, benchmark generating", "session_id": str(data.session_id)}
+    return {
+        "message": "Session completed, benchmark generating",
+        "session_id": str(data.session_id),
+        "answers_count": answer_count,
+    }
 
 
 # ─── Benchmark result endpoints ───
 
 
 def _compute_scores(pillar_stages: dict, capability_stages: dict) -> dict[str, int]:
-    """Derive percentage scores (0-100) from pillar stages (1-5) and capability stages."""
     ps = pillar_stages or {}
     cs = capability_stages or {}
 
-    def _pct(val: int | None) -> int:
+    def _pct(val) -> int:
         if val is None:
             return 0
         return min(100, max(0, int(val) * 20))
@@ -554,203 +469,50 @@ async def list_benchmark_results(
 # ─── Voice endpoints ───
 
 
-class TTSRequest(BaseModel):
-    text: str
-    character: str
-    provider: str = "sarvam"
-
-
 @router.post("/voice/tts")
-async def text_to_speech(data: TTSRequest):
-    try:
-        audio_bytes = await voice_service.text_to_speech(data.text, data.character, data.provider)
-        audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
-        return {"audio_base64": audio_base64, "provider": data.provider}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.websocket("/voice/ws/stt")
-async def websocket_stt(websocket: WebSocket):
-    await websocket.accept()
-    audio_chunks: list[bytes] = []
-    interim_task: asyncio.Task | None = None
-
-    async def _send_interim():
-        last_count = 0
-        try:
-            while True:
-                await asyncio.sleep(2.0)
-                current_count = len(audio_chunks)
-                if current_count == 0 or current_count == last_count:
-                    continue
-                last_count = current_count
-                audio_bytes = b"".join(audio_chunks)
-                try:
-                    transcript = await voice_service.sarvam_stt(audio_bytes, "en-IN")
-                    await websocket.send_json({"transcript": transcript, "final": False})
-                except Exception as e:
-                    logger.warning("Interim STT error: %s", e)
-        except asyncio.CancelledError:
-            pass
+async def tts_endpoint(
+    text: str = fastapi.Form(...),
+    character: str = fastapi.Form("harry_potter"),
+    user: User = Depends(get_current_user),
+):
+    """Convert question text to speech audio. Provider is set in backend config."""
+    from app.plugins.benchmark.services.voice_service import text_to_speech
 
     try:
-        while True:
-            message = await websocket.receive()
-            if message["type"] == "websocket.receive":
-                if "bytes" in message and message["bytes"]:
-                    audio_chunks.append(message["bytes"])
-                    if interim_task is None:
-                        interim_task = asyncio.create_task(_send_interim())
-                elif "text" in message and message["text"]:
-                    try:
-                        data = json.loads(message["text"])
-                    except json.JSONDecodeError:
-                        continue
-
-                    if data.get("action") == "stop":
-                        if interim_task:
-                            interim_task.cancel()
-                            interim_task = None
-                        if not audio_chunks:
-                            await websocket.send_json({"transcript": "", "final": True, "error": "No audio received"})
-                            continue
-                        audio_bytes = b"".join(audio_chunks)
-                        audio_chunks = []
-                        language = data.get("language_code", "en-IN")
-                        try:
-                            transcript = await voice_service.sarvam_stt(audio_bytes, language)
-                            await websocket.send_json({"transcript": transcript, "final": True})
-                        except Exception as e:
-                            logger.error("Final STT error: %s", e)
-                            await websocket.send_json({"transcript": "", "final": True, "error": str(e)})
-
-                    elif data.get("action") == "cancel":
-                        if interim_task:
-                            interim_task.cancel()
-                            interim_task = None
-                        audio_chunks = []
-                        await websocket.send_json({"transcript": "", "cancelled": True})
-
-            elif message["type"] == "websocket.disconnect":
-                break
-    except WebSocketDisconnect:
-        pass
-    finally:
-        if interim_task:
-            interim_task.cancel()
-
-
-@router.websocket("/voice/ws/realtime")
-async def websocket_realtime_sarvam(websocket: WebSocket):
-    """Real-time conversational voice via Sarvam streaming STT + Claude + Sarvam streaming TTS."""
-    await websocket.accept()
-
-    from app.plugins.benchmark.services.sarvam_realtime import SarvamConversationPipeline
-
-    pipeline: SarvamConversationPipeline | None = None
-    stt_listener_task: asyncio.Task | None = None
-    session_id: str | None = None
-
-    try:
-        # Wait for init message with session config
-        init_raw = await websocket.receive_text()
-        init_data = json.loads(init_raw)
-        character = init_data["character"]
-        student_name = init_data.get("student_name", "Student")
-        student_age = init_data.get("student_age", 10)
-        student_grade = init_data.get("student_grade", "")
-        session_id = init_data.get("session_id")
-
-        async def on_user_transcript(text: str):
-            await websocket.send_json({"type": "user_transcript", "text": text})
-
-        async def on_agent_text(text: str, delta: bool = False):
-            await websocket.send_json({
-                "type": "agent_text_delta" if delta else "agent_text",
-                "text": text,
-            })
-
-        async def on_agent_audio(audio_b64: str):
-            await websocket.send_json({"type": "agent_audio", "audio": audio_b64})
-
-        async def on_turn_complete(turn_count: int):
-            await websocket.send_json({"type": "turn_complete", "turn_count": turn_count})
-
-        pipeline = SarvamConversationPipeline(
-            character=character,
-            student_name=student_name,
-            student_age=student_age,
-            student_grade=student_grade,
-            on_user_transcript=on_user_transcript,
-            on_agent_text=on_agent_text,
-            on_agent_audio=on_agent_audio,
-            on_turn_complete=on_turn_complete,
+        audio_bytes = await text_to_speech(text, character)
+        return fastapi.responses.Response(
+            content=audio_bytes,
+            media_type="audio/wav",
+            headers={"Content-Disposition": "inline; filename=question.wav"},
         )
-
-        # Send opener text immediately, TTS runs in background
-        await pipeline.send_opener_text()
-        await websocket.send_json({"type": "ready"})
-
-        # Start TTS for opener in background while we set up STT
-        opener_tts_task = asyncio.create_task(pipeline.synthesize_opener())
-
-        # Connect streaming STT
-        await pipeline.connect_stt()
-        stt_listener_task = asyncio.create_task(pipeline.listen_stt())
-
-        # Wait for opener TTS to finish before entering audio loop
-        await opener_tts_task
-
-        # Forward audio from frontend to Sarvam STT
-        audio_frame_count = 0
-        while True:
-            message = await websocket.receive()
-            if message["type"] == "websocket.receive":
-                if "bytes" in message and message["bytes"]:
-                    audio_frame_count += 1
-                    if audio_frame_count == 1:
-                        logger.info("First audio frame received (%d bytes)", len(message["bytes"]))
-                    elif audio_frame_count % 100 == 0:
-                        logger.info("Audio frames received: %d", audio_frame_count)
-                    await pipeline.feed_audio(message["bytes"])
-                elif "text" in message and message["text"]:
-                    data = json.loads(message["text"])
-                    if data.get("action") == "end":
-                        await pipeline.generate_farewell()
-                        transcript = pipeline.get_transcript()
-                        await websocket.send_json({
-                            "type": "ended",
-                            "transcript": transcript,
-                            "turn_count": pipeline.turn_count,
-                        })
-                        break
-            elif message["type"] == "websocket.disconnect":
-                break
-    except WebSocketDisconnect:
-        pass
     except Exception as e:
-        logger.error("Realtime Sarvam WS error: %s", e)
-        try:
-            await websocket.send_json({"type": "error", "detail": str(e)})
-        except Exception:
-            pass
-    finally:
-        if stt_listener_task:
-            stt_listener_task.cancel()
-        if pipeline:
-            await pipeline.stop()
+        logger.error("TTS failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
 
 
-@router.get("/voice/providers")
-async def get_providers():
-    default = os.getenv("DEFAULT_VOICE_PROVIDER", "sarvam_realtime")
-    return {
-        "providers": [
-            {"id": "sarvam_realtime", "name": "Sarvam Conversational AI", "mode": "realtime"},
-            {"id": "sarvam", "name": "Sarvam Turn-based", "mode": "turn_based"},
-            {"id": "elevenlabs_realtime", "name": "ElevenLabs Conversational AI", "mode": "realtime"},
-            {"id": "elevenlabs", "name": "ElevenLabs Turn-based", "mode": "turn_based"},
-        ],
-        "default": default,
-    }
+@router.post("/voice/stt")
+async def stt_endpoint(
+    file: fastapi.UploadFile = fastapi.File(...),
+    user: User = Depends(get_current_user),
+):
+    """Convert spoken answer audio to text. Provider is set in backend config."""
+    from app.plugins.benchmark.services.voice_service import speech_to_text
+
+    audio_bytes = await file.read()
+    if len(audio_bytes) < 100:
+        raise HTTPException(status_code=400, detail="Audio too short")
+
+    try:
+        transcript = await speech_to_text(audio_bytes)
+        return {"transcript": transcript}
+    except Exception as e:
+        logger.error("STT failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"STT failed: {str(e)}")
+
+
+@router.get("/voice/provider")
+async def get_voice_provider(user: User = Depends(get_current_user)):
+    """Return the currently configured voice provider."""
+    from app.plugins.benchmark.services.voice_service import get_default_provider
+
+    return {"provider": get_default_provider()}

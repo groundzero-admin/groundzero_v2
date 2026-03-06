@@ -2,6 +2,13 @@ import { useNavigate } from "react-router";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 
+const PILLAR_PREVIEWS = [
+  { emoji: "🔴", name: "Communication", desc: "How you explain, argue, and adapt" },
+  { emoji: "🔵", name: "Creativity", desc: "How you generate ideas and explore" },
+  { emoji: "🟢", name: "AI & Systems", desc: "How you think about systems and tech" },
+  { emoji: "🟣", name: "Math & Logic", desc: "How you reason and solve problems" },
+];
+
 export default function BenchmarkLandingPage() {
   const navigate = useNavigate();
   const { studentId } = useStudent();
@@ -14,28 +21,19 @@ export default function BenchmarkLandingPage() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "64px 24px",
+        padding: "48px 24px",
         flex: 1,
       }}
     >
       <div
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#805AD515",
-          marginBottom: 24,
+          width: 56, height: 56, borderRadius: 16,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          backgroundColor: "#805AD515", marginBottom: 24,
+          fontSize: 28,
         }}
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-            fill="#805AD5"
-          />
-        </svg>
+        🎯
       </div>
 
       <h1
@@ -48,36 +46,65 @@ export default function BenchmarkLandingPage() {
           letterSpacing: "-0.02em",
         }}
       >
-        AI Benchmark
+        Diagnostic Assessment
       </h1>
-      <p style={{ color: "#7A7168", fontSize: 14, marginBottom: 40, textAlign: "center", maxWidth: 400 }}>
-        Have a fun conversation with a character and discover your strengths across 8 skill dimensions.
+      <p style={{ color: "#7A7168", fontSize: 14, marginBottom: 32, textAlign: "center", maxWidth: 440 }}>
+        Answer 20 questions guided by a fun character to discover your strengths across 4 skill pillars.
+        Takes about 20 minutes.
       </p>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: 10,
+          maxWidth: 400,
+          width: "100%",
+          marginBottom: 32,
+        }}
+      >
+        {PILLAR_PREVIEWS.map((p) => (
+          <div
+            key={p.name}
+            style={{
+              padding: "12px 14px",
+              borderRadius: 12,
+              border: "1px solid #E8E0D8",
+              backgroundColor: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span style={{ fontSize: 18 }}>{p.emoji}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#26221D" }}>{p.name}</div>
+              <div style={{ fontSize: 11, color: "#A89E94" }}>{p.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div
         style={{
           backgroundColor: "#FFFFFF",
           border: "1px solid #E8E0D8",
           borderRadius: 20,
-          padding: 32,
+          padding: 28,
           maxWidth: 400,
           width: "100%",
           boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
         }}
       >
-        <div style={{ marginBottom: 24 }}>
+        <div style={{ marginBottom: 20 }}>
           <label style={{ fontSize: 12, fontWeight: 600, color: "#7A7168", display: "block", marginBottom: 6 }}>
             Student
           </label>
           <div
             style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: "1px solid #E8E0D8",
-              backgroundColor: "#FAF7F4",
-              fontSize: 14,
-              color: "#26221D",
-              fontWeight: 500,
+              padding: "10px 16px", borderRadius: 10,
+              border: "1px solid #E8E0D8", backgroundColor: "#FAF7F4",
+              fontSize: 14, color: "#26221D", fontWeight: 500,
             }}
           >
             {student?.name || "Loading..."}
@@ -90,13 +117,9 @@ export default function BenchmarkLandingPage() {
           </label>
           <div
             style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              border: "1px solid #E8E0D8",
-              backgroundColor: "#FAF7F4",
-              fontSize: 14,
-              color: "#26221D",
-              fontWeight: 500,
+              padding: "10px 16px", borderRadius: 10,
+              border: "1px solid #E8E0D8", backgroundColor: "#FAF7F4",
+              fontSize: 14, color: "#26221D", fontWeight: 500,
             }}
           >
             {student?.grade ? `Grade ${student.grade}` : "Loading..."}
@@ -107,21 +130,16 @@ export default function BenchmarkLandingPage() {
           onClick={() => navigate("/benchmark/select")}
           disabled={!student}
           style={{
-            width: "100%",
-            padding: "12px 20px",
-            borderRadius: 12,
-            border: "none",
-            backgroundColor: "#805AD5",
-            color: "#fff",
-            fontSize: 15,
-            fontWeight: 700,
+            width: "100%", padding: "12px 20px", borderRadius: 12,
+            border: "none", backgroundColor: "#805AD5", color: "#fff",
+            fontSize: 15, fontWeight: 700,
             cursor: student ? "pointer" : "not-allowed",
             opacity: student ? 1 : 0.5,
             fontFamily: "'Nunito', sans-serif",
             transition: "background-color 150ms",
           }}
         >
-          Start Assessment
+          Choose Your Guide
         </button>
       </div>
 
@@ -129,12 +147,8 @@ export default function BenchmarkLandingPage() {
         <button
           onClick={() => navigate("/benchmark/history")}
           style={{
-            backgroundColor: "transparent",
-            border: "none",
-            color: "#805AD5",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
+            backgroundColor: "transparent", border: "none",
+            color: "#805AD5", fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}
         >
           View Assessment History

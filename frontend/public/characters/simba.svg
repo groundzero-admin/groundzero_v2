@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b45309"/>
+      <stop offset="100%" style="stop-color:#fbbf24"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#92400e" stroke-width="2"/>
+  <!-- Mane -->
+  <circle cx="100" cy="100" r="62" fill="#B45309"/>
+  <circle cx="70" cy="60" r="18" fill="#92400E"/>
+  <circle cx="100" cy="48" r="18" fill="#92400E"/>
+  <circle cx="130" cy="60" r="18" fill="#92400E"/>
+  <circle cx="140" cy="85" r="16" fill="#92400E"/>
+  <circle cx="60" cy="85" r="16" fill="#92400E"/>
+  <circle cx="55" cy="110" r="14" fill="#92400E"/>
+  <circle cx="145" cy="110" r="14" fill="#92400E"/>
+  <!-- Face -->
+  <ellipse cx="100" cy="105" rx="42" ry="40" fill="#FBBF24"/>
+  <!-- Inner ears -->
+  <ellipse cx="72" cy="72" rx="10" ry="8" fill="#FBBF24"/>
+  <ellipse cx="128" cy="72" rx="10" ry="8" fill="#FBBF24"/>
+  <ellipse cx="72" cy="72" rx="6" ry="5" fill="#F59E0B"/>
+  <ellipse cx="128" cy="72" rx="6" ry="5" fill="#F59E0B"/>
+  <!-- Eyes -->
+  <ellipse cx="84" cy="98" rx="9" ry="10" fill="white"/>
+  <ellipse cx="116" cy="98" rx="9" ry="10" fill="white"/>
+  <circle cx="86" cy="99" r="5" fill="#78350F"/>
+  <circle cx="114" cy="99" r="5" fill="#78350F"/>
+  <circle cx="87" cy="97" r="2" fill="white"/>
+  <circle cx="115" cy="97" r="2" fill="white"/>
+  <!-- Nose -->
+  <path d="M94 112 L100 118 L106 112 Z" fill="#78350F"/>
+  <!-- Mouth -->
+  <path d="M92 122 Q100 130 108 122" stroke="#92400E" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <line x1="100" y1="118" x2="100" y2="124" stroke="#92400E" stroke-width="1.5"/>
+  <!-- Whisker dots -->
+  <circle cx="82" cy="116" r="1.5" fill="#92400E"/>
+  <circle cx="76" cy="112" r="1.5" fill="#92400E"/>
+  <circle cx="78" cy="120" r="1.5" fill="#92400E"/>
+  <circle cx="118" cy="116" r="1.5" fill="#92400E"/>
+  <circle cx="124" cy="112" r="1.5" fill="#92400E"/>
+  <circle cx="122" cy="120" r="1.5" fill="#92400E"/>
+</svg>

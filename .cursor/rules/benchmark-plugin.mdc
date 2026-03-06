@@ -1,31 +1,34 @@
----
-description: Benchmark conversation AI plugin - protected code and architecture context
-globs: backend/app/plugins/benchmark/**,frontend/src/features/benchmark/**
-alwaysApply: false
----
+# Benchmark Plugin (Diagnostic Assessment)
 
-# Benchmark Plugin (Conversation AI)
-
-This is the conversation AI feature. **Do NOT delete this code.**
+This is the onboarding diagnostic assessment feature. **Do NOT delete this code.**
 
 ## What It Does
-Students have voice/text conversations with AI characters (Harry Potter, Doraemon, Peppa Pig, Simba, Dora) for developmental assessment across 4 pillars and 16 capabilities.
+Students answer 20 predefined diagnostic questions (grade-band specific) guided by a visual avatar character (Harry Potter, Doraemon, Peppa Pig, Simba, Dora). Answers are evaluated by Claude against predefined rubrics to assess across 4 pillars and 16 capabilities. Results seed BKT states.
 
-## Voice Providers (both are real-time conversational)
-- **Sarvam AI** (default): Real-time pipeline - streaming STT (Saaras v3 with VAD) → Claude → streaming TTS (Bulbul v3) orchestrated on our backend via WebSocket
-- **ElevenLabs Conversational AI**: Real-time agent - full voice agent via ElevenLabs platform (STT + LLM + TTS end-to-end)
+## Architecture
+- **Question Bank**: 60 questions stored in `bm_questions` DB table (20 per grade band: 4-5, 6-7, 8-9)
+- **Flow**: Select avatar -> Answer 20 questions (text) -> Claude evaluates all answers against rubrics -> Generate benchmark -> Seed BKT
+- **Avatar**: Purely visual/personality. Does NOT affect questions. Characters add fun, not different assessment content.
 
 ## AI Model Providers
 - **Direct Anthropic API**: Local development (`CLAUDE_API_KEY`)
 - **AWS Bedrock**: Production (`CLAUDE_PROVIDER=bedrock`, uses IAM auth)
 
 ## Key Files
-- `backend/app/plugins/benchmark/services/claude_service.py` - AI conversation + benchmark generation
-- `backend/app/plugins/benchmark/services/sarvam_realtime.py` - Sarvam real-time conversational pipeline (streaming STT + Claude + streaming TTS)
-- `backend/app/plugins/benchmark/services/voice_service.py` - TTS/STT helpers (legacy turn-based)
-- `backend/app/plugins/benchmark/services/elevenlabs_conversation.py` - ElevenLabs Conversational AI agent management
-- `backend/app/plugins/benchmark/router.py` - All API endpoints (incl. WS /voice/ws/realtime for Sarvam)
+- `backend/app/plugins/benchmark/seed_questions.py` - Question bank data + seeding function
+- `backend/app/plugins/benchmark/models.py` - BenchmarkQuestion, BenchmarkSession, BenchmarkTurn, BenchmarkResult
+- `backend/app/plugins/benchmark/services/claude_service.py` - Rubric-based answer evaluation via Claude
 - `backend/app/plugins/benchmark/services/benchmark_service.py` - Scoring + BKT seeding
-- `frontend/src/features/benchmark/hooks/useSarvamRealtimeConversation.ts` - Sarvam real-time conversation hook (WebSocket + audio streaming)
-- `frontend/src/features/benchmark/hooks/useRealtimeConversation.ts` - ElevenLabs real-time conversation hook
-- `frontend/src/features/benchmark/pages/ConversationRoomPage.tsx` - Unified conversation room (both providers)
+- `backend/app/plugins/benchmark/router.py` - API endpoints (sessions, questions, answers, results)
+- `frontend/src/features/benchmark/pages/ConversationRoomPage.tsx` - Structured Q&A with visual avatars
+- `frontend/src/features/benchmark/constants/characters.ts` - Character definitions with emoji
+
+## API Endpoints
+- `POST /benchmark/sessions` - Create session
+- `GET /benchmark/questions` - Get 20 questions for student's grade band
+- `POST /benchmark/answers` - Submit an answer
+- `POST /benchmark/complete` - Complete session, trigger evaluation
+- `GET /benchmark/results/{session_id}` - Get benchmark result
+- `POST /benchmark/questions/seed` - Seed/update question bank
+
+Consider these rules if they affect your changes.

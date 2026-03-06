@@ -1,62 +1,51 @@
 export interface Character {
   id: string;
   name: string;
-  initial: string;
+  image: string;
   color: string;
   accent: string;
-  tagline: string;
-  description: string;
+  greeting: string;
 }
 
 export const CHARACTERS: Character[] = [
   {
     id: "harry_potter",
     name: "Harry Potter",
-    initial: "HP",
+    image: "/characters/harry_potter.svg",
     color: "#8b1a1a",
     accent: "#d4a843",
-    tagline: "Courage & Problem Solving",
-    description:
-      "Explores themes of bravery, logical reasoning, and creative problem-solving through magical scenarios.",
+    greeting: "Hey! I'm Harry. Let's explore some brilliant questions together!",
   },
   {
     id: "doraemon",
     name: "Doraemon",
-    initial: "DR",
+    image: "/characters/doraemon.svg",
     color: "#2563eb",
     accent: "#60a5fa",
-    tagline: "Innovation & Technology",
-    description:
-      "Focuses on inventive thinking, futuristic concepts, and scientific curiosity.",
+    greeting: "Hello! I'm Doraemon. I've got some really interesting questions for you!",
   },
   {
     id: "peppa_pig",
     name: "Peppa Pig",
-    initial: "PP",
+    image: "/characters/peppa_pig.svg",
     color: "#e85d75",
     accent: "#f9a8d4",
-    tagline: "Social Skills & Empathy",
-    description:
-      "Encourages social-emotional learning, sharing, and understanding different perspectives.",
+    greeting: "Hi there! I'm Peppa! Let's have some fun answering questions together!",
   },
   {
     id: "simba",
     name: "Simba",
-    initial: "SB",
+    image: "/characters/simba.svg",
     color: "#b45309",
     accent: "#fbbf24",
-    tagline: "Leadership & Nature",
-    description:
-      "Explores leadership qualities, ecological awareness, and resilience through nature themes.",
+    greeting: "Hey! I'm Simba. Ready for an adventure through some cool questions?",
   },
   {
     id: "dora",
     name: "Dora",
-    initial: "DA",
+    image: "/characters/dora.svg",
     color: "#7c3aed",
     accent: "#a78bfa",
-    tagline: "Exploration & Languages",
-    description:
-      "Promotes spatial reasoning, multilingual awareness, and analytical puzzle-solving.",
+    greeting: "Hola! I'm Dora. Let's explore these questions together, amigo!",
   },
 ];

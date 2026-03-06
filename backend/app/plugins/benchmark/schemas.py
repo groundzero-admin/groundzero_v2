@@ -2,12 +2,11 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class BenchmarkSessionCreate(BaseModel):
     character: str
-    voice_provider: str = "sarvam"
 
 
 class BenchmarkSessionOut(BaseModel):
@@ -16,47 +15,41 @@ class BenchmarkSessionOut(BaseModel):
     student_name: Optional[str] = None
     student_grade: Optional[int] = None
     character: str
-    voice_provider: str
     status: str
     started_at: datetime
     total_turns: int
+    total_questions: int = 20
 
     model_config = {"from_attributes": True}
 
 
-class BenchmarkTurnRequest(BaseModel):
-    session_id: UUID
-    student_text: str
-    turn_number: int
-
-
-class BenchmarkTurnResponse(BaseModel):
-    ai_text: str
-    audio_base64: str
-    turn_number: int
-    session_id: UUID
-
-
-class BenchmarkEndRequest(BaseModel):
-    session_id: UUID
-
-
-class RealtimeStartResponse(BaseModel):
-    session_id: UUID
-    signed_url: str
-    agent_id: str
-    system_prompt: str
-    first_message: str
-
-
-class TranscriptTurn(BaseModel):
-    speaker: str
+class QuestionOut(BaseModel):
+    id: UUID
+    question_number: int
     text: str
+    curriculum_anchor: Optional[str] = None
+    pillars: list[str] = []
+
+    model_config = {"from_attributes": True}
 
 
-class SaveTranscriptRequest(BaseModel):
+class AnswerSubmit(BaseModel):
     session_id: UUID
-    transcript: list[TranscriptTurn]
+    question_id: UUID
+    question_number: int
+    answer_text: str
+
+
+class AnswerOut(BaseModel):
+    turn_number: int
+    question_id: UUID
+    question_number: int
+    question_text: str
+    answer_text: str
+
+
+class SessionCompleteRequest(BaseModel):
+    session_id: UUID
 
 
 class PillarStages(BaseModel):

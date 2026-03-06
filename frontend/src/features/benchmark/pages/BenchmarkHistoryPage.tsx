@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { CHARACTERS } from "../constants/characters";
-import { benchmarkApi } from "../api";
+import benchmarkApi from "../api";
 import { Eye, Search, Plus } from "lucide-react";
 
 const PILLAR_COLS = [
@@ -20,7 +20,7 @@ export default function BenchmarkHistoryPage() {
   const fetchBenchmarks = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await benchmarkApi.listResults({ limit: 50, search: search || undefined });
+      const { data } = await benchmarkApi.listResults();
       setBenchmarks(data);
     } catch { /* empty */ }
     setLoading(false);
@@ -102,9 +102,7 @@ export default function BenchmarkHistoryPage() {
                     <td style={{ padding: "10px 12px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         {char && (
-                          <span style={{ width: 22, height: 22, borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, backgroundColor: char.color + "15", color: char.color }}>
-                            {char.initial}
-                          </span>
+                          <img src={char.image} alt={char.name} style={{ width: 22, height: 22, borderRadius: 4, objectFit: "cover" }} />
                         )}
                         <span style={{ color: "#5A524A" }}>{char?.name || b.character}</span>
                       </div>

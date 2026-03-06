@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import BenchmarkRadar, { PILLAR_LABELS, PILLAR_COLORS } from "../components/BenchmarkRadar";
 import { CHARACTERS } from "../constants/characters";
-import { benchmarkApi } from "../api";
+import benchmarkApi from "../api";
 import { ArrowLeft, Printer, Plus, History, CheckCircle2 } from "lucide-react";
 
 const CAPABILITY_NAMES: Record<string, string> = {
@@ -116,9 +116,7 @@ export default function BenchmarkReportPage() {
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "24px 24px 48px" }}>
         {/* Student info card */}
         <div style={{ backgroundColor: "#fff", border: "1px solid #E8E0D8", borderRadius: 16, padding: 24, marginBottom: 20, display: "flex", alignItems: "center", gap: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, backgroundColor: char.color + "15", color: char.color }}>
-            {char.initial}
-          </div>
+          <img src={char.image} alt={char.name} style={{ width: 48, height: 48, borderRadius: 12, objectFit: "cover" }} />
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "#26221D", fontFamily: "'Nunito', sans-serif" }}>{benchmark.student_name}</div>
             <div style={{ fontSize: 13, color: "#A89E94" }}>

@@ -1,4 +1,4 @@
-"""Benchmark orchestration: score conversation, save result, seed BKT states."""
+"""Benchmark orchestration: evaluate Q&A answers, save result, seed BKT states."""
 
 import logging
 from datetime import datetime, timezone
@@ -7,7 +7,8 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.plugins.benchmark.models import BenchmarkResult, BenchmarkSession, BenchmarkTurn
+from app.plugins.benchmark.models import BenchmarkQuestion, BenchmarkResult, BenchmarkSession, BenchmarkTurn
+from app.plugins.benchmark.seed_questions import get_grade_band
 from app.plugins.benchmark.services import claude_service
 from app.services.diagnostic_service import apply_diagnostic
 
@@ -38,29 +39,59 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
     result = await db.execute(select(BenchmarkSession).where(BenchmarkSession.id == session_id))
     session = result.scalar_one()
 
+    student = session.student
+    student_name = student.name if student else "Student"
+    student_grade = student.grade if student else 6
+    student_age = student_grade + 5
+
+    grade_band = get_grade_band(student_grade)
+
     turns_result = await db.execute(
         select(BenchmarkTurn)
-        .where(BenchmarkTurn.session_id == session_id)
+        .where(
+            BenchmarkTurn.session_id == session_id,
+            BenchmarkTurn.speaker == "student",
+            BenchmarkTurn.question_id.isnot(None),
+        )
         .order_by(BenchmarkTurn.turn_number)
     )
     turns = turns_result.scalars().all()
 
-    conversation_history = [
-        {"role": "user" if turn.speaker == "student" else "assistant", "content": turn.text}
-        for turn in turns
-    ]
+    question_ids = [t.question_id for t in turns]
+    q_result = await db.execute(
+        select(BenchmarkQuestion).where(BenchmarkQuestion.id.in_(question_ids))
+    )
+    questions_map = {q.id: q for q in q_result.scalars().all()}
 
-    student = session.student
-    student_name = student.name if student else "Student"
-    student_age = (student.grade + 5) if student else 10
-    student_grade = str(student.grade) if student else ""
+    qa_pairs = []
+    conversation_snapshot = []
+    for turn in turns:
+        question = questions_map.get(turn.question_id)
+        if not question:
+            continue
+        qa_pairs.append({
+            "question_number": question.question_number,
+            "question_text": question.text,
+            "answer_text": turn.text,
+            "pillars": question.pillars or [],
+            "strong_signals": question.strong_signals or [],
+            "watchout_signals": question.watchout_signals or [],
+        })
+        conversation_snapshot.append({
+            "question_number": question.question_number,
+            "question": question.text,
+            "answer": turn.text,
+        })
 
-    benchmark_data = await claude_service.generate_benchmark(
+    if not qa_pairs:
+        raise ValueError("No valid Q&A pairs found for session")
+
+    benchmark_data = await claude_service.evaluate_answers(
         student_name=student_name,
         age=student_age,
-        grade=student_grade,
+        grade=str(student_grade),
         character=session.character,
-        conversation_history=conversation_history,
+        qa_pairs=qa_pairs,
     )
 
     pillar_stages = benchmark_data.get("pillar_stages", {})
@@ -88,7 +119,7 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
         engagement_level=insights.get("engagement_level"),
         notable_observations=insights.get("notable_observations", []),
         summary=benchmark_data.get("summary", ""),
-        conversation_snapshot=conversation_history,
+        conversation_snapshot=conversation_snapshot,
         bkt_seeded="pending",
     )
 
@@ -99,7 +130,6 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
     await db.commit()
     await db.refresh(benchmark)
 
-    # Seed BKT states from benchmark results
     if student:
         try:
             overrides = {}

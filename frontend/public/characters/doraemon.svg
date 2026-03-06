@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#1d4ed8" stroke-width="2"/>
+  <!-- Head (blue outer) -->
+  <ellipse cx="100" cy="95" rx="58" ry="56" fill="#2563eb"/>
+  <!-- Face (white) -->
+  <ellipse cx="100" cy="100" rx="44" ry="44" fill="white"/>
+  <!-- Eyes -->
+  <ellipse cx="86" cy="88" rx="12" ry="14" fill="white" stroke="#333" stroke-width="1.5"/>
+  <ellipse cx="114" cy="88" rx="12" ry="14" fill="white" stroke="#333" stroke-width="1.5"/>
+  <circle cx="90" cy="90" r="5" fill="#111"/>
+  <circle cx="110" cy="90" r="5" fill="#111"/>
+  <circle cx="91" cy="88" r="2" fill="white"/>
+  <circle cx="111" cy="88" r="2" fill="white"/>
+  <!-- Nose -->
+  <circle cx="100" cy="100" r="7" fill="#E53E3E"/>
+  <circle cx="102" cy="98" r="2.5" fill="#FF6B6B" opacity="0.6"/>
+  <!-- Whiskers -->
+  <line x1="52" y1="98" x2="80" y2="104" stroke="#555" stroke-width="1.5"/>
+  <line x1="52" y1="108" x2="80" y2="108" stroke="#555" stroke-width="1.5"/>
+  <line x1="52" y1="118" x2="80" y2="112" stroke="#555" stroke-width="1.5"/>
+  <line x1="148" y1="98" x2="120" y2="104" stroke="#555" stroke-width="1.5"/>
+  <line x1="148" y1="108" x2="120" y2="108" stroke="#555" stroke-width="1.5"/>
+  <line x1="148" y1="118" x2="120" y2="112" stroke="#555" stroke-width="1.5"/>
+  <!-- Mouth -->
+  <path d="M82 114 Q100 135 118 114" stroke="#333" stroke-width="2" fill="none"/>
+  <line x1="100" y1="107" x2="100" y2="120" stroke="#333" stroke-width="1.5"/>
+  <!-- Bell -->
+  <circle cx="100" cy="148" r="10" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"/>
+  <circle cx="100" cy="150" r="3" fill="#B8860B"/>
+  <line x1="100" y1="153" x2="100" y2="158" stroke="#B8860B" stroke-width="1.5"/>
+  <!-- Collar -->
+  <path d="M62 140 Q100 150 138 140" stroke="#E53E3E" stroke-width="8" fill="none" stroke-linecap="round"/>
+</svg>
