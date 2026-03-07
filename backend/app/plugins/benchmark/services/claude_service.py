@@ -192,6 +192,48 @@ Return ONLY a valid JSON object:
     raise ValueError(f"Could not parse benchmark JSON: {raw_text[:200]}")
 
 
+async def generate_answer_feedback(
+    question_text: str,
+    answer_text: str,
+    question_number: int,
+    character: str,
+    student_name: str,
+    grade: str,
+) -> str:
+    """Generate brief, friendly, constructive feedback for a single answer.
+
+    Returns a 2-3 sentence feedback string in the character's voice.
+    Designed to be fast (small prompt, short output).
+    """
+    persona = CHARACTER_PERSONALITIES.get(character, CHARACTER_PERSONALITIES["harry_potter"])
+
+    system_prompt = f"""You are {persona['name']}, talking to {student_name} (grade {grade}).
+Your tone is {persona['tone']}.
+
+Give brief, constructive feedback on the student's answer to a question.
+Rules:
+- 2-3 sentences MAX. Keep it short and conversational.
+- Start with something positive about what they said (even if partially correct).
+- If the answer is weak or wrong, gently point toward better thinking without giving the answer away.
+- Use simple, age-appropriate language.
+- Stay in character.
+- Do NOT use markdown, asterisks, or special formatting.
+- Do NOT repeat the question back."""
+
+    user_msg = f"Question {question_number}: {question_text}\n\nStudent's answer: {answer_text}"
+
+    client = _get_claude_client()
+    model = _get_claude_model()
+    response = await client.messages.create(
+        model=model,
+        max_tokens=200,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+
+    return response.content[0].text.strip()
+
+
 def _robust_json_parse(text: str):
     if text.startswith("```"):
         text = text.split("\n", 1)[1]

@@ -466,6 +466,56 @@ async def list_benchmark_results(
     return [_result_to_out(b) for b in result.scalars().all()]
 
 
+# ─── Answer feedback endpoint ───
+
+
+@router.post("/feedback")
+async def answer_feedback(
+    question_text: str = fastapi.Form(...),
+    answer_text: str = fastapi.Form(...),
+    question_number: int = fastapi.Form(...),
+    character: str = fastapi.Form("harry_potter"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate AI feedback for a single answer and return feedback text + TTS audio."""
+    from app.plugins.benchmark.services.claude_service import generate_answer_feedback
+    from app.plugins.benchmark.services.voice_service import text_to_speech
+
+    student = await _get_student_for_user(user, db)
+
+    try:
+        feedback_text = await generate_answer_feedback(
+            question_text=question_text,
+            answer_text=answer_text,
+            question_number=question_number,
+            character=character,
+            student_name=student.name or "Student",
+            grade=str(student.grade or "6"),
+        )
+    except Exception as e:
+        logger.error("Feedback generation failed: %s", e)
+        raise HTTPException(status_code=500, detail="Feedback generation failed")
+
+    try:
+        audio_bytes = await text_to_speech(feedback_text, character)
+    except Exception as e:
+        logger.warning("Feedback TTS failed, returning text only: %s", e)
+        import base64
+        return JSONResponse(content={
+            "feedback_text": feedback_text,
+            "audio_base64": None,
+        })
+
+    import base64
+    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+
+    return JSONResponse(content={
+        "feedback_text": feedback_text,
+        "audio_base64": audio_b64,
+    })
+
+
 # ─── Voice endpoints ───
 
 

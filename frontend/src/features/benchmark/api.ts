@@ -72,6 +72,24 @@ const benchmarkApi = {
 
   getVoiceProvider: () =>
     api.get<{ provider: string }>("/benchmark/voice/provider"),
+
+  fetchFeedback: (data: {
+    question_text: string;
+    answer_text: string;
+    question_number: number;
+    character: string;
+  }) => {
+    const formData = new FormData();
+    formData.append("question_text", data.question_text);
+    formData.append("answer_text", data.answer_text);
+    formData.append("question_number", String(data.question_number));
+    formData.append("character", data.character);
+    return api.post<{ feedback_text: string; audio_base64: string | null }>(
+      "/benchmark/feedback",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+  },
 };
 
 export default benchmarkApi;

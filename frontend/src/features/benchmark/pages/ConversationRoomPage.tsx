@@ -1,17 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
 import benchmarkApi, { type BenchmarkQuestion } from "../api";
 import useVoiceRecording from "../hooks/useVoiceRecording";
-import { Mic, MicOff, ChevronRight, CheckCircle, Loader2, Volume2 } from "lucide-react";
+import useConfetti from "../hooks/useConfetti";
+import useSoundEffects from "../hooks/useSoundEffects";
+import JourneyMap from "../components/JourneyMap";
+import { CHARACTERS } from "../constants/characters";
+import { Mic, MicOff, CheckCircle, Loader2, Volume2, Trophy, ArrowRight } from "lucide-react";
 
 interface AnsweredQuestion {
   questionNumber: number;
   questionText: string;
   answerText: string;
 }
+
+type Phase = "loading" | "intro" | "speaking" | "answering" | "filler" | "feedback" | "celebration";
+
+const FILLER_MESSAGES = [
+  "Great answer! Let me think about that and share some thoughts with you...",
+  "Nice one! Give me a moment to put together some feedback for you...",
+  "Thanks for sharing that! Let me process your answer and tell you what I think...",
+  "Good effort! Just a second while I review what you said...",
+  "Interesting answer! Let me think about it and get back to you...",
+];
 
 export default function ConversationRoomPage() {
   const navigate = useNavigate();
@@ -23,34 +37,44 @@ export default function ConversationRoomPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answerText, setAnswerText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
   const [answered, setAnswered] = useState<AnsweredQuestion[]>([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [phase, setPhase] = useState<Phase>("loading");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [avatarPulse, setAvatarPulse] = useState(false);
+  const [typedWords, setTypedWords] = useState<string[]>([]);
+  const [typingDone, setTypingDone] = useState(false);
+  const [introTypedWords, setIntroTypedWords] = useState<string[]>([]);
+  const [introTypingDone, setIntroTypingDone] = useState(false);
+  const [, setFeedbackText] = useState("");
+  const [feedbackTypedWords, setFeedbackTypedWords] = useState<string[]>([]);
 
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording, cancelRecording } =
     useVoiceRecording();
 
+  const character = selectedCharacter || CHARACTERS[0];
+
+  const confettiColors = useMemo(
+    () => [character.color, character.accent, "#FFD700", "#FF6B6B", "#4ECDC4"],
+    [character.color, character.accent],
+  );
+  const { smallBurst, celebrationBurst } = useConfetti(confettiColors);
+  const { playPop, playWhoosh, playComplete } = useSoundEffects();
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const historyEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
+  const introTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
+  const feedbackTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
+  // Stores pre-fetched feedback data so it's ready when filler audio ends
+  const pendingFeedbackRef = useRef<{ text: string; audioBase64: string | null } | null>(null);
+  const fillerDoneRef = useRef(false);
 
-  const character = selectedCharacter || {
-    id: "harry_potter",
-    name: "Guide",
-    image: "/characters/harry_potter.svg",
-    color: "#805AD5",
-    accent: "#B794F4",
-    greeting: "Let's get started!",
-  };
-
+  // ─── Load questions ───
   useEffect(() => {
     benchmarkApi
       .getQuestions()
       .then((res: { data: BenchmarkQuestion[] }) => {
         setQuestions(res.data);
-        setLoadingQuestions(false);
+        setPhase("intro");
       })
       .catch(() => {
         alert("Failed to load questions. Please try again.");
@@ -58,25 +82,103 @@ export default function ConversationRoomPage() {
       });
   }, [navigate]);
 
+  // ─── Intro greeting ───
+  useEffect(() => {
+    if (phase !== "intro") return;
+
+    const greetingText = character.greeting;
+    const words = greetingText.split(" ");
+    setIntroTypedWords([]);
+    setIntroTypingDone(false);
+    let idx = 0;
+    clearInterval(introTimerRef.current);
+    introTimerRef.current = setInterval(() => {
+      idx++;
+      setIntroTypedWords(words.slice(0, idx));
+      if (idx >= words.length) {
+        clearInterval(introTimerRef.current);
+        setIntroTypingDone(true);
+      }
+    }, 100);
+
+    (async () => {
+      try {
+        setIsSpeaking(true);
+        const { data } = await benchmarkApi.tts(greetingText, character.id);
+        const blob = new Blob([data], { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(url);
+          clearInterval(introTimerRef.current);
+          setIntroTypedWords(words);
+          setIntroTypingDone(true);
+        };
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          clearInterval(introTimerRef.current);
+          setIntroTypedWords(words);
+          setIntroTypingDone(true);
+        };
+        await audio.play();
+      } catch {
+        setIsSpeaking(false);
+        clearInterval(introTimerRef.current);
+        setIntroTypedWords(words);
+        setIntroTypingDone(true);
+      }
+    })();
+
+    return () => {
+      audioRef.current?.pause();
+      clearInterval(introTimerRef.current);
+    };
+  }, [phase === "intro"]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Live transcript sync ───
   useEffect(() => {
     if (isRecording && liveTranscript) {
       setAnswerText(liveTranscript);
     }
   }, [liveTranscript, isRecording]);
 
-  useEffect(() => {
-    historyEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [answered, currentIndex]);
-
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length || 20;
-  const progress = Math.round((answered.length / totalQuestions) * 100);
   const isLastQuestion = currentIndex >= totalQuestions - 1;
 
+  // ─── Typing animation helpers ───
+  const startTypingAnimation = useCallback((text: string) => {
+    const words = text.split(" ");
+    setTypedWords([]);
+    setTypingDone(false);
+    let idx = 0;
+    clearInterval(typingTimerRef.current);
+    typingTimerRef.current = setInterval(() => {
+      idx++;
+      setTypedWords(words.slice(0, idx));
+      if (idx >= words.length) {
+        clearInterval(typingTimerRef.current);
+        setTypingDone(true);
+      }
+    }, 90);
+  }, []);
+
+  const skipTyping = useCallback(() => {
+    if (!currentQuestion) return;
+    clearInterval(typingTimerRef.current);
+    setTypedWords(currentQuestion.text.split(" "));
+    setTypingDone(true);
+  }, [currentQuestion]);
+
+  // ─── Speak question via TTS ───
   const speakQuestion = useCallback(
     async (text: string) => {
+      setPhase("speaking");
       setIsSpeaking(true);
-      setAvatarPulse(true);
+      startTypingAnimation(text);
+      playPop();
       try {
         const { data } = await benchmarkApi.tts(text, character.id);
         const blob = new Blob([data], { type: "audio/wav" });
@@ -85,42 +187,123 @@ export default function ConversationRoomPage() {
         audioRef.current = audio;
         audio.onended = () => {
           setIsSpeaking(false);
-          setAvatarPulse(false);
+          setPhase("answering");
           URL.revokeObjectURL(url);
+          skipTyping();
           textareaRef.current?.focus();
         };
         audio.onerror = () => {
           setIsSpeaking(false);
-          setAvatarPulse(false);
+          setPhase("answering");
+          skipTyping();
         };
         await audio.play();
       } catch {
         setIsSpeaking(false);
-        setAvatarPulse(false);
+        setPhase("answering");
+        skipTyping();
       }
     },
-    [character.id],
+    [character.id, startTypingAnimation, skipTyping, playPop],
   );
 
+  // ─── Trigger question speech on index change ───
   useEffect(() => {
-    if (currentQuestion && !loadingQuestions) {
-      speakQuestion(currentQuestion.text);
-    }
+    if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
+    speakQuestion(currentQuestion.text);
     return () => {
       audioRef.current?.pause();
+      clearInterval(typingTimerRef.current);
     };
-  }, [currentIndex, loadingQuestions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleStartQuestions = useCallback(() => {
+    audioRef.current?.pause();
+    clearInterval(introTimerRef.current);
+    if (currentQuestion) {
+      speakQuestion(currentQuestion.text);
+    }
+  }, [currentQuestion, speakQuestion]);
+
+  // ─── Play feedback audio and show typed text ───
+  const playFeedback = useCallback((text: string, audioBase64: string | null) => {
+    setPhase("feedback");
+    setFeedbackText(text);
+    setIsSpeaking(true);
+    smallBurst();
+
+    // Type feedback words
+    const words = text.split(" ");
+    setFeedbackTypedWords([]);
+    let idx = 0;
+    clearInterval(feedbackTimerRef.current);
+    feedbackTimerRef.current = setInterval(() => {
+      idx++;
+      setFeedbackTypedWords(words.slice(0, idx));
+      if (idx >= words.length) clearInterval(feedbackTimerRef.current);
+    }, 80);
+
+    const onFeedbackDone = () => {
+      setIsSpeaking(false);
+      clearInterval(feedbackTimerRef.current);
+      setFeedbackTypedWords(words);
+      // Pause briefly, then advance
+      setTimeout(() => {
+        setPhase("speaking");
+        setCurrentIndex((i) => i + 1);
+      }, 1200);
+    };
+
+    if (audioBase64) {
+      try {
+        const bytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => {
+          URL.revokeObjectURL(url);
+          onFeedbackDone();
+        };
+        audio.onerror = () => {
+          URL.revokeObjectURL(url);
+          onFeedbackDone();
+        };
+        audio.play().catch(() => onFeedbackDone());
+      } catch {
+        onFeedbackDone();
+      }
+    } else {
+      // No audio - just show text for a few seconds
+      setTimeout(onFeedbackDone, 3000);
+    }
+  }, [smallBurst]);
+
+  // Called when filler audio ends - check if feedback is ready
+  const onFillerComplete = useCallback(() => {
+    fillerDoneRef.current = true;
+    const pending = pendingFeedbackRef.current;
+    if (pending) {
+      pendingFeedbackRef.current = null;
+      playFeedback(pending.text, pending.audioBase64);
+    }
+    // If not ready yet, the fetch callback will trigger playFeedback
+  }, [playFeedback]);
+
+  // ─── Submit answer -> filler -> feedback ───
   const handleSubmitAnswer = useCallback(async () => {
     if (!answerText.trim() || !sessionId || !currentQuestion || isSubmitting) return;
 
+    if (isRecording) stopRecording();
     setIsSubmitting(true);
+    const trimmedAnswer = answerText.trim();
+
     try {
       await benchmarkApi.submitAnswer({
         session_id: sessionId,
         question_id: currentQuestion.id,
         question_number: currentQuestion.question_number,
-        answer_text: answerText.trim(),
+        answer_text: trimmedAnswer,
       });
 
       setAnswered((prev) => [
@@ -128,31 +311,115 @@ export default function ConversationRoomPage() {
         {
           questionNumber: currentQuestion.question_number,
           questionText: currentQuestion.text,
-          answerText: answerText.trim(),
+          answerText: trimmedAnswer,
         },
       ]);
       setAnswerText("");
 
       if (isLastQuestion) {
-        setIsCompleting(true);
+        setPhase("celebration");
+        celebrationBurst();
+        playComplete();
         await benchmarkApi.completeSession(sessionId);
-        navigate(`/benchmark/report/${sessionId}`);
+        setTimeout(() => navigate(`/benchmark/report/${sessionId}`), 3500);
+        return;
+      }
+
+      // Enter filler phase
+      setPhase("filler");
+      setIsSpeaking(true);
+      pendingFeedbackRef.current = null;
+      fillerDoneRef.current = false;
+      playWhoosh();
+
+      const fillerMsg = FILLER_MESSAGES[Math.floor(Math.random() * FILLER_MESSAGES.length)];
+      const fillerWords = fillerMsg.split(" ");
+      setFeedbackText(fillerMsg);
+      setFeedbackTypedWords([]);
+      let fidx = 0;
+      clearInterval(feedbackTimerRef.current);
+      feedbackTimerRef.current = setInterval(() => {
+        fidx++;
+        setFeedbackTypedWords(fillerWords.slice(0, fidx));
+        if (fidx >= fillerWords.length) clearInterval(feedbackTimerRef.current);
+      }, 80);
+
+      // Fire TTS for filler + feedback fetch in parallel
+      const fillerTtsPromise = benchmarkApi.tts(fillerMsg, character.id).catch(() => null);
+      const feedbackPromise = benchmarkApi.fetchFeedback({
+        question_text: currentQuestion.text,
+        answer_text: trimmedAnswer,
+        question_number: currentQuestion.question_number,
+        character: character.id,
+      }).catch(() => null);
+
+      // Play filler TTS
+      const fillerTtsResult = await fillerTtsPromise;
+      if (fillerTtsResult?.data) {
+        const blob = new Blob([fillerTtsResult.data], { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(url);
+          clearInterval(feedbackTimerRef.current);
+          setFeedbackTypedWords(fillerWords);
+          onFillerComplete();
+        };
+        audio.onerror = () => {
+          setIsSpeaking(false);
+          URL.revokeObjectURL(url);
+          clearInterval(feedbackTimerRef.current);
+          setFeedbackTypedWords(fillerWords);
+          onFillerComplete();
+        };
+        await audio.play().catch(() => {
+          setIsSpeaking(false);
+          onFillerComplete();
+        });
       } else {
-        setCurrentIndex((i) => i + 1);
+        // No filler audio, wait 2.5s then proceed
+        setTimeout(() => {
+          setIsSpeaking(false);
+          clearInterval(feedbackTimerRef.current);
+          setFeedbackTypedWords(fillerWords);
+          onFillerComplete();
+        }, 2500);
+      }
+
+      // Handle feedback arrival
+      const feedbackResult = await feedbackPromise;
+      if (feedbackResult?.data) {
+        const fb = { text: feedbackResult.data.feedback_text, audioBase64: feedbackResult.data.audio_base64 };
+        if (fillerDoneRef.current) {
+          playFeedback(fb.text, fb.audioBase64);
+        } else {
+          pendingFeedbackRef.current = fb;
+        }
+      } else {
+        // Feedback fetch failed - just advance after filler
+        if (fillerDoneRef.current) {
+          setTimeout(() => {
+            setPhase("speaking");
+            setCurrentIndex((i) => i + 1);
+          }, 800);
+        } else {
+          // When filler ends, it will see no pending feedback and we handle it
+          pendingFeedbackRef.current = null;
+        }
       }
     } catch {
       alert("Failed to submit answer. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, navigate]);
+  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback]);
 
   const handleMicToggle = useCallback(() => {
     if (isRecording) {
       const finalText = stopRecording();
-      if (finalText) {
-        setAnswerText(finalText);
-      }
+      if (finalText) setAnswerText(finalText);
     } else {
       startRecording();
     }
@@ -165,249 +432,535 @@ export default function ConversationRoomPage() {
     }
   };
 
-  if (loadingQuestions || isCompleting) {
+  // ─── Loading ───
+  if (phase === "loading") {
     return (
-      <div style={styles.loadingContainer}>
-        <div style={spinnerStyle(character.color)} />
-        <p style={styles.loadingText}>
-          {isCompleting ? "Generating your report..." : "Loading questions..."}
-        </p>
-        <style>{spinKeyframes}</style>
+      <div className="cr-center" style={{ background: character.background }}>
+        <img src={character.image} alt="" className="cr-loading-avatar" />
+        <p className="cr-loading-text">Getting your questions ready...</p>
+        <style>{cssStyles}</style>
       </div>
     );
   }
 
+  // ─── Intro ───
+  if (phase === "intro") {
+    return (
+      <div className="cr-center" style={{ background: character.background, padding: 24 }}>
+        <div className="cr-intro-card">
+          <div
+            className="cr-intro-avatar-ring"
+            style={{
+              borderColor: character.accent,
+              boxShadow: isSpeaking
+                ? `0 0 30px ${character.color}50, 0 0 60px ${character.color}20`
+                : `0 6px 24px ${character.color}30`,
+            }}
+          >
+            <img
+              src={character.image}
+              alt={character.name}
+              className={`cr-intro-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
+            />
+          </div>
+
+          <h2 className="cr-intro-name">{character.name}</h2>
+
+          <div className="cr-intro-bubble" style={{ borderColor: character.color + "20" }}>
+            <div className="cr-intro-text">
+              {introTypedWords.map((word, i) => (
+                <span key={i} className="cr-word" style={{ animationDelay: `${i * 0.02}s` }}>
+                  {word}{" "}
+                </span>
+              ))}
+            </div>
+            {isSpeaking && (
+              <div className="cr-speaking-label" style={{ color: character.color }}>
+                <Volume2 size={14} /> Speaking...
+              </div>
+            )}
+          </div>
+
+          {introTypingDone && !isSpeaking && (
+            <button
+              onClick={handleStartQuestions}
+              className="cr-start-btn"
+              style={{ background: `linear-gradient(135deg, ${character.color}, ${character.accent})`, boxShadow: `0 6px 20px ${character.color}40` }}
+            >
+              Let's Begin! <ArrowRight size={18} />
+            </button>
+          )}
+
+          <p className="cr-intro-sub">{totalQuestions} questions ahead</p>
+        </div>
+        <style>{cssStyles}</style>
+      </div>
+    );
+  }
+
+  // ─── Celebration ───
+  if (phase === "celebration") {
+    return (
+      <div className="cr-center" style={{ background: character.background }}>
+        <div className="cr-celeb-card">
+          <div className="cr-celeb-badge" style={{ background: `linear-gradient(135deg, ${character.color}, ${character.accent})`, boxShadow: `0 10px 40px ${character.color}50` }}>
+            <Trophy size={44} color="#fff" />
+          </div>
+          <h1 className="cr-celeb-title">Assessment Complete!</h1>
+          <p className="cr-celeb-sub">You answered all {totalQuestions} questions!</p>
+          <img src={character.image} alt={character.name} className="cr-celeb-avatar" />
+          <p className="cr-celeb-hint">Generating your report...</p>
+        </div>
+        <style>{cssStyles}</style>
+      </div>
+    );
+  }
+
+  // ─── Main Q&A flow ───
   return (
-    <div style={styles.root}>
+    <div className="cr-root" style={{ background: character.background }}>
       {/* Header */}
-      <div style={styles.header}>
-        <img src={character.image} alt={character.name} style={styles.headerAvatar} />
-        <div style={{ flex: 1 }}>
-          <div style={styles.headerName}>{character.name}</div>
-          <div style={styles.headerSub}>
-            Diagnostic with {student?.name || "Student"}
-          </div>
+      <div className="cr-header">
+        <img src={character.image} alt={character.name} className="cr-header-avatar" />
+        <div className="cr-header-info">
+          <div className="cr-header-name">{character.name}</div>
+          <div className="cr-header-sub">with {student?.name || "Student"}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={styles.progressLabel}>
-            {answered.length + (currentQuestion ? 1 : 0)} / {totalQuestions}
-          </div>
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%`, backgroundColor: character.color }} />
-          </div>
-        </div>
+        <span className="cr-header-count" style={{ color: character.color }}>
+          {answered.length}/{totalQuestions}
+        </span>
       </div>
 
-      {/* Main content */}
-      <div style={styles.chatArea}>
-        {/* Previous Q&A (compact) */}
-        {answered.map((a, idx) => (
-          <div key={idx} style={styles.answeredRow}>
-            <div style={styles.answeredQ}>
-              <span style={styles.qBadgeSmall}>Q{a.questionNumber}</span> {a.questionText}
-            </div>
-            <div style={{ ...styles.answeredA, borderColor: character.color + "30" }}>
-              <CheckCircle size={10} color="#38A169" style={{ flexShrink: 0, marginTop: 2 }} />
-              <span>{a.answerText}</span>
-            </div>
-          </div>
-        ))}
+      {/* Journey Map */}
+      <div className="cr-journey">
+        <JourneyMap
+          total={totalQuestions}
+          completed={answered.length}
+          current={currentIndex}
+          color={character.color}
+          accent={character.accent}
+          avatarImage={character.image}
+        />
+      </div>
 
-        {/* Current question - avatar speaks */}
-        {currentQuestion && !isCompleting && (
-          <div style={styles.questionSection}>
-            {/* Large avatar */}
-            <div style={styles.avatarContainer}>
+      {/* Main area */}
+      <div className="cr-main">
+        {/* Filler / Feedback overlay */}
+        {(phase === "filler" || phase === "feedback") && (
+          <div className="cr-feedback-area">
+            <div className="cr-avatar-section">
               <div
+                className="cr-avatar-ring"
                 style={{
-                  ...styles.avatarRing,
-                  borderColor: avatarPulse ? character.color : "transparent",
-                  boxShadow: avatarPulse ? `0 0 30px ${character.color}40, 0 0 60px ${character.color}20` : "none",
+                  borderColor: character.color,
+                  boxShadow: isSpeaking
+                    ? `0 0 20px ${character.color}50, 0 0 40px ${character.color}20`
+                    : `0 4px 16px ${character.color}30`,
                 }}
               >
                 <img
                   src={character.image}
                   alt={character.name}
-                  style={{
-                    ...styles.avatarImage,
-                    animation: avatarPulse ? "avatarBounce 1s ease-in-out infinite" : "none",
-                  }}
+                  className={`cr-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
                 />
               </div>
               {isSpeaking && (
-                <div style={styles.speakingIndicator}>
-                  <Volume2 size={14} color={character.color} />
-                  <span style={{ color: character.color, fontSize: 11, fontWeight: 600 }}>Speaking...</span>
+                <div className="cr-speaking-label" style={{ color: character.color }}>
+                  <Volume2 size={12} /> {phase === "filler" ? "Processing..." : "Sharing feedback..."}
                 </div>
               )}
             </div>
 
-            {/* Question bubble */}
-            <div style={{ ...styles.questionBubble, borderColor: character.color + "20" }}>
-              <div style={{ ...styles.qBadge, backgroundColor: character.color + "15", color: character.color }}>
-                Question {currentQuestion.question_number}
+            <div className="cr-feedback-bubble" style={{ borderColor: character.color + "25" }}>
+              {phase === "feedback" && (
+                <div className="cr-fb-badge" style={{ backgroundColor: character.accent + "25", color: character.color }}>
+                  Feedback
+                </div>
+              )}
+              <div className="cr-feedback-text">
+                {feedbackTypedWords.map((word, i) => (
+                  <span key={`fb-${i}`} className="cr-word" style={{ animationDelay: `${i * 0.02}s` }}>
+                    {word}{" "}
+                  </span>
+                ))}
               </div>
-              <div style={styles.questionText}>{currentQuestion.text}</div>
-              {!isSpeaking && (
-                <button
-                  onClick={() => speakQuestion(currentQuestion.text)}
-                  style={{ ...styles.replayBtn, color: character.color }}
-                  title="Replay question"
-                >
-                  <Volume2 size={14} /> Replay
-                </button>
+              {phase === "filler" && !isSpeaking && (
+                <div className="cr-thinking-dots" style={{ color: character.color }}>
+                  <span>Thinking</span>
+                  <span className="cr-dot-anim">...</span>
+                </div>
               )}
             </div>
           </div>
         )}
-        <div ref={historyEndRef} />
+
+        {/* Question */}
+        {(phase === "speaking" || phase === "answering") && currentQuestion && (
+          <div className="cr-question-area">
+            <div className="cr-avatar-section">
+              <div
+                className="cr-avatar-ring"
+                style={{
+                  borderColor: isSpeaking ? character.color : character.accent,
+                  boxShadow: isSpeaking
+                    ? `0 0 20px ${character.color}50, 0 0 40px ${character.color}20`
+                    : `0 4px 16px ${character.color}30`,
+                }}
+              >
+                <img
+                  src={character.image}
+                  alt={character.name}
+                  className={`cr-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
+                />
+              </div>
+              {isSpeaking && (
+                <div className="cr-speaking-label" style={{ color: character.color }}>
+                  <Volume2 size={12} /> Speaking...
+                </div>
+              )}
+            </div>
+
+            <div
+              className="cr-q-bubble"
+              style={{ borderColor: character.color + "25" }}
+              onClick={!typingDone ? skipTyping : undefined}
+            >
+              <div className="cr-q-badge" style={{ backgroundColor: character.color + "18", color: character.color }}>
+                Question {currentQuestion.question_number}
+              </div>
+              <div className="cr-q-text">
+                {typedWords.map((word, i) => (
+                  <span key={`${currentIndex}-${i}`} className="cr-word" style={{ animationDelay: `${i * 0.02}s` }}>
+                    {word}{" "}
+                  </span>
+                ))}
+              </div>
+              {!isSpeaking && typingDone && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); speakQuestion(currentQuestion.text); }}
+                  className="cr-replay-btn"
+                  style={{ color: character.color }}
+                >
+                  <Volume2 size={13} /> Hear again
+                </button>
+              )}
+              {!typingDone && (
+                <span className="cr-skip-hint">Tap to show full question</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input area */}
-      {currentQuestion && !isCompleting && (
-        <div style={styles.inputArea}>
-          <div style={styles.inputRow}>
-            {/* Mic button */}
+      {phase === "answering" && currentQuestion && (
+        <div className="cr-input-area">
+          <div className="cr-input-row">
             <button
               onClick={handleMicToggle}
               disabled={isSubmitting}
+              className="cr-mic-btn"
               style={{
-                ...styles.micBtn,
                 backgroundColor: isRecording ? "#E53E3E" : character.color,
-                opacity: isSubmitting ? 0.4 : 1,
+                animation: !isRecording ? "crMicPulse 2s ease-in-out infinite" : "none",
+                boxShadow: isRecording ? "0 0 16px #E53E3E50" : `0 4px 12px ${character.color}40`,
               }}
-              title={isRecording ? "Stop recording" : "Record answer"}
             >
-              {isRecording ? (
-                <MicOff size={18} color="#fff" />
-              ) : (
-                <Mic size={20} color="#fff" />
-              )}
+              {isRecording ? <MicOff size={20} color="#fff" /> : <Mic size={20} color="#fff" />}
             </button>
 
-            {/* Text input */}
             <textarea
               ref={textareaRef}
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={
-                isRecording
-                  ? "Listening... your words will appear here"
-                  : "Speak or type your answer..."
-              }
+              placeholder={isRecording ? "Listening... speak your answer \uD83C\uDFA4" : "Speak or type your answer..."}
               disabled={isSubmitting}
-              rows={3}
+              rows={2}
+              className="cr-textarea"
               style={{
-                ...styles.textarea,
-                borderColor: isRecording ? "#E53E3E" : "#E8E0D8",
-                backgroundColor: isRecording ? "#FFF5F5" : "#FAF7F4",
+                borderColor: isRecording ? "#E53E3E40" : `${character.color}30`,
+                backgroundColor: isRecording ? "#FFF5F5" : "#ffffff",
               }}
-              onFocus={(e) => { if (!isRecording) e.target.style.borderColor = character.color; }}
-              onBlur={(e) => { if (!isRecording) e.target.style.borderColor = "#E8E0D8"; }}
             />
 
-            {/* Submit */}
             <button
               onClick={handleSubmitAnswer}
               disabled={isSubmitting || !answerText.trim()}
+              className="cr-submit-btn"
               style={{
-                ...styles.submitBtn,
-                backgroundColor: character.color,
+                background: `linear-gradient(135deg, ${character.color}, ${character.accent})`,
                 opacity: isSubmitting || !answerText.trim() ? 0.4 : 1,
+                boxShadow: answerText.trim() ? `0 4px 12px ${character.color}40` : "none",
               }}
             >
               {isSubmitting ? (
-                <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+                <Loader2 size={18} className="cr-spinner" />
               ) : isLastQuestion ? (
-                <>Finish <CheckCircle size={16} /></>
+                <><CheckCircle size={16} /> <span className="cr-btn-label">Done!</span></>
               ) : (
-                <>Next <ChevronRight size={16} /></>
+                <><span className="cr-btn-label">Send</span> {"\u{1F680}"}</>
               )}
             </button>
           </div>
 
           {isRecording && (
-            <div style={styles.recordingBar}>
-              <div style={styles.recordingDot} />
-              <span>Recording... click the mic to stop</span>
-              <button onClick={cancelRecording} style={styles.cancelBtn}>
-                <MicOff size={12} /> Cancel
-              </button>
+            <div className="cr-recording-bar">
+              <div className="cr-recording-dot" />
+              <span>Listening...</span>
+              <button onClick={cancelRecording} className="cr-cancel-btn"><MicOff size={10} /> Cancel</button>
             </div>
           )}
 
-          {voiceError && (
-            <div style={{ marginTop: 8, fontSize: 12, color: "#E53E3E", fontWeight: 500 }}>
-              {voiceError}
-            </div>
-          )}
+          {voiceError && <div className="cr-voice-error">{voiceError}</div>}
 
-          <div style={styles.hint}>
-            {isLastQuestion
-              ? "Last question. Your report will be generated after submission."
-              : `${totalQuestions - answered.length - 1} questions remaining`}
+          <div className="cr-hint">
+            {isLastQuestion ? "Last question! \u{2728}" : `${totalQuestions - answered.length - 1} more to go`}
           </div>
         </div>
       )}
 
-      <style>{`
-        ${spinKeyframes}
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes avatarBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
-        @keyframes recordPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-      `}</style>
+      <style>{cssStyles}</style>
     </div>
   );
 }
 
-const spinKeyframes = `@keyframes spin { to { transform: rotate(360deg); } }`;
+const cssStyles = `
+  /* ─── Animations ─── */
+  @keyframes crSpin { to { transform: rotate(360deg); } }
+  @keyframes crFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes crTalk { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  @keyframes crPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes crWordIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes crPop { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes crWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  @keyframes crMicPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  @keyframes crRecordPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes crDotBlink { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
-function spinnerStyle(color: string): React.CSSProperties {
-  return { width: 48, height: 48, border: "3px solid #E8E0D8", borderTopColor: color, borderRadius: "50%", animation: "spin 1s linear infinite" };
-}
+  .cr-floating { animation: crFloat 3s ease-in-out infinite; }
+  .cr-talking { animation: crTalk 0.5s ease-in-out infinite; }
+  .cr-spinner { animation: crSpin 1s linear infinite; }
 
-const styles: Record<string, React.CSSProperties> = {
-  root: { height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#FAF7F4" },
-  loadingContainer: { height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#FAF7F4", flexDirection: "column", gap: 16 },
-  loadingText: { color: "#7A7168", fontSize: 15, fontFamily: "'Inter', sans-serif" },
+  .cr-word {
+    display: inline; opacity: 0;
+    animation: crWordIn 0.3s ease forwards;
+  }
 
-  header: { padding: "12px 24px", borderBottom: "1px solid #E8E0D8", backgroundColor: "#FFFFFF", display: "flex", alignItems: "center", gap: 14 },
-  headerAvatar: { width: 40, height: 40, borderRadius: 10, objectFit: "cover" },
-  headerName: { fontSize: 16, fontWeight: 700, color: "#26221D", fontFamily: "'Nunito', sans-serif" },
-  headerSub: { fontSize: 12, color: "#A89E94" },
-  progressLabel: { fontSize: 13, fontWeight: 600, color: "#3D3730" },
-  progressBar: { width: 120, height: 6, backgroundColor: "#E8E0D8", borderRadius: 999, overflow: "hidden", marginTop: 4 },
-  progressFill: { height: "100%", borderRadius: 999, transition: "width 500ms ease" },
+  /* ─── Layout ─── */
+  .cr-center {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px;
+  }
+  .cr-root {
+    height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    transition: background 500ms;
+  }
 
-  chatArea: { flex: 1, overflowY: "auto", padding: "20px 24px" },
+  /* ─── Loading ─── */
+  .cr-loading-avatar { width: 72px; height: 72px; border-radius: 50%; animation: crFloat 2s ease-in-out infinite; margin-bottom: 16px; }
+  .cr-loading-text { color: #ffffffcc; font-size: 15px; font-family: 'Nunito', sans-serif; font-weight: 600; }
 
-  answeredRow: { marginBottom: 12, padding: "10px 14px", backgroundColor: "#fff", borderRadius: 12, border: "1px solid #F0EBE6" },
-  answeredQ: { fontSize: 12, color: "#7A7168", lineHeight: 1.5, marginBottom: 4 },
-  qBadgeSmall: { fontSize: 10, fontWeight: 700, color: "#A89E94" },
-  answeredA: { fontSize: 13, color: "#3D3730", display: "flex", gap: 6, alignItems: "flex-start", paddingTop: 4, borderTop: "1px solid", lineHeight: 1.5 },
+  /* ─── Intro ─── */
+  .cr-intro-card {
+    animation: crPop 0.5s ease-out;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    max-width: 460px; width: 100%;
+  }
+  .cr-intro-avatar-ring {
+    width: 110px; height: 110px; border-radius: 50%; border: 3px solid;
+    display: flex; align-items: center; justify-content: center;
+    background: #ffffffcc; transition: box-shadow 0.4s;
+  }
+  .cr-intro-avatar-img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
+  .cr-intro-name {
+    font-size: 24px; font-family: 'Nunito', sans-serif; font-weight: 900;
+    color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.2); margin: 0;
+  }
+  .cr-intro-bubble {
+    background: #ffffffee; border-radius: 20px; padding: 16px 22px;
+    border: 2px solid; box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    text-align: center; width: 100%;
+  }
+  .cr-intro-text {
+    font-size: 16px; color: #26221D; line-height: 1.7;
+    font-family: 'Nunito', sans-serif; font-weight: 500; min-height: 28px;
+  }
+  .cr-start-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: 24px; border: none;
+    color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+    font-family: 'Nunito', sans-serif; animation: crPop 0.4s ease-out;
+    transition: transform 150ms;
+  }
+  .cr-start-btn:hover { transform: scale(1.04); }
+  .cr-intro-sub { font-size: 12px; color: #ffffffaa; font-weight: 500; font-family: 'Nunito', sans-serif; }
 
-  questionSection: { display: "flex", flexDirection: "column", alignItems: "center", gap: 20, paddingTop: 8, animation: "fadeIn 0.5s ease" },
+  /* ─── Celebration ─── */
+  .cr-celeb-card { animation: crPop 0.6s ease-out; text-align: center; }
+  .cr-celeb-badge {
+    width: 96px; height: 96px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .cr-celeb-title { font-size: 26px; font-family: 'Nunito', sans-serif; font-weight: 900; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3); margin-bottom: 6px; }
+  .cr-celeb-sub { font-size: 16px; color: #ffffffcc; font-weight: 500; margin-bottom: 6px; }
+  .cr-celeb-avatar { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; margin-top: 12px; animation: crFloat 2s ease-in-out infinite; }
+  .cr-celeb-hint { font-size: 13px; color: #ffffff99; margin-top: 12px; }
 
-  avatarContainer: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8 },
-  avatarRing: { width: 140, height: 140, borderRadius: "50%", border: "4px solid", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s ease" },
-  avatarImage: { width: 120, height: 120, borderRadius: "50%", objectFit: "cover" },
-  speakingIndicator: { display: "flex", alignItems: "center", gap: 4, animation: "recordPulse 1.5s ease-in-out infinite" },
+  /* ─── Header ─── */
+  .cr-header {
+    padding: 8px 14px; background: #ffffffcc; backdrop-filter: blur(10px);
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid #ffffff40; flex-shrink: 0;
+  }
+  .cr-header-avatar { width: 32px; height: 32px; border-radius: 10px; object-fit: cover; }
+  .cr-header-info { flex: 1; min-width: 0; }
+  .cr-header-name { font-size: 14px; font-weight: 800; color: #26221D; font-family: 'Nunito', sans-serif; }
+  .cr-header-sub { font-size: 11px; color: #7A7168; }
+  .cr-header-count { font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; flex-shrink: 0; }
 
-  questionBubble: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: "18px 22px", maxWidth: 600, width: "100%", border: "1px solid", boxShadow: "0 2px 12px rgba(0,0,0,0.04)", textAlign: "center" },
-  qBadge: { display: "inline-block", padding: "3px 10px", borderRadius: 8, fontSize: 11, fontWeight: 700, marginBottom: 10 },
-  questionText: { fontSize: 16, color: "#26221D", lineHeight: 1.7, fontFamily: "'Inter', sans-serif" },
-  replayBtn: { display: "inline-flex", alignItems: "center", gap: 4, marginTop: 12, padding: "4px 12px", borderRadius: 6, border: "none", backgroundColor: "transparent", cursor: "pointer", fontSize: 12, fontWeight: 600 },
+  /* ─── Journey ─── */
+  .cr-journey { background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
 
-  inputArea: { borderTop: "1px solid #E8E0D8", padding: "14px 24px", backgroundColor: "#FFFFFF" },
-  inputRow: { display: "flex", gap: 10, alignItems: "flex-end" },
-  micBtn: { width: 48, height: 48, borderRadius: 12, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 200ms" },
-  textarea: { flex: 1, padding: "12px 16px", borderRadius: 12, border: "1px solid", fontSize: 14, outline: "none", color: "#26221D", fontFamily: "'Inter', sans-serif", resize: "none", lineHeight: 1.5, transition: "border-color 200ms" },
-  submitBtn: { height: 48, padding: "0 20px", borderRadius: 12, border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 14, fontWeight: 600, transition: "opacity 200ms", fontFamily: "'Inter', sans-serif" },
+  /* ─── Main ─── */
+  .cr-main {
+    flex: 1; overflow-y: auto; display: flex; align-items: center; justify-content: center;
+    padding: 12px 14px;
+  }
 
-  recordingBar: { display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12, color: "#E53E3E", fontWeight: 500 },
-  recordingDot: { width: 8, height: 8, borderRadius: "50%", backgroundColor: "#E53E3E", animation: "recordPulse 1s ease-in-out infinite" },
-  cancelBtn: { display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 4, border: "1px solid #E53E3E30", backgroundColor: "transparent", color: "#E53E3E", cursor: "pointer", fontSize: 11, marginLeft: "auto" },
+  /* ─── Feedback / Filler area ─── */
+  .cr-feedback-area {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; width: 100%; max-width: 580px; animation: crPop 0.4s ease-out;
+  }
+  .cr-feedback-bubble {
+    border-radius: 20px; padding: 16px 20px; width: 100%;
+    border: 2px solid; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    text-align: center; backdrop-filter: blur(8px);
+    background: #ffffffdd;
+  }
+  .cr-fb-badge {
+    display: inline-block; padding: 3px 12px; border-radius: 10px;
+    font-size: 11px; font-weight: 800; margin-bottom: 10px;
+  }
+  .cr-feedback-text {
+    font-size: 15px; color: #26221D; line-height: 1.7;
+    font-family: 'Nunito', sans-serif; font-weight: 500;
+  }
+  .cr-thinking-dots {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    margin-top: 10px; font-size: 13px; font-weight: 700;
+  }
+  .cr-dot-anim { animation: crPulse 1.2s ease-in-out infinite; }
 
-  hint: { marginTop: 8, fontSize: 11, color: "#A89E94", textAlign: "center" },
-};
+  /* ─── Question area ─── */
+  .cr-question-area {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 14px; width: 100%; max-width: 580px; animation: crPop 0.5s ease-out;
+  }
+  .cr-avatar-section { display: flex; flex-direction: column; align-items: center; }
+  .cr-avatar-ring {
+    width: 80px; height: 80px; border-radius: 50%; border: 3px solid;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.4s; background: #ffffffcc;
+  }
+  .cr-avatar-img { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; }
+  .cr-speaking-label {
+    display: flex; align-items: center; gap: 5px; margin-top: 6px;
+    font-size: 11px; font-weight: 600; animation: crPulse 1.5s ease-in-out infinite;
+  }
+
+  .cr-q-bubble {
+    border-radius: 20px; padding: 16px 20px; width: 100%;
+    border: 2px solid; box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    text-align: center; cursor: pointer; backdrop-filter: blur(8px);
+    background: #ffffffdd;
+  }
+  .cr-q-badge {
+    display: inline-block; padding: 3px 12px; border-radius: 10px;
+    font-size: 11px; font-weight: 800; margin-bottom: 10px;
+  }
+  .cr-q-text {
+    font-size: 15px; color: #26221D; line-height: 1.7;
+    font-family: 'Nunito', sans-serif; font-weight: 500;
+  }
+  .cr-replay-btn {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+    padding: 5px 14px; border-radius: 8px; border: none; background: transparent;
+    cursor: pointer; font-size: 12px; font-weight: 700;
+  }
+  .cr-skip-hint { font-size: 10px; color: #A89E94; margin-top: 6px; display: block; }
+
+  /* ─── Input area ─── */
+  .cr-input-area {
+    border-top: 1px solid #ffffff40; padding: 10px 12px;
+    background: #ffffffcc; backdrop-filter: blur(10px); flex-shrink: 0;
+  }
+  .cr-input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .cr-mic-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all 200ms;
+  }
+  .cr-textarea {
+    flex: 1; padding: 10px 14px; border-radius: 14px; border: 2px solid;
+    font-size: 14px; outline: none; color: #26221D;
+    font-family: 'Nunito', sans-serif; resize: none; line-height: 1.4;
+    transition: border-color 200ms; min-width: 0;
+  }
+  .cr-submit-btn {
+    height: 44px; padding: 0 16px; border-radius: 22px; border: none; color: #fff;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 5px; font-size: 14px; font-weight: 800; transition: all 200ms;
+    font-family: 'Nunito', sans-serif; flex-shrink: 0; white-space: nowrap;
+  }
+  .cr-btn-label { display: inline; }
+
+  .cr-recording-bar { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: #E53E3E; font-weight: 600; }
+  .cr-recording-dot { width: 8px; height: 8px; border-radius: 50%; background: #E53E3E; animation: crRecordPulse 1s ease-in-out infinite; }
+  .cr-cancel-btn {
+    display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
+    border-radius: 5px; border: 1px solid #E53E3E30; background: transparent;
+    color: #E53E3E; cursor: pointer; font-size: 11px; margin-left: auto;
+  }
+  .cr-voice-error { margin-top: 4px; font-size: 11px; color: #E53E3E; font-weight: 500; text-align: center; }
+  .cr-hint { margin-top: 6px; font-size: 12px; color: #7A7168; text-align: center; font-weight: 600; font-family: 'Nunito', sans-serif; }
+
+  /* ─── Desktop (>=640px) ─── */
+  @media (min-width: 640px) {
+    .cr-loading-avatar { width: 100px; height: 100px; }
+    .cr-intro-avatar-ring { width: 150px; height: 150px; border-width: 4px; }
+    .cr-intro-avatar-img { width: 132px; height: 132px; }
+    .cr-intro-name { font-size: 28px; }
+    .cr-intro-text { font-size: 18px; }
+    .cr-intro-bubble { padding: 20px 28px; border-radius: 24px; }
+    .cr-start-btn { padding: 16px 36px; font-size: 18px; border-radius: 28px; }
+    .cr-intro-card { gap: 20px; }
+    .cr-celeb-badge { width: 120px; height: 120px; }
+    .cr-celeb-title { font-size: 32px; }
+    .cr-celeb-avatar { width: 80px; height: 80px; }
+    .cr-header { padding: 10px 20px; gap: 12px; }
+    .cr-header-avatar { width: 40px; height: 40px; border-radius: 12px; }
+    .cr-header-name { font-size: 16px; }
+    .cr-header-count { font-size: 14px; }
+    .cr-main { padding: 20px 24px; }
+    .cr-feedback-area { max-width: 640px; gap: 20px; }
+    .cr-feedback-bubble { padding: 22px 28px; border-radius: 24px; }
+    .cr-feedback-text { font-size: 18px; line-height: 1.8; }
+    .cr-question-area { gap: 20px; max-width: 640px; }
+    .cr-avatar-ring { width: 140px; height: 140px; border-width: 4px; }
+    .cr-avatar-img { width: 122px; height: 122px; }
+    .cr-q-bubble { padding: 22px 28px; border-radius: 24px; }
+    .cr-q-badge { font-size: 12px; padding: 4px 14px; }
+    .cr-q-text { font-size: 18px; line-height: 1.8; }
+    .cr-input-area { padding: 14px 20px; }
+    .cr-input-row { gap: 10px; }
+    .cr-mic-btn { width: 56px; height: 56px; }
+    .cr-textarea { padding: 14px 18px; border-radius: 18px; font-size: 16px; }
+    .cr-submit-btn { height: 56px; padding: 0 24px; border-radius: 28px; font-size: 16px; }
+    .cr-hint { font-size: 13px; margin-top: 8px; }
+  }
+`;
