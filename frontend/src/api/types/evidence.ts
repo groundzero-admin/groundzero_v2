@@ -3,6 +3,7 @@ export interface EvidenceCreate {
   competency_id: string;
   outcome: number;
   source: string;
+  question_id?: string;
   module_id?: string;
   session_id?: string;
   weight?: number;

@@ -79,10 +79,16 @@ def seed_competencies(session: Session, data: dict) -> None:
 def seed_prerequisite_edges(session: Session, edges: list) -> None:
     for e in edges:
         stmt = insert(PrerequisiteEdge).values(
-            source_id=e["source_id"], target_id=e["target_id"], min_stage=e.get("min_stage", 2)
+            source_id=e["source_id"],
+            target_id=e["target_id"],
+            min_stage=e.get("min_stage", 2),
+            encompassing_weight=e.get("encompassing_weight", 0.0),
         ).on_conflict_do_update(
             index_elements=["source_id", "target_id"],
-            set_=dict(min_stage=e.get("min_stage", 2)),
+            set_=dict(
+                min_stage=e.get("min_stage", 2),
+                encompassing_weight=e.get("encompassing_weight", 0.0),
+            ),
         )
         session.execute(stmt)
     print(f"  Prerequisite edges: {len(edges)} upserted")
@@ -110,6 +116,7 @@ def seed_activities(session: Session, activities: list) -> None:
             module_id=a["module_id"],
             name=a["name"],
             type=a["type"],
+            mode=a.get("mode", "default"),
             week=a.get("week"),
             session_number=a.get("session_number"),
             duration_minutes=a.get("duration_minutes"),
@@ -125,6 +132,7 @@ def seed_activities(session: Session, activities: list) -> None:
                 module_id=a["module_id"],
                 name=a["name"],
                 type=a["type"],
+                mode=a.get("mode", "default"),
                 week=a.get("week"),
                 session_number=a.get("session_number"),
                 duration_minutes=a.get("duration_minutes"),

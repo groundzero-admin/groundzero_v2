@@ -111,3 +111,13 @@ export const liveDot = style({
   borderRadius: vars.radius.full,
   backgroundColor: "#38A169",
 });
+
+export const timerBadge = style({
+  flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  gap: "4px",
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.secondary,
+  fontVariantNumeric: "tabular-nums",
+});

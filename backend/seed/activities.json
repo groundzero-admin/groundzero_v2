@@ -30,15 +30,23 @@
   {
     "id": "L1_W1_S1_diy",
     "module_id": "level_1",
-    "name": "Estimation Challenge Quiz",
+    "name": "Math Sprint",
     "type": "diy",
+    "mode": "timed_mcq",
     "week": 1, "session_number": 1,
-    "duration_minutes": 15,
+    "duration_minutes": 10,
     "grade_bands": ["4-5", "6-7", "8-9"],
-    "description": "Simple, fast-paced math problems to build number sense.",
-    "learning_outcomes": ["Build number sense and confidence in thinking quickly and logically"],
-    "primary_competencies": [{"competency_id": "C4.14", "expected_gain": 0.10}],
-    "secondary_competencies": [],
+    "description": "10-minute adaptive math practice across Number Sense, Fractions, and Geometry. Questions adapt to your level.",
+    "learning_outcomes": ["Build fluency across core math skills", "Practice at the right difficulty level"],
+    "primary_competencies": [
+      {"competency_id": "C4.14.6", "expected_gain": 0.10},
+      {"competency_id": "C4.15.6", "expected_gain": 0.10},
+      {"competency_id": "C4.19.6", "expected_gain": 0.10}
+    ],
+    "secondary_competencies": [
+      {"competency_id": "C4.14.5", "expected_gain": 0.05},
+      {"competency_id": "C4.15.5", "expected_gain": 0.05}
+    ],
     "prerequisites": []
   },
   {

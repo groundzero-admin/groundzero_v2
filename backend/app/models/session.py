@@ -47,6 +47,7 @@ class SessionActivity(Base):
     activity_id: Mapped[str] = mapped_column(String(100))  # loose coupling, not a strict FK
     order: Mapped[int] = mapped_column(Integer)  # 1, 2, 3, 4
     status: Mapped[str] = mapped_column(String(20), server_default="pending")  # pending / active / completed
+    launched_at: Mapped[datetime | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
 

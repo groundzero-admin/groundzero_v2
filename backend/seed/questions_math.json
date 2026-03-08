@@ -1760,7 +1760,7 @@
     "explanation": "Opportunity cost is what you sacrifice when you choose one option over another. If you spend Saturday studying, the opportunity cost is the fun you could have had."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.4",
     "module_id": "math_v1",
     "text": "Estimate: 498 × 21 is approximately:",
     "type": "mcq",
@@ -1792,7 +1792,7 @@
     "explanation": "Round: 498 ≈ 500 and 21 ≈ 20. 500 × 20 = 10,000. (Exact answer: 10,458)"
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.5",
     "module_id": "math_v1",
     "text": "Which is the best estimate for 7.8 × 4.2?",
     "type": "mcq",
@@ -1824,7 +1824,7 @@
     "explanation": "Round: 7.8 ≈ 8 and 4.2 ≈ 4. 8 × 4 = 32. (Exact: 32.76)"
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.6",
     "module_id": "math_v1",
     "text": "A cricket stadium holds about 50,000 people. If tickets cost ₹500 each and the stadium is 80% full, approximately how much ticket revenue is generated?",
     "type": "mcq",
@@ -1856,7 +1856,7 @@
     "explanation": "80% of 50,000 = 40,000 people. 40,000 × ₹500 = ₹2,00,00,000 = ₹2 crore."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.16.6",
     "module_id": "math_v1",
     "text": "What is 15% of 200?",
     "type": "mcq",
@@ -1884,11 +1884,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.3,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "15% of 200 = 0.15 × 200 = 30. Quick way: 10% of 200 = 20, 5% = 10, so 15% = 30."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.6",
     "module_id": "math_v1",
     "text": "There are about 1.4 billion people in India. If about 30% are under 15, approximately how many children under 15 are there?",
     "type": "mcq",
@@ -1920,7 +1920,7 @@
     "explanation": "30% of 1.4 billion = 0.3 × 1,400,000,000 = 420,000,000 = 420 million."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.4",
     "module_id": "math_v1",
     "text": "What is 1/4 + 1/4?",
     "type": "mcq",
@@ -1952,7 +1952,7 @@
     "explanation": "1/4 + 1/4 = 2/4 = 1/2. Note: C (2/4) is correct but not simplified. The simplified answer is 1/2."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.4",
     "module_id": "math_v1",
     "text": "Which fraction is EQUIVALENT to 3/6?",
     "type": "mcq",
@@ -1984,7 +1984,7 @@
     "explanation": "3/6 simplified: divide both by 3 → 1/2."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.6",
     "module_id": "math_v1",
     "text": "What is 2/3 + 1/6?",
     "type": "mcq",
@@ -2012,11 +2012,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.5,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Convert to same denominator: 2/3 = 4/6. Then 4/6 + 1/6 = 5/6."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.7",
     "module_id": "math_v1",
     "text": "What is 3/4 × 2/5?",
     "type": "mcq",
@@ -2044,11 +2044,11 @@
     ],
     "correct_answer": "C",
     "difficulty": 0.5,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Multiply numerators: 3×2=6. Multiply denominators: 4×5=20. Simplify 6/20 = 3/10."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.5",
     "module_id": "math_v1",
     "text": "A recipe calls for 3/4 cup of flour. You want to make half the recipe. How much flour do you need?",
     "type": "mcq",
@@ -2080,7 +2080,7 @@
     "explanation": "Half of 3/4 = 1/2 × 3/4 = 3/8 cup."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.5",
     "module_id": "math_v1",
     "text": "Convert 3/8 to a decimal:",
     "type": "mcq",
@@ -2112,7 +2112,7 @@
     "explanation": "3 ÷ 8 = 0.375."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.6",
     "module_id": "math_v1",
     "text": "A shirt costs ₹800 and is 25% off. What is the sale price?",
     "type": "mcq",
@@ -2140,11 +2140,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "25% of ₹800 = ₹200 discount. Sale price = ₹800 - ₹200 = ₹600."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.6",
     "module_id": "math_v1",
     "text": "Which is the LARGEST: 0.5, 1/3, 45%, or 0.48?",
     "type": "mcq",
@@ -2172,11 +2172,11 @@
     ],
     "correct_answer": "A",
     "difficulty": 0.5,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Convert all to decimals: 0.5 = 0.50, 1/3 ≈ 0.33, 45% = 0.45, 0.48. Largest is 0.50."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.6",
     "module_id": "math_v1",
     "text": "A restaurant bill is ₹1,200. You want to leave a 10% tip. How much is the tip?",
     "type": "mcq",
@@ -2204,11 +2204,11 @@
     ],
     "correct_answer": "C",
     "difficulty": 0.3,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "10% of ₹1,200 = ₹1,200 × 0.10 = ₹120."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.6",
     "module_id": "math_v1",
     "text": "A student scored 36 out of 48 on a test. What percentage is that?",
     "type": "mcq",
@@ -2236,11 +2236,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "36/48 = 3/4 = 0.75 = 75%."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.6",
     "module_id": "math_v1",
     "text": "If 3 apples cost ₹60, how much do 7 apples cost?",
     "type": "mcq",
@@ -2268,11 +2268,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.3,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Price per apple = ₹60 ÷ 3 = ₹20. 7 apples = 7 × ₹20 = ₹140."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.6",
     "module_id": "math_v1",
     "text": "A map scale is 1 cm = 50 km. If two cities are 4.5 cm apart on the map, what is the real distance?",
     "type": "mcq",
@@ -2300,11 +2300,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "4.5 cm × 50 km/cm = 225 km."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.7",
     "module_id": "math_v1",
     "text": "If 5 workers can build a wall in 10 days, how many days will 10 workers take (assuming same rate)?",
     "type": "mcq",
@@ -2336,7 +2336,7 @@
     "explanation": "This is inverse proportion: doubling the workers halves the time. 5 workers × 10 days = 50 worker-days. 10 workers = 50 ÷ 10 = 5 days."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.6",
     "module_id": "math_v1",
     "text": "A recipe for 4 people uses 2 cups of rice. How much rice for 10 people?",
     "type": "mcq",
@@ -2364,11 +2364,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Ratio: 2 cups / 4 people = 0.5 cups per person. For 10 people: 0.5 × 10 = 5 cups."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.6",
     "module_id": "math_v1",
     "text": "A car travels 150 km in 3 hours. At the same speed, how far will it travel in 5 hours?",
     "type": "mcq",
@@ -2396,11 +2396,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "Speed = 150 km ÷ 3 hours = 50 km/h. In 5 hours: 50 × 5 = 250 km."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.6",
     "module_id": "math_v1",
     "text": "Solve for x: 2x + 5 = 15",
     "type": "mcq",
@@ -2428,11 +2428,11 @@
     ],
     "correct_answer": "A",
     "difficulty": 0.3,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "2x + 5 = 15 → 2x = 10 → x = 5."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.6",
     "module_id": "math_v1",
     "text": "If x = 3 and y = 4, what is 2x + 3y?",
     "type": "mcq",
@@ -2460,11 +2460,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.3,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "2(3) + 3(4) = 6 + 12 = 18."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.6",
     "module_id": "math_v1",
     "text": "A number machine says: 'I think of a number, multiply by 3, then subtract 7, and get 14.' What was the original number?",
     "type": "mcq",
@@ -2492,11 +2492,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "3x - 7 = 14 → 3x = 21 → x = 7."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.7",
     "module_id": "math_v1",
     "text": "Simplify: 3(x + 4) - 2x",
     "type": "mcq",
@@ -2528,7 +2528,7 @@
     "explanation": "Distribute: 3x + 12 - 2x = x + 12."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.6",
     "module_id": "math_v1",
     "text": "Which expression represents: 'Five more than three times a number n'?",
     "type": "mcq",
@@ -2556,11 +2556,11 @@
     ],
     "correct_answer": "A",
     "difficulty": 0.4,
-    "grade_band": "4-5",
+    "grade_band": "6-7",
     "explanation": "'Three times a number' = 3n. 'Five more than' = + 5. So: 3n + 5 or equivalently 5 + 3n."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.4",
     "module_id": "math_v1",
     "text": "What is the area of a rectangle with length 8 cm and width 5 cm?",
     "type": "mcq",
@@ -2592,7 +2592,7 @@
     "explanation": "Area of rectangle = length × width = 8 × 5 = 40 cm²."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.5",
     "module_id": "math_v1",
     "text": "A triangle has a base of 10 cm and a height of 6 cm. What is its area?",
     "type": "mcq",
@@ -2624,7 +2624,7 @@
     "explanation": "Area of triangle = 1/2 × base × height = 1/2 × 10 × 6 = 30 cm²."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.4",
     "module_id": "math_v1",
     "text": "The perimeter of a square is 36 cm. What is the length of one side?",
     "type": "mcq",
@@ -2656,7 +2656,7 @@
     "explanation": "Perimeter of square = 4 × side. So side = 36 ÷ 4 = 9 cm."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.5",
     "module_id": "math_v1",
     "text": "What is the sum of angles in any triangle?",
     "type": "mcq",
@@ -2688,7 +2688,7 @@
     "explanation": "The sum of interior angles in any triangle is always 180°."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.6",
     "module_id": "math_v1",
     "text": "A room is 5 meters long and 4 meters wide. You want to put tiles that are 50 cm × 50 cm. How many tiles do you need?",
     "type": "mcq",
@@ -4768,7 +4768,7 @@
     "explanation": "Opportunity cost of studying = 3 × ₹200 = ₹600 (lost wages). Benefit = ₹5,000 scholarship. Net gain = ₹5,000 - ₹600 = ₹4,400."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.6",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Estimate: A cricket stadium has 50,000 seats. If each seat is about 0.5m wide with 0.8m legroom, approximately what area do the seats cover?",
@@ -4800,7 +4800,7 @@
     "explanation": "Each seat ≈ 0.5 × 0.8 = 0.4 m². Total ≈ 50,000 × 0.4 = 20,000 m² (about 2 hectares)."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "How many litres of water does an average Indian household use per day? (Estimate)",
@@ -4832,7 +4832,7 @@
     "explanation": "Average per capita water use in India ≈ 50-70 litres/day. For a family of 4-5: 200-350 litres/day. Including cooking, bathing, washing, cleaning."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.9",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Fermi estimation: How many piano tuners are there in Mumbai (population ~20 million)?",
@@ -4864,7 +4864,7 @@
     "explanation": "20M people ÷ 5 per household = 4M households. ~2% have pianos = 80,000 pianos. Each tuned 1-2 times/year = ~120,000 tunings. A tuner does ~4 per day × 250 days = 1000/year. 120,000 ÷ 1000 = ~120 tuners. Roughly 50-100 seems reasonable given lower piano ownership in India."
   },
   {
-    "competency_id": "C4.14",
+    "competency_id": "C4.14.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Estimate the number of breaths you take in a year.",
@@ -4896,7 +4896,7 @@
     "explanation": "Average breathing rate ≈ 15 breaths/minute. Per year: 15 × 60 × 24 × 365 = 15 × 525,600 ≈ 7,884,000 ≈ 8 million breaths."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A recipe needs 2/3 cup of flour. If you want to make 2½ times the recipe, how much flour do you need?",
@@ -4928,7 +4928,7 @@
     "explanation": "2/3 × 5/2 = 10/6 = 5/3 = 1⅔ cups."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.6",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Arrange in ascending order: 3/7, 2/5, 4/9",
@@ -4960,7 +4960,7 @@
     "explanation": "Convert to common denominator (315): 3/7=135/315, 2/5=126/315, 4/9=140/315. Order: 126 < 135 < 140, so 2/5 < 3/7 < 4/9."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "If a/b = 3/4 and b/c = 2/5, what is a/c?",
@@ -4992,7 +4992,7 @@
     "explanation": "a/c = (a/b) × (b/c) = 3/4 × 2/5 = 6/20 = 3/10. Note: B is also 3/10 but not fully simplified — A is the simplest form."
   },
   {
-    "competency_id": "C4.15",
+    "competency_id": "C4.15.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Simplify: (1/2 + 1/3) ÷ (1/4 - 1/6)",
@@ -5024,7 +5024,7 @@
     "explanation": "Numerator: 1/2 + 1/3 = 3/6 + 2/6 = 5/6. Denominator: 1/4 - 1/6 = 3/12 - 2/12 = 1/12. Division: 5/6 ÷ 1/12 = 5/6 × 12/1 = 60/6 = 10."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A shopkeeper offers 20% discount, then another 10% on the discounted price. What is the effective single discount?",
@@ -5056,7 +5056,7 @@
     "explanation": "On ₹100: After 20% off = ₹80. After 10% off on ₹80 = ₹72. Total discount = ₹28 on ₹100 = 28%. Successive discounts: 1 - (0.8 × 0.9) = 1 - 0.72 = 0.28 = 28%."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.16.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A product's price increases by 25%, then decreases by 25%. Is the final price equal to, more than, or less than the original?",
@@ -5088,7 +5088,7 @@
     "explanation": "On ₹100: +25% = ₹125. -25% of ₹125 = ₹93.75. Loss = ₹6.25 = 6.25%. This is because 1.25 × 0.75 = 0.9375."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.17.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Simple interest: ₹15,000 at 8% per annum for 2.5 years. What is the total amount?",
@@ -5116,11 +5116,11 @@
     ],
     "correct_answer": "B",
     "difficulty": 0.8,
-    "grade_band": "8-9",
+    "grade_band": "6-7",
     "explanation": "SI = P × R × T / 100 = 15,000 × 8 × 2.5 / 100 = ₹3,000. Total = ₹15,000 + ₹3,000 = ₹18,000."
   },
   {
-    "competency_id": "C4.16",
+    "competency_id": "C4.17.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "If the price of petrol increases by 20%, by what percentage must consumption decrease to keep the expenditure the same?",
@@ -5152,7 +5152,7 @@
     "explanation": "If price increases by 20% (multiplied by 1.2), consumption must be multiplied by 1/1.2 = 5/6. Decrease = 1 - 5/6 = 1/6 ≈ 16.67%."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.6",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A map has a scale of 1:50,000. Two cities are 8 cm apart on the map. What is the actual distance?",
@@ -5184,7 +5184,7 @@
     "explanation": "8 cm × 50,000 = 400,000 cm = 4,000 m = 4 km."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "If 8 workers can build a wall in 12 days, how many days will 6 workers take (assuming same work rate)?",
@@ -5216,7 +5216,7 @@
     "explanation": "Inverse proportion: more workers = fewer days. Total work = 8 × 12 = 96 worker-days. With 6 workers: 96 ÷ 6 = 16 days."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Three partners invest ₹2,00,000, ₹3,00,000, and ₹5,00,000 in a business. If the total profit is ₹1,50,000, what is the share of the partner who invested ₹3,00,000?",
@@ -5248,7 +5248,7 @@
     "explanation": "Investment ratio = 2:3:5. Total parts = 10. Share = 3/10 × ₹1,50,000 = ₹45,000."
   },
   {
-    "competency_id": "C4.17",
+    "competency_id": "C4.17.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A mixture has milk and water in ratio 5:3. If 16 litres of the mixture is replaced with water, the ratio becomes 3:5. What was the original quantity of the mixture?",
@@ -5280,7 +5280,7 @@
     "explanation": "Let total = 8x (since ratio is 5:3). Milk = 5x, Water = 3x. After removing 16L mixture: milk left = 5x - 5x×16/8x = 5x - 10. Water left = 3x - 6 + 16 = 3x + 10. New ratio: (5x-10)/(3x+10) = 3/5. 25x-50 = 9x+30. 16x = 80. x = 5. Total = 40L."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Solve: 3(x - 4) = 2(x + 1)",
@@ -5312,7 +5312,7 @@
     "explanation": "3x - 12 = 2x + 2. 3x - 2x = 2 + 12. x = 14."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "The sum of three consecutive even numbers is 78. What is the largest number?",
@@ -5344,7 +5344,7 @@
     "explanation": "Let the numbers be x, x+2, x+4. Sum = 3x + 6 = 78. 3x = 72. x = 24. Largest = 24 + 4 = 28."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A father is 4 times as old as his son. In 20 years, the father will be twice as old as his son. What is the son's current age?",
@@ -5376,7 +5376,7 @@
     "explanation": "Let son = x, father = 4x. In 20 years: 4x + 20 = 2(x + 20). 4x + 20 = 2x + 40. 2x = 20. x = 10."
   },
   {
-    "competency_id": "C4.18",
+    "competency_id": "C4.18.9",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "If the sum of two numbers is 45 and their difference is 13, what is the product of the two numbers?",
@@ -5408,7 +5408,7 @@
     "explanation": "x + y = 45, x - y = 13. Adding: 2x = 58, x = 29. y = 16. Product = 29 × 16 = 464."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.7",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A triangle has angles in ratio 2:3:4. What is the largest angle?",
@@ -5440,7 +5440,7 @@
     "explanation": "Sum of angles = 180°. Ratio 2:3:4, total parts = 9. Each part = 20°. Largest = 4 × 20° = 80°."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A circular garden has radius 7m. A path of width 3.5m runs around it. What is the area of the path? (Use π = 22/7)",
@@ -5472,7 +5472,7 @@
     "explanation": "Outer radius = 7 + 3.5 = 10.5m. Path area = π(R² - r²) = 22/7 × (110.25 - 49) = 22/7 × 61.25 = 192.5 m²."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.8",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "A cube has edge length 6 cm. What is the length of the space diagonal (corner to opposite corner)?",
@@ -5504,7 +5504,7 @@
     "explanation": "Space diagonal of a cube with edge a = a√3. For a = 6: diagonal = 6√3 ≈ 10.39 cm."
   },
   {
-    "competency_id": "C4.19",
+    "competency_id": "C4.19.9",
     "module_id": "math_v1",
     "type": "mcq",
     "text": "Two similar triangles have sides in ratio 3:5. What is the ratio of their areas?",
@@ -5534,5 +5534,6917 @@
     "difficulty": 0.8,
     "grade_band": "8-9",
     "explanation": "For similar figures, the ratio of areas = square of the ratio of sides. (3/5)² = 9/25."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "What is the place value of 5 in 3,567?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "500",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "50",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "5 is in the hundreds place, so its place value is 500."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "Round 4,678 to the nearest hundred.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4,600",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "4,700",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "4,680",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "4,678 rounded to nearest hundred: 78 >= 50, so round up to 4,700."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "Which number is greater: 45,672 or 45,627?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "45,672",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "45,627",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "They are equal",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot tell",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Compare digit by digit: 45,6__ — 7 > 2 in the tens place."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "Rina saved ₹1,250 in January, ₹980 in February, and ₹1,500 in March. How much did she save in total?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹3,730",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹3,370",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹3,700",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹4,730",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "1,250 + 980 + 1,500 = 3,730."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "What is 6,000 - 2,473?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3,527",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3,473",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4,527",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3,537",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "6,000 - 2,473 = 3,527. Borrow from thousands."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "A school has 1,245 students. If 389 are in primary section, how many are in secondary?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "856",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "956",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "846",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "756",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "1,245 - 389 = 856."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "Estimate 4,891 + 3,214 by rounding to the nearest thousand.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "8,000",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "7,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "9,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8,100",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "4,891 ≈ 5,000 and 3,214 ≈ 3,000. So 5,000 + 3,000 = 8,000."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "Write the number fifty-six thousand, three hundred and eight in digits.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "56,308",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "56,380",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5,638",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "56,038",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Fifty-six thousand = 56,000. Three hundred and eight = 308. Total = 56,308."
+  },
+  {
+    "competency_id": "C4.14.4",
+    "module_id": "math_v1",
+    "text": "What is 345 × 12?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4,140",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4,040",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3,140",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4,240",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "4-5",
+    "explanation": "345 × 12 = 345 × 10 + 345 × 2 = 3,450 + 690 = 4,140."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "Which of these is a prime number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "21",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "23",
+        "is_correct": true
+      },
+      {
+        "label": "C",
+        "text": "27",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "33",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "B",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "23 is only divisible by 1 and 23. The others have more factors."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "What is the LCM of 4 and 6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "24",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "18",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Multiples of 4: 4,8,12,16... Multiples of 6: 6,12,18... LCM = 12."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "What is the HCF of 12 and 18?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "36",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "Factors of 12: 1,2,3,4,6,12. Factors of 18: 1,2,3,6,9,18. HCF = 6."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "The population of a town is 45,67,890. Write this in words (Indian system).",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Forty-five lakh sixty-seven thousand eight hundred ninety",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Four million five hundred sixty-seven thousand",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Forty-five crore sixty-seven lakh",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Four lakh fifty-six thousand seven hundred",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "45,67,890 = 45 lakh 67 thousand 8 hundred 90."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "Which of these numbers is composite?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "11",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "13",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "17",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "15 = 3 × 5, so it has factors other than 1 and itself."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "Two bells ring every 8 minutes and 12 minutes. If they ring together at 9:00 AM, when will they ring together next?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "9:24 AM",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "9:20 AM",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "9:16 AM",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "9:30 AM",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "4-5",
+    "explanation": "LCM of 8 and 12 = 24. They ring together every 24 minutes."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "Write 6,50,00,000 in words (Indian system).",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Six crore fifty lakh",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Sixty-five million",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Six hundred fifty lakh",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Six crore five lakh",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "6,50,00,000 = 6 crore 50 lakh."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "Find the prime factorisation of 36.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2 × 2 × 3 × 3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4 × 9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6 × 6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2 × 3 × 6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "36 = 4 × 9 = 2² × 3² = 2 × 2 × 3 × 3."
+  },
+  {
+    "competency_id": "C4.14.5",
+    "module_id": "math_v1",
+    "text": "What is the LCM of 15 and 20?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "60",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "300",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "15 = 3×5, 20 = 4×5. LCM = 3×4×5 = 60."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "What is (-3) + (-5)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-8",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Adding two negatives: -3 + -5 = -8."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "Arrange these integers in ascending order: 3, -7, 0, -2, 5",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-7, -2, 0, 3, 5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5, 3, 0, -2, -7",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-2, -7, 0, 3, 5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0, -2, -7, 3, 5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "From smallest to largest: -7 < -2 < 0 < 3 < 5."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "The temperature in Shimla was -3°C in the morning and rose by 8°C by afternoon. What was the afternoon temperature?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5°C",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "11°C",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-11°C",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-5°C",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "-3 + 8 = 5°C."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "Which property is shown: 7 + 3 = 3 + 7?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Commutative property",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Associative property",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Distributive property",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Identity property",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Changing the order of addition doesn't change the result — commutative property."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "What is (-12) ÷ (-4)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "48",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-48",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Negative ÷ negative = positive. 12 ÷ 4 = 3."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "A submarine is at -200m. It rises 75m. What is its new depth?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-125m",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-275m",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "125m",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-135m",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "-200 + 75 = -125m. Still below sea level."
+  },
+  {
+    "competency_id": "C4.14.6",
+    "module_id": "math_v1",
+    "text": "Evaluate: 15 - (-8) + (-3)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "20",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "26",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "6-7",
+    "explanation": "15 - (-8) = 15 + 8 = 23. Then 23 + (-3) = 20."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "What is (-6) × (-7)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "42",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-42",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "13",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-13",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Negative × negative = positive. 6 × 7 = 42."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "Simplify: (-2) × 3 × (-5)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "30",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-30",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "(-2) × 3 = -6. Then (-6) × (-5) = 30."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "A lift goes down 3 floors per trip. After 7 trips down from floor 2, what floor is it on?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-19",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-21",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-23",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "23",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "7 trips × (-3) floors = -21. Starting at 2: 2 + (-21) = -19."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "What is (-48) ÷ 6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-8",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "Negative ÷ positive = negative. 48 ÷ 6 = 8. Answer: -8."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "Find the value of: (-3)³",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-27",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "27",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-9",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "9",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "(-3)³ = (-3) × (-3) × (-3) = 9 × (-3) = -27."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "A company's profit was ₹-5 lakh per month for 4 months. What was the total loss?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹20 lakh",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹-20 lakh",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹5 lakh",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹-1 lakh",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "Total = 4 × (-5) = -20 lakh. Total loss = ₹20 lakh."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "Which is true about the product of three negative integers?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Always negative",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Always positive",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Always zero",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Could be positive or negative",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Odd number of negatives: neg × neg = pos, pos × neg = neg."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "Evaluate: 36 ÷ (-4) ÷ (-3)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "9",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-9",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "36 ÷ (-4) = -9. Then (-9) ÷ (-3) = 3."
+  },
+  {
+    "competency_id": "C4.14.7",
+    "module_id": "math_v1",
+    "text": "Simplify: (-8) + (-8) + (-8) + (-8) + (-8)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-40",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-48",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "5 × (-8) = -40."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Which of these is a rational number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "√4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "√3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "π",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "√7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "√4 = 2, which can be written as 2/1. The others are irrational."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Find: 3/4 + (-1/2)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-1/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "3/4 + (-1/2) = 3/4 - 2/4 = 1/4."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Which rational number lies between 1/3 and 1/2?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5/12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2/3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "1/3 = 4/12, 1/2 = 6/12. So 5/12 lies between them."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "The additive inverse of -7/9 is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "7/9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-7/9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "9/7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-9/7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "8-9",
+    "explanation": "Additive inverse means the number that adds to give 0. -7/9 + 7/9 = 0."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Find the multiplicative inverse of -3/5.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-5/3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-3/5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Multiplicative inverse: -3/5 × x = 1. So x = -5/3."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Represent -3/4 on a number line. It lies between:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-1 and 0",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0 and 1",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "-2 and -1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1 and 2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "-3/4 = -0.75, which is between -1 and 0."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Simplify: (-2/3) × (9/4) × (-5/6)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "-5/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-3/4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.65,
+    "grade_band": "8-9",
+    "explanation": "(-2/3)×(9/4) = -18/12 = -3/2. Then (-3/2)×(-5/6) = 15/12 = 5/4."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Is 0 a rational number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, it can be written as 0/1",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "No, it's neither positive nor negative",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "No, it's not a fraction",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Only sometimes",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "8-9",
+    "explanation": "0 = 0/1, which is of the form p/q where q is not 0."
+  },
+  {
+    "competency_id": "C4.14.8",
+    "module_id": "math_v1",
+    "text": "Find 5 rational numbers between -1 and 0 is possible because:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "There are infinitely many rationals between any two rationals",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "There are only 5 rationals between them",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Rational numbers are countable",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Only integers lie between them",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "Between any two rational numbers, there are infinitely many rationals (density property)."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Which of these is irrational?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "√5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "√9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.333...",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "22/7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "√5 cannot be expressed as p/q. √9=3, 0.333...=1/3, 22/7 is rational."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Rationalise the denominator of 1/√3.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "√3/3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/√3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "√3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Multiply top and bottom by √3: 1/√3 × √3/√3 = √3/3."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Simplify: √12 + √27",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5√3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "√39",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3√3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6√3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "8-9",
+    "explanation": "√12 = 2√3, √27 = 3√3. Sum = 5√3."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "The decimal expansion of √2 is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Non-terminating, non-repeating",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Terminating",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Non-terminating, repeating",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be determined",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "Irrational numbers have non-terminating, non-repeating decimal expansions."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "If x = 3 + 2√2, find x + 1/x.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3 + 2√2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4√2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.7,
+    "grade_band": "8-9",
+    "explanation": "1/x = 1/(3+2√2) = (3-2√2)/((3+2√2)(3-2√2)) = (3-2√2)/(9-8) = 3-2√2. So x + 1/x = 6."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Between which two consecutive integers does √7 lie?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2 and 3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3 and 4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1 and 2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "7 and 8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "8-9",
+    "explanation": "2² = 4 and 3² = 9. Since 4 < 7 < 9, √7 lies between 2 and 3."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Simplify: (3 + √5)(3 - √5)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "9 - 5",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "14",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "9 + 5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "Using (a+b)(a-b) = a² - b²: 9 - 5 = 4."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Express 0.4̅ (0.444...) as a fraction.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4/9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/5",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4/10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "44/99",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "8-9",
+    "explanation": "Let x = 0.444... Then 10x = 4.444... So 9x = 4, x = 4/9."
+  },
+  {
+    "competency_id": "C4.14.9",
+    "module_id": "math_v1",
+    "text": "Which of these is true?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Every rational number is a real number",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Every real number is rational",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Every irrational number is an integer",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "π is a rational number",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "Real numbers = rational + irrational. So every rational is real, but not vice versa."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "What fraction of a pizza is left if 3 out of 8 slices are eaten?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5/8",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "8 - 3 = 5 slices left. Fraction left = 5/8."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "Which fraction is equivalent to 2/4?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4/2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "2/4 simplified: divide both by 2 = 1/2."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "Which is greater: 3/5 or 3/7?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/7",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "They are equal",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot compare",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Same numerator: smaller denominator means bigger fraction. 3/5 > 3/7."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "A ribbon is 1 metre long. If Priya cuts off 1/4, how much is left?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/4 metre",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/4 metre",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/2 metre",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/4 metre",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "1 - 1/4 = 3/4 metre."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "Convert 3/4 to an equivalent fraction with denominator 12.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "9/12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "6/12",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "12/4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "Multiply both by 3: 3×3 / 4×3 = 9/12."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "Arrange in ascending order: 1/2, 1/4, 3/4",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4, 1/2, 3/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/4, 1/2, 1/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/2, 1/4, 3/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/4, 3/4, 1/2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "1/4 = 0.25, 1/2 = 0.50, 3/4 = 0.75."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "What is 1/3 of 12 pencils?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4 pencils",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3 pencils",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6 pencils",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "9 pencils",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "12 ÷ 3 = 4 pencils."
+  },
+  {
+    "competency_id": "C4.15.4",
+    "module_id": "math_v1",
+    "text": "A cake is divided into 6 equal pieces. Ravi eats 2, Meena eats 1. What fraction is eaten?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/6 or 1/2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4/6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "2 + 1 = 3 pieces eaten out of 6 = 3/6 = 1/2."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Add: 2/5 + 1/5",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/10",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Same denominator: 2/5 + 1/5 = 3/5."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Subtract: 3/4 - 1/2",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Convert 1/2 = 2/4. Then 3/4 - 2/4 = 1/4."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Add: 1/3 + 1/4",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "7/12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/7",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "LCM of 3 and 4 = 12. 4/12 + 3/12 = 7/12."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Anu drank 1/3 litre of milk in the morning and 1/4 litre in the evening. How much total?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "7/12 litre",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/7 litre",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/2 litre",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/12 litre",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "4-5",
+    "explanation": "1/3 + 1/4 = 4/12 + 3/12 = 7/12 litre."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Which is greater: 3/4 or 2/3?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "They are equal",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot tell",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "3/4 = 9/12, 2/3 = 8/12. 9/12 > 8/12."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Subtract: 5/6 - 1/3",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4/3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4/6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "1/3 = 2/6. 5/6 - 2/6 = 3/6 = 1/2."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "A rope is 5/8 metre. Another is 3/8 metre. Total length?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1 metre",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8/8 metre",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "8/16 metre",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2 metres",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "5/8 + 3/8 = 8/8 = 1 metre. Both A and B are correct, but A is simpler."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Add: 2½ + 1¼",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3¾",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3½",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3¼",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "2½ + 1¼ = 5/2 + 5/4 = 10/4 + 5/4 = 15/4 = 3¾."
+  },
+  {
+    "competency_id": "C4.15.5",
+    "module_id": "math_v1",
+    "text": "Simplify: 8/12 + 3/12 - 5/12",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "6/12",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6/36",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "16/12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "8/12 + 3/12 - 5/12 = 6/12 = 1/2."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Convert 7/3 to a mixed number.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2⅓",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3⅔",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1⅔",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2⅔",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "7 ÷ 3 = 2 remainder 1. So 7/3 = 2⅓."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Add: 2/3 + 3/5",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "19/15",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5/8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5/15",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "LCM of 3 and 5 = 15. 10/15 + 9/15 = 19/15."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Which is the largest: 2/3, 5/6, 3/4?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5/6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2/3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "All equal",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "LCM=12: 8/12, 10/12, 9/12. Largest = 10/12 = 5/6."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Subtract: 4½ - 2¾",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1¾",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2¾",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2¼",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1¼",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "6-7",
+    "explanation": "4½ = 9/2 = 18/4. 2¾ = 11/4. 18/4 - 11/4 = 7/4 = 1¾."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Reduce 24/36 to simplest form.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2/3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4/6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "12/18",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/9",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "GCD of 24 and 36 = 12. 24/12 = 2, 36/12 = 3. Simplest form = 2/3."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "A recipe needs 2/3 cup sugar. If you make half the recipe, how much sugar?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/3 cup",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/6 cup",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2/6 cup",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1/2 cup",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Half of 2/3 = 2/3 × 1/2 = 2/6 = 1/3 cup."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Add: 5/8 + 1/6",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "19/24",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "6/14",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3/7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/48",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "LCM of 8 and 6 = 24. 15/24 + 4/24 = 19/24."
+  },
+  {
+    "competency_id": "C4.15.6",
+    "module_id": "math_v1",
+    "text": "Identify the type: 5/3",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Improper fraction",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Proper fraction",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Mixed number",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Unit fraction",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "6-7",
+    "explanation": "Numerator > denominator, so it's an improper fraction."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "Multiply: 2/3 × 3/4",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "6/7",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "5/12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "2/3 × 3/4 = 6/12 = 1/2."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "Divide: 3/4 ÷ 1/2",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3/2 or 1½",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3/8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "6/4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "3/4 ÷ 1/2 = 3/4 × 2/1 = 6/4 = 3/2 = 1½."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "A room is 5½ metres long and 3¼ metres wide. What is its area?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "17⅞ sq m",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8¾ sq m",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15 sq m",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "16½ sq m",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "6-7",
+    "explanation": "5½ × 3¼ = 11/2 × 13/4 = 143/8 = 17⅞ sq m."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "If 3/5 of a number is 45, what is the number?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "75",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "27",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "135",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "3/5 × n = 45. n = 45 × 5/3 = 75."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "Simplify: 2½ × 1⅓",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3⅓",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2⅙",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3½",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2¾",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "5/2 × 4/3 = 20/6 = 10/3 = 3⅓."
+  },
+  {
+    "competency_id": "C4.15.7",
+    "module_id": "math_v1",
+    "text": "How many pieces of 1/4 metre can be cut from a 3 metre rope?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "7",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "3 ÷ 1/4 = 3 × 4 = 12 pieces."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Write 3/10 as a decimal.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3.0",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.03",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0.33",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "4-5",
+    "explanation": "3/10 = 3 tenths = 0.3."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Which is greater: 0.5 or 0.45?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.45",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "They are equal",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot tell",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "0.5 = 0.50. Compare: 50 > 45, so 0.5 > 0.45."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "What is the place value of 7 in 3.72?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "7 tenths or 0.7",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "7 hundredths",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "7 ones",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "70",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "7 is in the tenths place, so its value is 0.7."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Convert 0.25 to a fraction.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/5",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "25/10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2/5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "0.25 = 25/100 = 1/4."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Arrange in ascending order: 0.6, 0.06, 0.66",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.06, 0.6, 0.66",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.6, 0.06, 0.66",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.66, 0.6, 0.06",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0.06, 0.66, 0.6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "0.06 = 6 hundredths, 0.6 = 60 hundredths, 0.66 = 66 hundredths."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Riya ran 2.5 km and Arjun ran 2.35 km. Who ran more and by how much?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Riya, by 0.15 km",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Arjun, by 0.15 km",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Riya, by 0.25 km",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "They ran the same",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "2.5 - 2.35 = 0.15 km more by Riya."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Write 7/4 as a decimal.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1.75",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.74",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "7.4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1.25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "7/4 = 7 ÷ 4 = 1.75."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "What is 1.5 + 2.75?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4.25",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3.25",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4.75",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4.15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "1.50 + 2.75 = 4.25."
+  },
+  {
+    "competency_id": "C4.16.5",
+    "module_id": "math_v1",
+    "text": "Round 3.67 to one decimal place.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3.7",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3.6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4.0",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3.70",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Look at hundredths digit: 7 >= 5, so round up. 3.67 ≈ 3.7."
+  },
+  {
+    "competency_id": "C4.16.6",
+    "module_id": "math_v1",
+    "text": "Subtract: 5.03 - 2.7",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2.33",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2.97",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3.33",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2.23",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "5.03 - 2.70 = 2.33."
+  },
+  {
+    "competency_id": "C4.16.6",
+    "module_id": "math_v1",
+    "text": "A notebook costs ₹45.50 and a pen costs ₹12.75. What is the total?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹58.25",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹57.25",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹58.75",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹57.75",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "45.50 + 12.75 = 58.25."
+  },
+  {
+    "competency_id": "C4.16.6",
+    "module_id": "math_v1",
+    "text": "Express 3.045 in expanded form.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3 + 0/10 + 4/100 + 5/1000",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3 + 4/10 + 5/100",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "3 + 0.45",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3 + 45/100",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "3.045 = 3 ones + 0 tenths + 4 hundredths + 5 thousandths."
+  },
+  {
+    "competency_id": "C4.16.6",
+    "module_id": "math_v1",
+    "text": "Which is equivalent to 2.50?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2.5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "25.0",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.25",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2.05",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "6-7",
+    "explanation": "Trailing zero after decimal doesn't change value: 2.50 = 2.5."
+  },
+  {
+    "competency_id": "C4.16.6",
+    "module_id": "math_v1",
+    "text": "Add: 12.6 + 3.45 + 0.123",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "16.173",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "16.073",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15.173",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "16.23",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "12.600 + 3.450 + 0.123 = 16.173. Align decimal points."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Multiply: 0.3 × 0.4",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1.2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.012",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "3 × 4 = 12. Two decimal places total: 0.12."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Divide: 4.5 ÷ 0.5",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "90",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2.25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "4.5 ÷ 0.5 = 45 ÷ 5 = 9."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Convert 3/8 to a decimal.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.375",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.38",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.35",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3.8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "3 ÷ 8 = 0.375."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "A cloth costs ₹125.50 per metre. What is the cost of 2.5 metres?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹313.75",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹250.50",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹312.50",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹315.25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "125.50 × 2.5 = 125.50 × 2 + 125.50 × 0.5 = 251 + 62.75 = 313.75."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Express 0.125 as a fraction in simplest form.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1/8",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1/4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "125/100",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5/40",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "0.125 = 125/1000 = 1/8."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Simplify: 2.4 × 1.5 ÷ 0.6",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "3.6",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2.4",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "6-7",
+    "explanation": "2.4 × 1.5 = 3.6. Then 3.6 ÷ 0.6 = 6."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "Which decimal is equivalent to 5/6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0.833...",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "0.856",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0.666...",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0.56",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "5 ÷ 6 = 0.8333... (repeating)."
+  },
+  {
+    "competency_id": "C4.16.7",
+    "module_id": "math_v1",
+    "text": "What is 12.6 ÷ 0.03?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "420",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "42",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4.2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "4200",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "12.6 ÷ 0.03 = 1260 ÷ 3 = 420."
+  },
+  {
+    "competency_id": "C4.17.6",
+    "module_id": "math_v1",
+    "text": "Express the ratio 15:25 in simplest form.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3:5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5:3",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1:5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15:25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Divide both by 5: 15/5 = 3, 25/5 = 5. Ratio = 3:5."
+  },
+  {
+    "competency_id": "C4.17.6",
+    "module_id": "math_v1",
+    "text": "If the ratio of boys to girls in a class is 3:2, and there are 30 students, how many boys?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "18",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "12",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "20",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Total parts = 3+2 = 5. Boys = 3/5 × 30 = 18."
+  },
+  {
+    "competency_id": "C4.17.6",
+    "module_id": "math_v1",
+    "text": "12 pens cost ₹180. How much do 8 pens cost?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹120",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹150",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹96",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹144",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Cost of 1 pen = 180/12 = ₹15. Cost of 8 = 15 × 8 = ₹120."
+  },
+  {
+    "competency_id": "C4.17.6",
+    "module_id": "math_v1",
+    "text": "Are 4:6 and 6:9 equivalent ratios?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "No",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Only if simplified",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot compare",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "4:6 = 2:3 and 6:9 = 2:3. Same ratio, so equivalent."
+  },
+  {
+    "competency_id": "C4.17.6",
+    "module_id": "math_v1",
+    "text": "A map has a scale of 1:50000. If two cities are 3 cm apart on the map, what is the actual distance?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1.5 km",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "15 km",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "150 m",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "150 km",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "6-7",
+    "explanation": "3 × 50000 = 150000 cm = 1500 m = 1.5 km."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "Convert 3/5 to a percentage.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "60%",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "35%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "53%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "75%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "3/5 × 100 = 60%."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "A shopkeeper buys a shirt for ₹400 and sells for ₹500. What is the profit percentage?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "25%",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "20%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "100%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "50%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Profit = 100. Profit% = 100/400 × 100 = 25%."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "Find the simple interest on ₹5,000 at 8% per annum for 2 years.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹800",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹400",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹1,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹600",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "SI = P×R×T/100 = 5000×8×2/100 = 800."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "A TV's price is ₹20,000. After 10% discount, what do you pay?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹18,000",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹19,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹17,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹22,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Discount = 10% of 20,000 = 2,000. Pay = 20,000 - 2,000 = 18,000."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "In a test of 80 questions, Riya got 60 correct. What percentage did she score?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "75%",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "80%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "70%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "60/80 × 100 = 75%."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "A fruit seller bought mangoes for ₹600 and sold them for ₹540. Find the loss percentage.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "10%",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60%",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6%",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15%",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Loss = 60. Loss% = 60/600 × 100 = 10%."
+  },
+  {
+    "competency_id": "C4.17.7",
+    "module_id": "math_v1",
+    "text": "What is 15% of 240?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "36",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "24",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "48",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "15/100 × 240 = 36."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "Find the compound interest on ₹10,000 at 10% for 2 years.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹2,100",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹2,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹1,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹2,500",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "A = 10000(1+0.1)² = 10000×1.21 = 12100. CI = 12100-10000 = 2100."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "A shirt marked ₹1,200 is sold at 20% discount. GST of 5% is then applied. Final price?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹1,008",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹960",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹1,020",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹1,140",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "8-9",
+    "explanation": "After 20% discount: 1200 × 0.8 = 960. With 5% GST: 960 × 1.05 = 1008."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "A population of 50,000 grows at 5% per year. What will it be after 2 years?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "55,125",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "55,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "52,500",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "60,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "50000 × 1.05² = 50000 × 1.1025 = 55,125."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "The value of a car depreciates by 15% each year. If it costs ₹6,00,000 now, what after 1 year?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹5,10,000",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹5,40,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹4,85,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹5,25,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "600000 × (1-0.15) = 600000 × 0.85 = 510000."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "What is the difference between CI and SI on ₹5,000 at 10% for 2 years?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹50",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹100",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹500",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "SI = 5000×10×2/100 = 1000. CI = 5000(1.1²-1) = 1050. Diff = 50."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "If a product's price increases by 20% then decreases by 20%, what is the net change?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4% decrease",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "No change",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4% increase",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2% decrease",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "8-9",
+    "explanation": "100 × 1.2 = 120. 120 × 0.8 = 96. Net = 4% decrease."
+  },
+  {
+    "competency_id": "C4.17.8",
+    "module_id": "math_v1",
+    "text": "Find the amount when ₹8,000 is invested at 5% compounded annually for 3 years.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "₹9,261",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "₹9,200",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "₹9,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "₹9,300",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "8-9",
+    "explanation": "8000 × 1.05³ = 8000 × 1.157625 = 9261."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "What comes next in the pattern: 2, 5, 8, 11, __?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "14",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "13",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Pattern: add 3 each time. 11 + 3 = 14."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "Find the rule: 1, 4, 9, 16, 25, __",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "36",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "30",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "34",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "49",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "These are perfect squares: 1², 2², 3², 4², 5². Next: 6² = 36."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "If a pattern grows by adding 5 each time starting from 3, what is the 6th term?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "28",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "33",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "23",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "30",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "3, 8, 13, 18, 23, 28. The 6th term is 28."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "What is the pattern rule for: 100, 90, 80, 70, ...?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Subtract 10",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Divide by 10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Add 10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Subtract 20",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "4-5",
+    "explanation": "Each term is 10 less than the previous: subtract 10."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "A staircase pattern uses 3 blocks for step 1, 6 for step 2, 9 for step 3. How many for step 7?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "21",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "18",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "24",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "27",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "4-5",
+    "explanation": "Pattern: 3n. Step 7 = 3 × 7 = 21."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "Find the missing number: 2, 6, __, 54, 162",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "18",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "12",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "24",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "36",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Pattern: multiply by 3. 2, 6, 18, 54, 162."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "In a number machine, input ×2 then +3. If input is 5, what is the output?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "13",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "15",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "5 × 2 = 10. Then 10 + 3 = 13."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "How many dots in the 5th figure if pattern is: 1, 3, 6, 10, __?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "15",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "14",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "16",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "20",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Triangular numbers: 1, 1+2, 1+2+3, 1+2+3+4, 1+2+3+4+5 = 15."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "The rule is 'double and subtract 1'. Starting from 3, what is the 4th term?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "17",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "15",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "19",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "21",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "4-5",
+    "explanation": "3 -> 5 -> 9 -> 17. Each: ×2-1."
+  },
+  {
+    "competency_id": "C4.18.5",
+    "module_id": "math_v1",
+    "text": "What comes next: 1, 1, 2, 3, 5, 8, __?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "13",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "11",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "16",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "4-5",
+    "explanation": "Fibonacci: each number is the sum of the two before it. 5+8=13."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "If x = 3, find the value of 2x + 5.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "11",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "13",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "2(3) + 5 = 6 + 5 = 11."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "Solve: x + 7 = 12",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 19",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "x = 12 - 7 = 5."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "Write an algebraic expression: 'a number multiplied by 5 and then 3 added to it'",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5x + 3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5 + 3x",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x + 5 + 3",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5(x + 3)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Number × 5 = 5x. Then add 3 = 5x + 3."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "Solve: 3x = 18",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 15",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 54",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "x = 18 ÷ 3 = 6."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "A rectangle's perimeter is 2(l + b). If l = 8 cm and b = 5 cm, find the perimeter.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "26 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "13 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "52 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "2(8 + 5) = 2 × 13 = 26 cm."
+  },
+  {
+    "competency_id": "C4.18.6",
+    "module_id": "math_v1",
+    "text": "Simplify: 4x + 3x - 2x",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5x",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "9x",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "4x + 3x = 7x. 7x - 2x = 5x."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "Solve: 2x + 3 = 11",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 7",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 5.5",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "2x = 11 - 3 = 8. x = 4."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "Simplify: 3(x + 4) - 2x",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x + 12",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5x + 4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x + 4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3x + 12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "3x + 12 - 2x = x + 12."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "The sum of three consecutive numbers is 42. Find the numbers.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "13, 14, 15",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "12, 13, 14",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "14, 15, 16",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "10, 14, 18",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Let numbers be x, x+1, x+2. 3x+3=42, x=13. Numbers: 13,14,15."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "Solve: 5x - 3 = 3x + 7",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 5",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = -5",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "5x - 3x = 7 + 3. 2x = 10. x = 5."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "What are like terms in: 4xy + 3x + 2xy - 5y + x?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4xy and 2xy; 3x and x",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4xy and 3x",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "All are like terms",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3x and -5y",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Like terms have the same variables: 4xy & 2xy are like; 3x & x are like."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "A father is 30 years older than his son. In 5 years, the father will be 3 times the son's age. Find son's current age.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "10",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "15",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "12",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "6-7",
+    "explanation": "Son=x. Father=x+30. In 5 years: x+35 = 3(x+5). x+35=3x+15. 20=2x. x=10."
+  },
+  {
+    "competency_id": "C4.18.7",
+    "module_id": "math_v1",
+    "text": "Solve: x/3 + 2 = 5",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 21",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "x/3 = 5 - 2 = 3. x = 9."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Expand: (x + 3)²",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x² + 6x + 9",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x² + 9",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x² + 3x + 9",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2x + 6",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "Using (a+b)² = a² + 2ab + b²: x² + 6x + 9."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Factorise: x² - 9",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "(x+3)(x-3)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "(x-3)²",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "(x+9)(x-1)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x(x-9)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Using a² - b² = (a+b)(a-b): x²-9 = (x+3)(x-3)."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Solve: 3(x - 2) = 2(x + 1)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 8",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = -8",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 4",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "3x - 6 = 2x + 2. x = 8."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Factorise: 6x² + 11x + 3",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "(2x + 3)(3x + 1)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "(6x + 1)(x + 3)",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "(3x + 3)(2x + 1)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "(2x + 1)(3x + 3)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "8-9",
+    "explanation": "Find two numbers: 9 and 2 (product=18, sum=11). Split: 6x²+9x+2x+3 = 3x(2x+3)+1(2x+3)."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Evaluate 105² using an identity.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "11,025",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "10,025",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "11,025",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "10,525",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "8-9",
+    "explanation": "(100+5)² = 10000 + 1000 + 25 = 11025."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Expand: (2x - 5)(2x + 5)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4x² - 25",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4x² + 25",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "4x² - 10x - 25",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "2x² - 25",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Using (a-b)(a+b) = a²-b²: (2x)² - 5² = 4x² - 25."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Solve for x: (x+4)/3 = (x-2)/2",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x = 14",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x = 16",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x = 10",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x = 12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "Cross multiply: 2(x+4) = 3(x-2). 2x+8 = 3x-6. 14 = x."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Factorise: x² + 5x + 6",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "(x+2)(x+3)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "(x+1)(x+6)",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "(x+5)(x+1)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "(x-2)(x-3)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Find two numbers with product 6 and sum 5: 2 and 3. So (x+2)(x+3)."
+  },
+  {
+    "competency_id": "C4.18.8",
+    "module_id": "math_v1",
+    "text": "Using identity, find 998 × 1002.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "999,996",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1,000,000",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "998,000",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "999,000",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "(1000-2)(1000+2) = 1000² - 4 = 999,996."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Find the value of polynomial p(x) = x³ - 3x² + 2x - 1 at x = 1.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "-1",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "0",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "p(1) = 1 - 3 + 2 - 1 = -1."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Is (x - 2) a factor of x³ - 4x² + x + 6?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, because p(2) = 0",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "No, because p(2) = 4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Yes, because p(0) = 6",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "p(2) = 8 - 16 + 2 + 6 = 0. Since p(2)=0, (x-2) is a factor."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Factorise: x³ + 3x² + 3x + 1",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "(x+1)³",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "(x+1)(x²+1)",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "(x+1)(x+2)(x+3)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot be factorised",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "This is the expansion of (a+b)³ with a=x, b=1."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Solve the system: x + y = 7, x - y = 3",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x=5, y=2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x=3, y=4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x=7, y=0",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x=4, y=3",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Add equations: 2x = 10, x = 5. Substitute: y = 2."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Find the remainder when x³ + 1 is divided by x + 1.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "0",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "-1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "By remainder theorem: p(-1) = (-1)³ + 1 = -1 + 1 = 0."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "The degree of polynomial 4x³ - 7x + 2 is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "3",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "1",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "Highest power of x is 3."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "If x + y = 10 and xy = 24, find x² + y².",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "52",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "76",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "100",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "48",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.55,
+    "grade_band": "8-9",
+    "explanation": "(x+y)² = x² + 2xy + y². So x²+y² = 100 - 48 = 52."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Graph of 2x + 3y = 6 passes through which point?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "(3, 0)",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "(0, 3)",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "(1, 1)",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "(2, 2)",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Put y=0: 2x=6, x=3. So (3,0) is on the line."
+  },
+  {
+    "competency_id": "C4.18.9",
+    "module_id": "math_v1",
+    "text": "Divide x³ + 2x² - x - 2 by (x - 1). What is the quotient?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "x² + 3x + 2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "x² + x - 2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "x² + 2x + 1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "x² - x + 2",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.6,
+    "grade_band": "8-9",
+    "explanation": "Long division or synthetic: x³+2x²-x-2 = (x-1)(x²+3x+2)."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "How many lines of symmetry does a square have?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "4",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "2",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "A square has 4 lines of symmetry: 2 diagonal + 2 through midpoints."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "Which shape has 3 sides and 3 corners?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Triangle",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Square",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Pentagon",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Circle",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.1,
+    "grade_band": "4-5",
+    "explanation": "A triangle has 3 sides and 3 vertices (corners)."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "Which letter has a vertical line of symmetry: A, B, F, G?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "A",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "B",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "F",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "G",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "A has a vertical line of symmetry. B has horizontal."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "A floor is tiled with squares. This is an example of:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Tessellation",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Symmetry",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Rotation",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Reflection",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "4-5",
+    "explanation": "Tessellation = covering a surface with repeated shapes without gaps."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "How many sides does a hexagon have?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "5",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "7",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "8",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "4-5",
+    "explanation": "Hexa = 6. A hexagon has 6 sides."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "Which of these shapes can tessellate (tile a floor without gaps)?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Equilateral triangle",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Circle",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Regular pentagon",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Oval",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "Equilateral triangles can tile a plane. Circles and pentagons cannot."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "A rectangle has ____ lines of symmetry.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "2",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "1",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "0",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "A rectangle has 2 lines of symmetry (horizontal and vertical through center)."
+  },
+  {
+    "competency_id": "C4.19.4",
+    "module_id": "math_v1",
+    "text": "Which shape has no straight sides?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Circle",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Triangle",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Rectangle",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Rhombus",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.1,
+    "grade_band": "4-5",
+    "explanation": "A circle has no straight sides — it's a curved shape."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "What is the sum of angles in a triangle?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "180°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "360°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "90°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "270°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "4-5",
+    "explanation": "The angle sum property: all triangles have angles adding to 180°."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "Find the perimeter of a rectangle with length 8 cm and width 5 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "26 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "13 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "30 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "Perimeter = 2(l+w) = 2(8+5) = 26 cm."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "What type of angle is 120°?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Obtuse",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Acute",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Right",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Reflex",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "90° < 120° < 180°, so it's obtuse."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "Find the area of a rectangle with length 12 cm and width 7 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "84 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "38 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "19 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "96 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "Area = length × width = 12 × 7 = 84 sq cm."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "A triangle has angles 60° and 80°. What is the third angle?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "40°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "80°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "20°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "180° - 60° - 80° = 40°."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "What is the circumference of a circle with radius 7 cm? (Use π = 22/7)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "44 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "22 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "154 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "88 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "4-5",
+    "explanation": "C = 2πr = 2 × 22/7 × 7 = 44 cm."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "Which 3D shape has 6 rectangular faces?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Cuboid",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Cylinder",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Cone",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Sphere",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "4-5",
+    "explanation": "A cuboid (rectangular box) has 6 rectangular faces."
+  },
+  {
+    "competency_id": "C4.19.5",
+    "module_id": "math_v1",
+    "text": "The net of a cube has how many squares?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "8",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "12",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "4-5",
+    "explanation": "A cube has 6 faces, so its net has 6 squares."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "Two angles are complementary. If one is 35°, what is the other?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "55°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "145°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "35°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "90°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Complementary angles add to 90°. 90 - 35 = 55°."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "Two angles are supplementary. If one is 110°, what is the other?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "70°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "250°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "110°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "90°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Supplementary angles add to 180°. 180 - 110 = 70°."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "In a quadrilateral, three angles are 90°, 80°, and 100°. Find the fourth.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "90°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "80°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "100°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "110°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "Sum of angles in a quadrilateral = 360°. 360 - 90 - 80 - 100 = 90°."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "Two lines intersect. One angle formed is 65°. What is the vertically opposite angle?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "65°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "115°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "25°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "90°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "Vertically opposite angles are equal."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "An isosceles triangle has two equal sides of 5 cm and a base of 6 cm. What is its perimeter?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "16 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "11 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "30 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "5 + 5 + 6 = 16 cm."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "What is a ray?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "A line that starts at a point and goes on forever in one direction",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "A line segment with two endpoints",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "A line that goes forever in both directions",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "A curved path",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.15,
+    "grade_band": "6-7",
+    "explanation": "A ray has one endpoint and extends infinitely in one direction."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "A triangle has all three sides different. It is called:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Scalene",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Isosceles",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Equilateral",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Right",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Scalene triangle: all three sides are of different lengths."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "The exterior angle of a triangle is equal to:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Sum of the two non-adjacent interior angles",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Sum of all three interior angles",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "The adjacent interior angle",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "180°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Exterior angle theorem: exterior angle = sum of remote interior angles."
+  },
+  {
+    "competency_id": "C4.19.6",
+    "module_id": "math_v1",
+    "text": "A parallelogram has one angle of 60°. What are the other three angles?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "120°, 60°, 120°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60°, 60°, 60°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "90°, 60°, 150°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "120°, 120°, 60°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Opposite angles equal, adjacent supplementary: 60, 120, 60, 120."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "Find the area of a triangle with base 10 cm and height 6 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "30 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "16 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "20 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "6-7",
+    "explanation": "Area = 1/2 × base × height = 1/2 × 10 × 6 = 30 sq cm."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "If two parallel lines are cut by a transversal, alternate interior angles are:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Equal",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Supplementary",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Complementary",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Unrelated",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "When a transversal cuts parallel lines, alternate interior angles are equal."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "Find the area of a circle with radius 7 cm. (Use π = 22/7)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "154 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "44 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "308 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "22 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "Area = πr² = 22/7 × 49 = 154 sq cm."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "Two triangles are congruent by SAS if:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Two sides and the included angle are equal",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "All three sides are equal",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Two angles and one side are equal",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "The areas are equal",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "6-7",
+    "explanation": "SAS: Side-Angle-Side. The angle must be between the two sides."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "A parallelogram has base 12 cm and height 8 cm. Its area is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "96 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "20 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "48 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "6-7",
+    "explanation": "Area of parallelogram = base × height = 12 × 8 = 96."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "In the figure, l || m and a transversal makes an angle of 70° with l. The co-interior angle with m is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "110°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "70°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "90°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "180°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "6-7",
+    "explanation": "Co-interior angles are supplementary when lines are parallel. 180 - 70 = 110°."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "Which congruence rule does NOT exist?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "AAA",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "SSS",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "SAS",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "ASA",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "AAA (angle-angle-angle) proves similarity, not congruence."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "The circumference of a circle is 44 cm. Find its radius. (π = 22/7)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "7 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "14 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "22 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "11 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "6-7",
+    "explanation": "C = 2πr. 44 = 2 × 22/7 × r. r = 44 × 7/44 = 7 cm."
+  },
+  {
+    "competency_id": "C4.19.7",
+    "module_id": "math_v1",
+    "text": "A trapezium has parallel sides 8 cm and 12 cm, height 5 cm. Find its area.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "50 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "60 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "40 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "100 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.45,
+    "grade_band": "6-7",
+    "explanation": "Area = 1/2 × (a+b) × h = 1/2 × 20 × 5 = 50 sq cm."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "A right triangle has legs 3 cm and 4 cm. Find the hypotenuse.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "5 cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "7 cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "6 cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "12 cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "Pythagoras: 3² + 4² = 9 + 16 = 25. √25 = 5 cm."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "Find the volume of a cuboid with dimensions 5 cm × 4 cm × 3 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "60 cu cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "12 cu cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "94 cu cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "47 cu cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "Volume = l × w × h = 5 × 4 × 3 = 60 cu cm."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "The diagonals of a rhombus are 10 cm and 24 cm. Find its area.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "120 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "240 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "34 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "60 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Area = 1/2 × d₁ × d₂ = 1/2 × 10 × 24 = 120."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "Find the surface area of a cube with side 6 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "216 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "36 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "72 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "144 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "SA = 6a² = 6 × 36 = 216 sq cm."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "A ladder 10 m long leans against a wall. Its foot is 6 m from the wall. How high does it reach?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "8 m",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "4 m",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "16 m",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "12 m",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "h² + 6² = 10². h² = 100-36 = 64. h = 8 m."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "Find the volume of a cylinder with radius 7 cm and height 10 cm. (π = 22/7)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "1540 cu cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "440 cu cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "770 cu cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "3080 cu cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.4,
+    "grade_band": "8-9",
+    "explanation": "V = πr²h = 22/7 × 49 × 10 = 1540 cu cm."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "In a quadrilateral ABCD, if AB || CD, it is definitely a:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Trapezium",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Parallelogram",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Rectangle",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Rhombus",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "One pair of parallel sides = trapezium. Need both pairs for parallelogram."
+  },
+  {
+    "competency_id": "C4.19.8",
+    "module_id": "math_v1",
+    "text": "The total surface area of a cylinder with r=3 cm and h=7 cm is: (π = 22/7)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "188.57 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "B",
+        "text": "132 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "60π sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "D",
+        "text": "42π sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "C",
+    "difficulty": 0.55,
+    "grade_band": "8-9",
+    "explanation": "TSA = 2πr(r+h) = 2π×3×10 = 60π sq cm."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "Using Heron's formula, find the area of a triangle with sides 5, 6, 7 cm. (s=9)",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "6√6 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "21 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "15 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "18 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "s=9. Area = √(9×4×3×2) = √216 = 6√6."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "The angle subtended by a diameter at any point on the circle is:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "90°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "180°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "60°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "45°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.25,
+    "grade_band": "8-9",
+    "explanation": "Angle in a semicircle is always 90° (Thales' theorem)."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "To construct a 60° angle, you need:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Compass and straightedge only",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Protractor only",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Set square only",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Calculator",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.2,
+    "grade_band": "8-9",
+    "explanation": "Draw an arc from vertex, then same radius from intersection point. Connect for 60°."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "In a circle, equal chords are:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Equidistant from the centre",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Parallel to each other",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Perpendicular to each other",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Of different lengths",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "Equal chords of a circle are equidistant from the centre."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "Euclid's 5th postulate is about:",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Parallel lines",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Right angles",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Circle properties",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Triangles",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "The 5th postulate (parallel postulate) deals with the uniqueness of parallel lines."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "The angle subtended by an arc at the centre is ____ the angle at any point on the remaining circle.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Double",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "Half",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Equal to",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Triple",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "Central angle = 2 × inscribed angle (for the same arc)."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "In triangle ABC, if AB = AC and angle A = 40°, find angle B.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "70°",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "40°",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "80°",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "100°",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.3,
+    "grade_band": "8-9",
+    "explanation": "Isosceles: B = C. A + B + C = 180. 40 + 2B = 180. B = 70°."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "A triangle has sides 8 cm, 15 cm, 17 cm. Is it a right triangle?",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "Yes, because 8² + 15² = 17²",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "No, the sides are too different",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "Yes, because 8 + 15 > 17",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "Cannot determine",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.35,
+    "grade_band": "8-9",
+    "explanation": "64 + 225 = 289 = 17². Satisfies Pythagoras, so it's a right triangle."
+  },
+  {
+    "competency_id": "C4.19.9",
+    "module_id": "math_v1",
+    "text": "Using Heron's formula, find the area of an equilateral triangle with side 10 cm.",
+    "type": "mcq",
+    "options": [
+      {
+        "label": "A",
+        "text": "25√3 sq cm",
+        "is_correct": true
+      },
+      {
+        "label": "B",
+        "text": "50 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "C",
+        "text": "100 sq cm",
+        "is_correct": false
+      },
+      {
+        "label": "D",
+        "text": "50√3 sq cm",
+        "is_correct": false
+      }
+    ],
+    "correct_answer": "A",
+    "difficulty": 0.5,
+    "grade_band": "8-9",
+    "explanation": "s=15. Area = √(15×5×5×5) = 25√3."
   }
 ]

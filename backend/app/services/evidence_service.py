@@ -6,10 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.engine.bkt import BKTEngine, SOURCE_WEIGHTS
-from app.engine.propagation import build_codevelopment_map
-from app.engine.types import BKTUpdateResult, CompetencyState, CodevelopmentLink, EvidenceInput
+from app.engine.propagation import build_prerequisite_ancestor_map
+from app.engine.types import BKTUpdateResult, CompetencyState, EvidenceInput
 from app.models.evidence import EvidenceEvent
-from app.models.skill_graph import CodevelopmentEdge
+from app.models.skill_graph import PrerequisiteEdge
 from app.models.student import StudentCompetencyState
 from app.schemas.evidence import EvidenceCreate
 
@@ -58,8 +58,8 @@ async def process_evidence(
     """
     Process an evidence event:
     1. Persist the event
-    2. Load student state + co-development links
-    3. Run BKT engine
+    2. Load student state + prerequisite edges
+    3. Run BKT engine (includes FIRe decay clock reset)
     4. Persist updated state(s)
     """
     # Determine weight
@@ -67,6 +67,8 @@ async def process_evidence(
 
     # Build meta dict from optional fields
     meta = {}
+    if data.question_id is not None:
+        meta["questionId"] = str(data.question_id)
     if data.response_time_ms is not None:
         meta["responseTimeMs"] = data.response_time_ms
     if data.confidence_report is not None:
@@ -100,31 +102,28 @@ async def process_evidence(
         await db.commit()
         return event, []
 
-    # 3. Load co-development links for this competency
-    codev_result = await db.execute(
-        select(CodevelopmentEdge).where(
-            (CodevelopmentEdge.source_id == data.competency_id)
-            | (CodevelopmentEdge.target_id == data.competency_id)
-        )
-    )
-    codev_edges = codev_result.scalars().all()
+    # 3. Load prerequisite edges for FIRe decay clock reset
+    prereq_result = await db.execute(select(PrerequisiteEdge))
+    prereq_edges_raw = [
+        {
+            "source_id": e.source_id,
+            "target_id": e.target_id,
+            "encompassing_weight": e.encompassing_weight,
+        }
+        for e in prereq_result.scalars().all()
+    ]
 
-    # Build links list (bidirectional)
-    links: list[CodevelopmentLink] = []
-    for edge in codev_edges:
-        if edge.source_id == data.competency_id:
-            links.append(CodevelopmentLink(linked_competency_id=edge.target_id, transfer_weight=edge.transfer_weight))
-        else:
-            links.append(CodevelopmentLink(linked_competency_id=edge.source_id, transfer_weight=edge.transfer_weight))
+    # Build ancestor map for FIRe
+    ancestor_links = build_prerequisite_ancestor_map(prereq_edges_raw, data.competency_id)
 
-    # Load all linked states for propagation
+    # Load ancestor states (FIRe only resets their decay clock)
+    ancestor_ids = [l.linked_competency_id for l in ancestor_links]
     all_states_engine: dict[str, CompetencyState] = {}
-    if links:
-        linked_ids = [l.linked_competency_id for l in links]
+    if ancestor_ids:
         linked_result = await db.execute(
             select(StudentCompetencyState).where(
                 StudentCompetencyState.student_id == data.student_id,
-                StudentCompetencyState.competency_id.in_(linked_ids),
+                StudentCompetencyState.competency_id.in_(ancestor_ids),
             )
         )
         linked_db_states = {s.competency_id: s for s in linked_result.scalars().all()}
@@ -145,53 +144,28 @@ async def process_evidence(
 
     primary_engine_state = _db_state_to_engine(primary_state_db)
     updated_state, update_results = engine.process_evidence(
-        primary_engine_state, evidence_input, links, all_states_engine
+        primary_engine_state, evidence_input,
+        codevelopment_links=[],
+        all_states=all_states_engine,
+        prerequisite_links=ancestor_links,
     )
 
     # 5. Persist updated primary state
     _apply_engine_state_to_db(primary_state_db, updated_state)
 
-    # 6. Persist propagated state updates + create propagated evidence events
-    if links:
+    # 6. Persist FIRe decay clock resets for ancestors
+    fire_refreshed = update_results[0].fire_refreshed if update_results else []
+    if fire_refreshed:
         linked_result2 = await db.execute(
             select(StudentCompetencyState).where(
                 StudentCompetencyState.student_id == data.student_id,
-                StudentCompetencyState.competency_id.in_([l.linked_competency_id for l in links]),
+                StudentCompetencyState.competency_id.in_(fire_refreshed),
             )
         )
-        linked_db_map = {s.competency_id: s for s in linked_result2.scalars().all()}
-
-        for cid, engine_st in all_states_engine.items():
-            db_st = linked_db_map.get(cid)
-            if db_st:
-                _apply_engine_state_to_db(db_st, engine_st)
-                # Find the actual delta transferred from update results
-                prop_result = next(
-                    (r for r in update_results if r.competency_id == cid and r.competency_id != data.competency_id),
-                    None,
-                )
-                actual_delta = (prop_result.p_learned_after - prop_result.p_learned_before) if prop_result else 0.0
-                transfer_w = next(
-                    (l.transfer_weight for l in links if l.linked_competency_id == cid), 0.5
-                )
-                # Create propagated evidence event for audit trail
-                prop_event = EvidenceEvent(
-                    student_id=data.student_id,
-                    competency_id=cid,
-                    source=data.source,
-                    module_id=data.module_id,
-                    outcome=data.outcome,
-                    weight=transfer_w,
-                    meta={
-                        "propagation_type": "delta_transfer",
-                        "delta_transferred": round(actual_delta, 6),
-                        "source_competency": data.competency_id,
-                        "transfer_weight": transfer_w,
-                    },
-                    is_propagated=True,
-                    source_event_id=event.id,
-                )
-                db.add(prop_event)
+        for db_st in linked_result2.scalars().all():
+            engine_st = all_states_engine.get(db_st.competency_id)
+            if engine_st:
+                db_st.last_evidence_at = engine_st.last_evidence_at
 
     await db.commit()
     await db.refresh(event)

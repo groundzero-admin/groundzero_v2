@@ -9,7 +9,7 @@ the evidence pipeline, curriculum predictor, or dashboards.
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from app.engine.types import BKTParams, BKTUpdateResult, CodevelopmentLink, CompetencyState, EvidenceInput
+from app.engine.types import BKTParams, BKTUpdateResult, CompetencyState, EvidenceInput, PrerequisiteLink
 
 
 class MasteryEngine(ABC):
@@ -24,10 +24,11 @@ class MasteryEngine(ABC):
         self,
         state: CompetencyState,
         evidence: EvidenceInput,
-        codevelopment_links: list[CodevelopmentLink],
+        codevelopment_links: list = (),
         all_states: dict[str, CompetencyState] | None = None,
+        prerequisite_links: list[PrerequisiteLink] | None = None,
     ) -> tuple[CompetencyState, list[BKTUpdateResult]]:
-        """Process a single evidence event. Returns updated state + list of all update results (including propagated)."""
+        """Process a single evidence event. Returns updated state + update result with FIRe info."""
         ...
 
     @abstractmethod

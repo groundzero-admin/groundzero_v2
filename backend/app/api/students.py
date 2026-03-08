@@ -4,9 +4,11 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.evidence import EvidenceEvent
 from app.schemas.curriculum import QuestionOut
 from app.schemas.curriculum_topic import RecommendedTopicOut
 from app.schemas.student import CompetencyStateOut, StudentCreate, StudentOut, StudentStateOut
@@ -102,6 +104,32 @@ async def get_single_competency_state(
     return state
 
 
+class FrontierSkillOut(BaseModel):
+    competency_id: str
+    competency_name: str
+    p_learned: float
+    stage: int
+    priority: float
+    reasons: list[str]
+
+
+@router.get(
+    "/{student_id}/skill-frontier",
+    response_model=list[FrontierSkillOut],
+    summary="Get Learning Frontier",
+    description="Find skills the student should work on next. Uses the prerequisite graph to identify skills where all prerequisites are met but the skill itself needs work. Prioritizes stuck, decaying, and close-to-next-stage skills.",
+)
+async def get_skill_frontier(
+    student_id: uuid.UUID,
+    limit: int = Query(10, le=30),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await student_service.get_student(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return await predictor_service.get_skill_frontier(db, student_id, limit)
+
+
 class ActivityRecommendation(BaseModel):
     activity_id: str
     activity_name: str
@@ -114,7 +142,7 @@ class ActivityRecommendation(BaseModel):
     "/{student_id}/next-activity",
     response_model=list[ActivityRecommendation],
     summary="Recommend Next Activities",
-    description="Get personalized activity recommendations based on the student's ZPD (Zone of Proximal Development). Returns activities scored by relevance to the student's current mastery level.",
+    description="Get personalized activity recommendations. Uses the prerequisite graph to filter out activities the student isn't ready for.",
 )
 async def get_next_activity(
     student_id: uuid.UUID,
@@ -147,6 +175,47 @@ async def get_next_questions(
         raise HTTPException(status_code=404, detail="Student not found")
     questions = await predictor_service.get_next_questions(db, student_id, competency_id, count, module_id)
     return questions
+
+
+class NextQuestionOut(BaseModel):
+    question: QuestionOut
+    competency_id: str
+    competency_name: str
+    p_learned: float
+    stage: int
+
+
+@router.get(
+    "/{student_id}/next-question",
+    response_model=NextQuestionOut | None,
+    summary="Get Next Adaptive Question",
+    description="Backend picks the best competency and question for the student. "
+    "Pass activity_id for live sessions or topic_id for self-serve practice.",
+)
+async def get_next_question(
+    student_id: uuid.UUID,
+    activity_id: str | None = Query(None),
+    topic_id: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    if not activity_id and not topic_id:
+        raise HTTPException(status_code=400, detail="Provide activity_id or topic_id")
+    student = await student_service.get_student(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    if activity_id:
+        result = await predictor_service.get_next_question_for_activity(db, student_id, activity_id)
+    else:
+        result = await predictor_service.get_next_question_for_topic(db, student_id, topic_id)
+    if not result:
+        return None
+    return NextQuestionOut(
+        question=QuestionOut.model_validate(result.question),
+        competency_id=result.competency_id,
+        competency_name=result.competency_name,
+        p_learned=result.p_learned,
+        stage=result.stage,
+    )
 
 
 @router.get(
@@ -197,3 +266,33 @@ async def submit_diagnostic(
         raise HTTPException(status_code=404, detail="Student not found")
     updates = await diagnostic_service.apply_diagnostic(db, student_id, profile.model_dump())
     return updates
+
+
+class SessionScoreOut(BaseModel):
+    total: int
+    correct: int
+
+
+@router.get(
+    "/{student_id}/session-score",
+    response_model=SessionScoreOut,
+    summary="Get Student's Score in Session",
+    description="Count total and correct answers for this student in the given session.",
+)
+async def get_student_session_score(
+    student_id: uuid.UUID,
+    session_id: uuid.UUID = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(
+            func.count().label("total"),
+            func.sum(case((EvidenceEvent.outcome >= 0.5, 1), else_=0)).label("correct"),
+        ).where(
+            EvidenceEvent.student_id == student_id,
+            EvidenceEvent.session_id == session_id,
+            EvidenceEvent.source == "mcq",
+        )
+    )
+    row = result.one()
+    return SessionScoreOut(total=int(row.total), correct=int(row.correct or 0))

@@ -10,6 +10,7 @@ class PrerequisiteEdge(Base):
     source_id: Mapped[str] = mapped_column(String(10), ForeignKey("competencies.id"), primary_key=True)
     target_id: Mapped[str] = mapped_column(String(10), ForeignKey("competencies.id"), primary_key=True)
     min_stage: Mapped[int] = mapped_column(Integer, server_default="2")
+    encompassing_weight: Mapped[float] = mapped_column(Float, server_default="0.0")
 
 
 class CodevelopmentEdge(Base):

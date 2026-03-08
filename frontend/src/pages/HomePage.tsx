@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Palette, BookOpen, Radio } from "lucide-react";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
-import { useActiveSession } from "@/api/hooks/useActiveSession";
+
 import * as s from "./HomePage.css";
 
 const MODES = [

@@ -5,7 +5,6 @@ import { useActivity, useActivities } from "@/api/hooks/useActivities";
 import { useEvidenceHistory } from "@/api/hooks/useEvidenceHistory";
 import { useCohortSessions } from "@/api/hooks/useCohortSessions";
 import { usePillars } from "@/api/hooks/usePillars";
-import { useCompetencies } from "@/api/hooks/useCompetencies";
 import { aggregatePillarProgress, computeStreak } from "@/lib/pillar-helpers";
 import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
 import { SessionsCard } from "@/components/dashboard/SessionsCard";
@@ -24,8 +23,8 @@ export default function DashboardPage() {
     student_id: studentId,
     limit: 200,
   });
-  const { data: pillars = [] } = usePillars();
-  const { data: competencies = [] } = useCompetencies();
+  usePillars(); // preload for dashboard
+
   const { data: allActivities = [] } = useActivities();
 
   // Session awareness
@@ -88,9 +87,6 @@ export default function DashboardPage() {
             loading={loadingSession}
           />
           <SelfServePractice
-            pillars={pillars}
-            competencies={competencies}
-            states={states}
             board={student?.board ?? "cbse"}
             grade={student?.grade ?? 6}
           />

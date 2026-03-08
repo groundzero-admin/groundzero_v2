@@ -3,6 +3,7 @@ export interface Activity {
   module_id: string;
   name: string;
   type: "warmup" | "key_topic" | "diy" | "ai_lab" | "artifact";
+  mode: "timed_mcq" | "open_ended" | "discussion" | "default";
   week: number | null;
   session_number: number | null;
   duration_minutes: number | null;

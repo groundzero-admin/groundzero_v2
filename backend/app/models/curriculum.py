@@ -15,6 +15,7 @@ class Activity(Base):
     module_id: Mapped[str] = mapped_column(String(50))  # level_1, math_v1
     name: Mapped[str] = mapped_column(String(300))
     type: Mapped[str] = mapped_column(String(20))  # warmup, key_topic, diy, ai_lab, artifact
+    mode: Mapped[str] = mapped_column(String(20), server_default="default")  # timed_mcq, open_ended, discussion, default
     week: Mapped[int | None] = mapped_column(Integer, nullable=True)
     session_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)

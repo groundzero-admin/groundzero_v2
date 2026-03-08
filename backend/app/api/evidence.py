@@ -29,6 +29,7 @@ async def submit_evidence(data: EvidenceCreate, db: AsyncSession = Depends(get_d
             stage_before=r.stage_before,
             stage_after=r.stage_after,
             is_stuck=r.is_stuck,
+            fire_refreshed=r.fire_refreshed,
         )
         for r in update_results
     ]

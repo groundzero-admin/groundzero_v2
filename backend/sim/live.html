@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BKT Engine — Live Simulation</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #222533; --border: #2a2d3a;
+    --text: #e1e4ed; --muted: #8b8fa3;
+    --red: #ef4444; --orange: #f59e0b; --green: #22c55e; --blue: #3b82f6;
+    --purple: #a855f7; --cyan: #06b6d4; --pink: #ec4899;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 300px 1fr; grid-template-rows: auto 1fr; height: 100vh; }
+  .topbar {
+    grid-column: 1 / -1; padding: 12px 24px; background: var(--surface);
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px;
+  }
+  .topbar h1 { font-size: 16px; font-weight: 600; }
+  .topbar .pill {
+    padding: 4px 10px; border-radius: 6px; font-size: 12px;
+    background: var(--blue); color: white;
+  }
+
+  .sidebar {
+    background: var(--surface); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 16px;
+  }
+  .main { overflow-y: auto; padding: 20px; }
+
+  /* Sidebar sections */
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+  /* Student creator */
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-row input, .form-row select {
+    flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 13px; outline: none;
+  }
+  .form-row input:focus, .form-row select:focus { border-color: var(--blue); }
+
+  .btn {
+    padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 500; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: #16a34a; }
+  .btn-red { background: var(--red); color: white; }
+  .btn-red:hover { background: #dc2626; }
+  .btn-outline {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-block { width: 100%; }
+
+  /* Student list */
+  .student-card {
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 6px;
+    background: var(--bg); border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .student-card:hover { border-color: var(--blue); }
+  .student-card.active { border-color: var(--blue); background: rgba(59,130,246,0.08); }
+  .student-card .name { font-size: 13px; font-weight: 500; }
+  .student-card .meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .profile-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px;
+  }
+  .profile-dot.weak { background: var(--red); }
+  .profile-dot.average { background: var(--orange); }
+  .profile-dot.strong { background: var(--green); }
+
+  /* Main content */
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 60vh; color: var(--muted); text-align: center;
+  }
+  .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  /* Controls bar */
+  .controls {
+    display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
+  }
+  .controls .label { font-size: 13px; color: var(--muted); }
+
+  /* Stats */
+  .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; min-width: 120px; flex: 1;
+  }
+  .stat-val { font-size: 24px; font-weight: 700; }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .chart-box { position: relative; height: 260px; }
+
+  /* Skill table */
+  .skill-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .skill-table th {
+    text-align: left; padding: 6px 10px; color: var(--muted); font-weight: 500;
+    border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase;
+  }
+  .skill-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .skill-table tr:hover { background: rgba(59,130,246,0.04); }
+  .skill-table tr.clickable { cursor: pointer; }
+
+  .pl-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .pl-bg { width: 80px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .pl-fill { height: 100%; border-radius: 3px; }
+
+  .badge {
+    display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;
+  }
+  .badge-1 { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-2 { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .badge-3 { background: rgba(6,182,212,0.15); color: var(--cyan); }
+  .badge-4 { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .badge-5 { background: rgba(34,197,94,0.15); color: var(--green); }
+  .badge-stuck { background: rgba(239,68,68,0.2); color: var(--red); }
+
+  /* Event feed */
+  .feed { max-height: 350px; overflow-y: auto; font-size: 12px; }
+  .feed::-webkit-scrollbar { width: 5px; }
+  .feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .feed-item {
+    padding: 6px 0; border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: flex-start; animation: fadeIn 0.3s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+  .feed-icon { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+  .feed-body { flex: 1; }
+  .feed-main { display: flex; gap: 8px; align-items: center; }
+  .feed-skill { color: var(--blue); font-family: monospace; }
+  .feed-delta { font-weight: 500; }
+  .feed-delta.pos { color: var(--green); }
+  .feed-delta.neg { color: var(--red); }
+  .feed-props { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .fire-tag {
+    display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 10px;
+    background: rgba(245,158,11,0.15); color: var(--orange); margin-right: 4px;
+  }
+
+  /* Question panel */
+  .question-panel {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 16px;
+  }
+  .question-text { font-size: 14px; margin-bottom: 12px; line-height: 1.5; }
+  .option-list { list-style: none; }
+  .option-item {
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+    background: var(--bg); border: 1px solid var(--border); cursor: pointer;
+    font-size: 13px; transition: all 0.15s;
+  }
+  .option-item:hover { border-color: var(--blue); }
+  .option-item.selected { border-color: var(--blue); background: rgba(59,130,246,0.1); }
+  .option-item.correct { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+  .option-item.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
+  .question-meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .explanation { font-size: 12px; color: var(--muted); margin-top: 8px; padding: 8px; background: var(--bg); border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <h1>BKT Engine — Live Simulation</h1>
+    <span class="pill" id="eventCounter">0 events</span>
+  </div>
+
+  <div class="sidebar">
+    <div class="section">
+      <div class="section-title">Create Student</div>
+      <div class="form-row">
+        <input id="studentName" placeholder="Name" value="Arjun">
+      </div>
+      <div class="form-row">
+        <select id="studentGrade">
+          <option value="4">Grade 4</option><option value="5">Grade 5</option>
+          <option value="6" selected>Grade 6</option><option value="7">Grade 7</option>
+          <option value="8">Grade 8</option><option value="9">Grade 9</option>
+        </select>
+        <select id="studentProfile">
+          <option value="weak">Weak</option>
+          <option value="average" selected>Average</option>
+          <option value="strong">Strong</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="createStudent()">Create Student</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Students</div>
+      <div id="studentList"></div>
+    </div>
+  </div>
+
+  <div class="main" id="mainContent">
+    <div class="empty-state">
+      <h2>Create a student to begin</h2>
+      <p>Pick a grade and profile, then submit evidence or auto-play to watch the BKT engine work.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "";
+let activeStudentId = null;
+let studentList = [];
+let masteryChart = null;
+let stageChart = null;
+let currentQuestion = null;
+let selectedOption = null;
+let questionSubmitted = false;
+let plHistory = {}; // competency_id -> [p_learned values over time]
+
+const STAGE = { 1: "Novice", 2: "Emerging", 3: "Developing", 4: "Proficient", 5: "Mastered" };
+const AREA_COLORS = {
+  "Number Sense": "#ef4444", "Fractions": "#f59e0b", "Decimals & Percentages": "#06b6d4",
+  "Ratios & Proportion": "#a855f7", "Algebra": "#3b82f6", "Geometry": "#22c55e", "Other": "#8b8fa3"
+};
+
+function plColor(pl) {
+  if (pl >= 0.85) return "var(--green)";
+  if (pl >= 0.65) return "var(--blue)";
+  if (pl >= 0.40) return "var(--cyan)";
+  if (pl >= 0.20) return "var(--orange)";
+  return "var(--red)";
+}
+
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  return res.json();
+}
+
+async function createStudent() {
+  const name = document.getElementById("studentName").value || "Student";
+  const grade = parseInt(document.getElementById("studentGrade").value);
+  const profile = document.getElementById("studentProfile").value;
+  const data = await api("POST", "/api/students", { name, grade, profile });
+  studentList.push(data);
+  activeStudentId = data.student_id;
+  plHistory = {};
+  renderSidebar();
+  await refreshMain();
+}
+
+function renderSidebar() {
+  document.getElementById("studentList").innerHTML = studentList.map(s => `
+    <div class="student-card ${s.student_id === activeStudentId ? 'active' : ''}"
+         onclick="selectStudent('${s.student_id}')">
+      <div class="name"><span class="profile-dot ${s.config.profile}"></span>${s.config.name}</div>
+      <div class="meta">Grade ${s.config.grade} · ${s.config.profile} · ${s.skill_count} skills</div>
+    </div>
+  `).join("");
+}
+
+async function selectStudent(sid) {
+  activeStudentId = sid;
+  plHistory = {};
+  renderSidebar();
+  await refreshMain();
+}
+
+async function refreshMain() {
+  if (!activeStudentId) return;
+  const [state, history] = await Promise.all([
+    api("GET", `/api/students/${activeStudentId}/state`),
+    api("GET", `/api/students/${activeStudentId}/history?last=100`),
+  ]);
+
+  // Track P(L) history for chart
+  state.states.forEach(s => {
+    if (!plHistory[s.id]) plHistory[s.id] = [];
+    const last = plHistory[s.id];
+    if (last.length === 0 || last[last.length - 1] !== s.p_learned) {
+      plHistory[s.id].push(s.p_learned);
+    }
+  });
+
+  document.getElementById("eventCounter").textContent = `${state.event_count} events`;
+  renderMainContent(state, history);
+}
+
+function renderMainContent(state, history) {
+  const states = state.states;
+  const avgPL = states.reduce((a, s) => a + s.p_learned, 0) / states.length;
+  const avgConf = states.reduce((a, s) => a + s.confidence, 0) / states.length;
+  const stuckCount = states.filter(s => s.is_stuck).length;
+  const proficient = states.filter(s => s.stage >= 4).length;
+  const mathStates = states.filter(s => s.id.startsWith("C4.1") && s.id.split(".").length === 3);
+
+  document.getElementById("mainContent").innerHTML = `
+    <div class="controls">
+      <button class="btn btn-green btn-sm" onclick="autoPlay(10)">▶ Auto-play 10</button>
+      <button class="btn btn-green btn-sm" onclick="autoPlay(50)">▶ Auto-play 50</button>
+      <button class="btn btn-green btn-sm" onclick="autoPlay(144)">▶ Full term (144)</button>
+      <button class="btn btn-outline btn-sm" onclick="loadQuestion()">📝 Answer a question</button>
+      <span class="label" style="margin-left:auto">${state.config.name} · Grade ${state.config.grade} · ${state.config.profile}</span>
+    </div>
+
+    <div id="questionArea"></div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-val" style="color:var(--blue)">${(avgPL * 100).toFixed(0)}%</div><div class="stat-lbl">Avg Mastery</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--green)">${proficient}</div><div class="stat-lbl">Proficient+</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--purple)">${(avgConf * 100).toFixed(0)}%</div><div class="stat-lbl">Avg Confidence</div></div>
+      <div class="stat"><div class="stat-val">${state.event_count}</div><div class="stat-lbl">Evidence</div></div>
+      <div class="stat"><div class="stat-val" style="color:${stuckCount ? 'var(--red)' : 'var(--green)'}">${stuckCount}</div><div class="stat-lbl">Stuck</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Math Mastery by Area</div>
+        <div class="chart-box"><canvas id="masteryCanvas"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Stage Distribution</div>
+        <div class="chart-box"><canvas id="stageCanvas"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">All Skills (${states.length})</div>
+        <div style="max-height:400px;overflow-y:auto">
+          <table class="skill-table">
+            <thead><tr><th>Skill</th><th>P(L)</th><th>Stage</th><th>Conf</th><th>Ev</th><th></th></tr></thead>
+            <tbody>${states.sort((a, b) => b.p_learned - a.p_learned).map(s => `
+              <tr class="clickable" onclick="submitForSkill('${s.id}', true)" title="Click to submit correct evidence">
+                <td><span style="color:var(--blue);font-family:monospace;font-size:11px">${s.id}</span><br><span style="font-size:11px;color:var(--muted)">${s.name}</span></td>
+                <td><div class="pl-bar-wrap"><div class="pl-bg"><div class="pl-fill" style="width:${s.p_learned*100}%;background:${plColor(s.p_learned)}"></div></div><span style="font-size:11px">${(s.p_learned*100).toFixed(0)}%</span></div></td>
+                <td><span class="badge badge-${s.stage}">${STAGE[s.stage]}</span></td>
+                <td style="color:${s.confidence > 0.6 ? 'var(--green)' : s.confidence > 0.3 ? 'var(--orange)' : 'var(--red)'}; font-size:11px">${(s.confidence*100).toFixed(0)}%</td>
+                <td style="font-size:11px">${s.total_evidence}</td>
+                <td>
+                  ${s.is_stuck ? '<span class="badge badge-stuck">STUCK</span>' : ''}
+                  <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();submitForSkill('${s.id}',true)" style="font-size:10px;padding:2px 6px">✓</button>
+                  <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();submitForSkill('${s.id}',false)" style="font-size:10px;padding:2px 6px;color:var(--red)">✗</button>
+                </td>
+              </tr>
+            `).join("")}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Event Feed</div>
+        <div class="feed" id="feedArea">
+          ${history.reverse().map(renderFeedItem).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderCharts(states);
+}
+
+function renderFeedItem(ev) {
+  const icon = ev.outcome >= 0.5 ? "✅" : "❌";
+  const delta = ev.p_learned_after - ev.p_learned_before;
+  const deltaStr = (delta >= 0 ? "+" : "") + (delta * 100).toFixed(1) + "%";
+  const propHtml = ev.propagated.length > 0
+    ? `<div class="feed-props">${ev.propagated.map(p =>
+        `<span class="fire-tag">${p.type === 'trickle_down' ? '↓' : '↑'} FIRe</span>${p.competency_id} ${p.delta > 0 ? '+' : ''}${(p.delta * 100).toFixed(1)}%`
+      ).join(" · ")}</div>`
+    : "";
+
+  return `<div class="feed-item">
+    <div class="feed-icon">${icon}</div>
+    <div class="feed-body">
+      <div class="feed-main">
+        <span class="feed-skill">${ev.competency_id}</span>
+        <span class="feed-delta ${delta >= 0 ? 'pos' : 'neg'}">${deltaStr}</span>
+        <span style="color:var(--muted);font-size:11px">${ev.competency_name}</span>
+        ${ev.is_stuck ? '<span class="badge badge-stuck">STUCK</span>' : ''}
+      </div>
+      ${propHtml}
+    </div>
+  </div>`;
+}
+
+function renderCharts(states) {
+  // Mastery by area
+  const areas = {};
+  states.forEach(s => {
+    if (!areas[s.area]) areas[s.area] = [];
+    areas[s.area].push(s.p_learned);
+  });
+
+  const areaLabels = Object.keys(areas).sort();
+  const areaAvgs = areaLabels.map(a => +(areas[a].reduce((x, y) => x + y, 0) / areas[a].length * 100).toFixed(1));
+  const areaColors = areaLabels.map(a => AREA_COLORS[a] || "#8b8fa3");
+
+  const ctx1 = document.getElementById("masteryCanvas").getContext("2d");
+  new Chart(ctx1, {
+    type: "bar",
+    data: {
+      labels: areaLabels,
+      datasets: [{ data: areaAvgs, backgroundColor: areaColors.map(c => c + "99"), borderColor: areaColors, borderWidth: 1 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: "y",
+      scales: {
+        x: { min: 0, max: 100, grid: { color: "#2a2d3a" }, ticks: { color: "#8b8fa3", callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { color: "#e1e4ed", font: { size: 11 } } }
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.x + "%" } } }
+    }
+  });
+
+  // Stage distribution
+  const stageCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  states.forEach(s => stageCounts[s.stage]++);
+  const stageColors = { 1: "#ef4444", 2: "#f59e0b", 3: "#06b6d4", 4: "#3b82f6", 5: "#22c55e" };
+
+  const ctx2 = document.getElementById("stageCanvas").getContext("2d");
+  new Chart(ctx2, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(STAGE).map(k => STAGE[k]),
+      datasets: [{ data: Object.values(stageCounts), backgroundColor: Object.values(stageColors).map(c => c + "cc"), borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "60%",
+      plugins: { legend: { position: "right", labels: { color: "#e1e4ed", usePointStyle: true, pointStyle: "circle", font: { size: 11 } } } }
+    }
+  });
+}
+
+async function submitForSkill(skillId, correct) {
+  if (!activeStudentId) return;
+  await api("POST", "/api/evidence", {
+    student_id: activeStudentId,
+    competency_id: skillId,
+    outcome: correct ? 1.0 : 0.0,
+    response_time_ms: 5000,
+  });
+  await refreshMain();
+}
+
+async function autoPlay(n) {
+  if (!activeStudentId) return;
+  const btns = document.querySelectorAll(".btn-green");
+  btns.forEach(b => b.disabled = true);
+  await api("POST", "/api/autoplay", { student_id: activeStudentId, num_events: n });
+  btns.forEach(b => b.disabled = false);
+  await refreshMain();
+}
+
+async function loadQuestion() {
+  if (!activeStudentId) return;
+  const state = await api("GET", `/api/students/${activeStudentId}/state`);
+  // Pick a random skill with low-ish mastery
+  const candidates = state.states.filter(s => s.p_learned < 0.8 && s.id.split(".").length === 3);
+  if (candidates.length === 0) return;
+  const skill = candidates[Math.floor(Math.random() * candidates.length)];
+
+  const questions = await api("GET", `/api/questions?competency_id=${skill.id}`);
+  if (questions.length === 0) {
+    document.getElementById("questionArea").innerHTML = `<div class="question-panel"><p style="color:var(--muted)">No questions available for ${skill.id}</p></div>`;
+    return;
+  }
+
+  currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+  selectedOption = null;
+  questionSubmitted = false;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = currentQuestion;
+  if (!q) return;
+  const area = document.getElementById("questionArea");
+
+  area.innerHTML = `
+    <div class="question-panel">
+      <div class="question-meta">${q.competency_id} · ${q.difficulty} · ${q.grade_band}</div>
+      <div class="question-text">${q.text}</div>
+      ${q.options ? `<ul class="option-list">${q.options.map((opt, i) => {
+        let cls = "option-item";
+        if (questionSubmitted) {
+          if (opt === q.correct_answer) cls += " correct";
+          else if (i === selectedOption && opt !== q.correct_answer) cls += " wrong";
+        } else if (i === selectedOption) {
+          cls += " selected";
+        }
+        return `<li class="${cls}" onclick="pickOption(${i})">${opt}</li>`;
+      }).join("")}</ul>` : ""}
+      ${!questionSubmitted
+        ? `<button class="btn btn-primary btn-sm" onclick="submitQuestion()" ${selectedOption === null ? 'disabled' : ''}>Submit Answer</button>`
+        : `<div>${q.explanation ? `<div class="explanation">${q.explanation}</div>` : ""}
+           <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="loadQuestion()">Next Question</button></div>`
+      }
+    </div>
+  `;
+}
+
+function pickOption(i) {
+  if (questionSubmitted) return;
+  selectedOption = i;
+  renderQuestion();
+}
+
+async function submitQuestion() {
+  if (!currentQuestion || selectedOption === null || questionSubmitted) return;
+  questionSubmitted = true;
+  const q = currentQuestion;
+  const isCorrect = q.options[selectedOption] === q.correct_answer;
+
+  await api("POST", "/api/evidence", {
+    student_id: activeStudentId,
+    competency_id: q.competency_id,
+    outcome: isCorrect ? 1.0 : 0.0,
+    response_time_ms: 6000,
+  });
+
+  renderQuestion();
+  await refreshMain();
+}
+</script>
+</body>
+</html>

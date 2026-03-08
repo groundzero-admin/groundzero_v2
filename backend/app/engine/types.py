@@ -69,13 +69,18 @@ class BKTUpdateResult:
     stage_before: int
     stage_after: int
     is_stuck: bool
-    propagated_updates: list["BKTUpdateResult"] = field(default_factory=list)
-    delta_transferred: float | None = None  # actual P(L) delta applied (for propagated updates)
+    fire_refreshed: list[str] = field(default_factory=list)  # prerequisite IDs whose decay clocks were reset
 
 
 @dataclass
-class CodevelopmentLink:
-    """A co-development edge between two competencies."""
+class PrerequisiteLink:
+    """A prerequisite ancestor (or postrequisite descendant) link with decayed weight.
+
+    For FIRe (Fractional Implicit Repetition):
+    - Ancestors: practicing an advanced skill gives fractional credit to prerequisites
+    - Postrequisites: failing a prerequisite applies a small penalty to dependents
+    """
 
     linked_competency_id: str
-    transfer_weight: float
+    depth: int  # number of hops from the primary competency
+    weight: float  # encompassing_weight * hop_decay^(depth-1)

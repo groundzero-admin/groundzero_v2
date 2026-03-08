@@ -177,12 +177,35 @@ async def get_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db))
 )
 async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(SessionActivity, Activity.name, Activity.type)
+        select(SessionActivity, Activity.name, Activity.type, Activity.mode, Activity.duration_minutes)
         .outerjoin(Activity, SessionActivity.activity_id == Activity.id)
         .where(SessionActivity.session_id == session_id)
         .order_by(SessionActivity.order)
     )
     rows = result.all()
+
+    # Auto-complete expired timed activities
+    now = datetime.utcnow()
+    dirty = False
+    for sa, name, atype, mode, duration in rows:
+        if (
+            sa.status == "active"
+            and mode == "timed_mcq"
+            and duration
+            and sa.launched_at
+            and (now - sa.launched_at).total_seconds() > duration * 60
+        ):
+            sa.status = "completed"
+            # Also clear session's current_activity_id
+            sess_result = await db.execute(select(Session).where(Session.id == session_id))
+            session = sess_result.scalar_one_or_none()
+            if session and session.current_activity_id == sa.activity_id:
+                session.current_activity_id = None
+            dirty = True
+
+    if dirty:
+        await db.commit()
+
     return [
         SessionActivityOut(
             id=sa.id,
@@ -190,10 +213,12 @@ async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depen
             activity_id=sa.activity_id,
             order=sa.order,
             status=sa.status,
+            launched_at=sa.launched_at,
             activity_name=name,
             activity_type=atype,
+            duration_minutes=duration,
         )
-        for sa, name, atype in rows
+        for sa, name, atype, mode, duration in rows
     ]
 
 
@@ -237,6 +262,7 @@ async def launch_activity(
     if not target_sa:
         raise HTTPException(status_code=404, detail="Activity not in this session's lesson plan")
     target_sa.status = "active"
+    target_sa.launched_at = datetime.utcnow()
 
     # Update session's current_activity_id
     session.current_activity_id = body.activity_id

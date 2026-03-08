@@ -48,9 +48,11 @@ class SessionActivityOut(BaseModel):
     activity_id: str
     order: int
     status: str  # pending / active / completed
+    launched_at: datetime | None = None
     # Joined from Activity table:
     activity_name: str | None = None
     activity_type: str | None = None
+    duration_minutes: int | None = None
 
     model_config = {"from_attributes": True}
 

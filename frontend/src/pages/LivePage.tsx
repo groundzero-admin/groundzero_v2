@@ -1,10 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentState } from "@/api/hooks/useStudentState";
 import { useActiveSession } from "@/api/hooks/useActiveSession";
 import { useActivity } from "@/api/hooks/useActivities";
-import { useNextQuestions } from "@/api/hooks/useNextQuestions";
+import { useSessionActivities } from "@/api/hooks/useTeacher";
+import { useSessionScore } from "@/api/hooks/useSessionScore";
+import { useNextQuestion } from "@/api/hooks/useNextQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
 import type { BKTUpdate, EvidenceCreate } from "@/api/types";
 import type { SparkTriggerData } from "@/components/live/AICompanionShell";
@@ -18,34 +20,30 @@ export default function LivePage() {
   const { studentId } = useStudent();
   const { data: studentState, isLoading: loadingState } = useStudentState(studentId);
   const student = studentState?.student ?? null;
-  const states = studentState?.states ?? [];
 
   // Session-driven flow: find active session for student's cohort
   const { data: session, isLoading: loadingSession } = useActiveSession(student?.cohort_id);
   const { data: activity, isLoading: loadingActivity } = useActivity(session?.current_activity_id);
+  const { data: sessionActivities } = useSessionActivities(session?.id);
 
-  // Derive competency IDs from the session's activity
-  const sessionCompetencyIds = (activity?.primary_competencies ?? []).map(
-    (pc) => pc.competency_id
+  const isTimedMcq = activity?.mode === "timed_mcq";
+
+  // Find the active SessionActivity to get server-side launched_at
+  const activeSessionActivity = useMemo(
+    () => sessionActivities?.find((sa) => sa.activity_id === session?.current_activity_id && sa.status === "active"),
+    [sessionActivities, session?.current_activity_id],
   );
-  const [activeCompIdx, setActiveCompIdx] = useState(0);
-  const competencyId = sessionCompetencyIds[activeCompIdx] ?? null;
-  const competencyState = states.find((st) => st.competency_id === competencyId) ?? null;
 
-  // Reset competency index when activity changes
-  useEffect(() => {
-    setActiveCompIdx(0);
-  }, [activity?.id]);
-
-  // Questions for current competency
+  // Backend picks the best competency + question for this activity
   const {
-    data: questions = [],
-    isLoading: questionsLoading,
-    refetch: refetchQuestions,
-  } = useNextQuestions(studentId, competencyId, { count: 5 });
+    data: nextQ,
+    isLoading: questionLoading,
+    refetch: refetchQuestion,
+  } = useNextQuestion(studentId, activity?.id ?? null);
+
+  const question = nextQ?.question ?? null;
 
   // Answer state
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<"got_it" | "kinda" | "lost" | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -59,27 +57,72 @@ export default function LivePage() {
   const [aiInteraction, setAiInteraction] = useState<"none" | "hint" | "conversation">("none");
   const stuckTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Stateful countdown timer — derived from server launched_at ──
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Calculate time remaining from server's launched_at + duration
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    if (!isTimedMcq || !activity?.duration_minutes || !activeSessionActivity?.launched_at) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const raw = activeSessionActivity.launched_at;
+    const launchedAt = new Date(raw.endsWith("Z") ? raw : raw + "Z").getTime();
+    const durationMs = activity.duration_minutes * 60 * 1000;
+    const endTime = launchedAt + durationMs;
+
+    const calcRemaining = () => Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    setTimeLeft(calcRemaining());
+
+    timerRef.current = setInterval(() => {
+      const remaining = calcRemaining();
+      setTimeLeft(remaining);
+      if (remaining <= 0 && timerRef.current) clearInterval(timerRef.current);
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isTimedMcq, activity?.duration_minutes, activeSessionActivity?.launched_at]);
+
+  // ── Stateful score tracking — seeded from server, incremented locally ──
+  const { data: serverScore } = useSessionScore(studentId, session?.id);
+  const [localScoreDelta, setLocalScoreDelta] = useState({ total: 0, correct: 0 });
+  const lastActivityRef = useRef<string | null>(null);
+
+  // Reset local delta when activity changes
+  useEffect(() => {
+    if (activity?.id && activity.id !== lastActivityRef.current) {
+      setLocalScoreDelta({ total: 0, correct: 0 });
+      lastActivityRef.current = activity.id;
+    }
+  }, [activity?.id]);
+
+  const totalAnswered = (serverScore?.total ?? 0) + localScoreDelta.total;
+  const correctCount = (serverScore?.correct ?? 0) + localScoreDelta.correct;
+
   // Trigger SPARK when student selects "Lost" (before submitting)
   useEffect(() => {
-    if (confidence !== "lost" || submitted || !studentId || !competencyId) return;
-    const question = questions[currentIndex];
+    if (confidence !== "lost" || submitted || !studentId || !nextQ) return;
     if (!question || sparkTrigger) return;
 
     setSparkTrigger({
       studentId,
       questionId: question.id,
       trigger: "low_confidence",
-      competencyId,
+      competencyId: nextQ.competency_id,
       selectedOption: selectedOption ?? undefined,
       confidenceReport: "lost",
     });
-  }, [confidence, submitted, studentId, competencyId, questions, currentIndex, selectedOption, sparkTrigger]);
+  }, [confidence, submitted, studentId, nextQ, question, selectedOption, sparkTrigger]);
 
   // Trigger SPARK after 30s of no answer
   useEffect(() => {
-    if (submitted || !studentId || !competencyId) return;
-    const question = questions[currentIndex];
-    if (!question) return;
+    if (submitted || !studentId || !nextQ || !question) return;
 
     if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
 
@@ -89,7 +132,7 @@ export default function LivePage() {
           studentId,
           questionId: question.id,
           trigger: "hint_request",
-          competencyId,
+          competencyId: nextQ.competency_id,
           selectedOption: selectedOption ?? undefined,
         });
       }
@@ -98,28 +141,24 @@ export default function LivePage() {
     return () => {
       if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
     };
-  }, [studentId, competencyId, questions, currentIndex, submitted, sparkTrigger, selectedOption]);
+  }, [studentId, nextQ, question, submitted, sparkTrigger, selectedOption]);
 
   // Submit mutation
   const { mutateAsync: submitEvidence, isPending: submitting } =
     useSubmitEvidence(studentId);
 
-  // Reset question state when competency changes
+  // Reset question state when question changes
   useEffect(() => {
-    setCurrentIndex(0);
     setSelectedOption(null);
     setConfidence(null);
     setSubmitted(false);
     setSparkTrigger(null);
     setAiInteraction("none");
     questionShownAt.current = Date.now();
-  }, [competencyId]);
+  }, [nextQ?.question?.id]);
 
   const handleSubmit = useCallback(async () => {
-    if (!studentId || !competencyId || !selectedOption) return;
-
-    const question = questions[currentIndex];
-    if (!question) return;
+    if (!studentId || !selectedOption || !question || !nextQ) return;
 
     const correctLabel =
       question.options?.find((o) => o.is_correct)?.label ?? null;
@@ -128,9 +167,10 @@ export default function LivePage() {
 
     const evidence: EvidenceCreate = {
       student_id: studentId,
-      competency_id: competencyId,
+      competency_id: nextQ.competency_id,
       outcome: isCorrect ? 1.0 : 0.0,
       source: "mcq",
+      question_id: question.id,
       module_id: question.module_id,
       session_id: session?.id,
       response_time_ms: responseTimeMs,
@@ -141,6 +181,10 @@ export default function LivePage() {
     try {
       const result = await submitEvidence(evidence);
       setSubmitted(true);
+      setLocalScoreDelta((prev) => ({
+        total: prev.total + 1,
+        correct: prev.correct + (isCorrect ? 1 : 0),
+      }));
       if (result.updates.length > 0) {
         setToastUpdates(result.updates);
       }
@@ -151,7 +195,7 @@ export default function LivePage() {
           studentId,
           questionId: question.id,
           trigger: !isCorrect ? "wrong_answer" : "low_confidence",
-          competencyId,
+          competencyId: nextQ.competency_id,
           selectedOption,
           confidenceReport: confidence ?? undefined,
         });
@@ -159,32 +203,11 @@ export default function LivePage() {
     } catch {
       // Mutation error handled by TanStack Query
     }
-  }, [
-    studentId,
-    competencyId,
-    selectedOption,
-    questions,
-    currentIndex,
-    confidence,
-    session?.id,
-    submitEvidence,
-    aiInteraction,
-  ]);
+  }, [studentId, selectedOption, question, nextQ, confidence, session?.id, submitEvidence, aiInteraction]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1);
-    } else {
-      refetchQuestions();
-      setCurrentIndex(0);
-    }
-    setSelectedOption(null);
-    setConfidence(null);
-    setSubmitted(false);
-    setSparkTrigger(null);
-    setAiInteraction("none");
-    questionShownAt.current = Date.now();
-  }, [currentIndex, questions.length, refetchQuestions]);
+    refetchQuestion();
+  }, [refetchQuestion]);
 
   const dismissToast = useCallback(() => setToastUpdates(null), []);
 
@@ -205,7 +228,7 @@ export default function LivePage() {
             facilitatorName={undefined}
             confidence={confidence}
             onConfidenceChange={setConfidence}
-            questionActive={!!questions[currentIndex] && !submitted}
+            questionActive={!!question && !submitted}
           />
         </div>
 
@@ -214,19 +237,17 @@ export default function LivePage() {
             session={session ?? null}
             activity={activity ?? null}
             activityLoading={loadingActivity}
-            competencyIds={sessionCompetencyIds}
-            activeCompIdx={activeCompIdx}
-            onCompetencySwitch={setActiveCompIdx}
-            competencyState={competencyState}
-            questions={questions}
-            questionsLoading={questionsLoading}
-            currentIndex={currentIndex}
+            question={question}
+            questionsLoading={questionLoading}
             selectedOption={selectedOption}
             onSelectOption={setSelectedOption}
             submitted={submitted}
             onSubmit={handleSubmit}
             onNext={handleNext}
             submitting={submitting}
+            timeLeft={isTimedMcq ? timeLeft : undefined}
+            totalAnswered={totalAnswered}
+            correctCount={correctCount}
           />
         </div>
       </div>

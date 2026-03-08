@@ -21,7 +21,7 @@ import math
 from datetime import datetime
 
 from app.engine.interface import MasteryEngine
-from app.engine.types import BKTParams, BKTUpdateResult, CodevelopmentLink, CompetencyState, EvidenceInput
+from app.engine.types import BKTParams, BKTUpdateResult, CompetencyState, EvidenceInput, PrerequisiteLink
 
 # Source reliability weights (from technical design)
 SOURCE_WEIGHTS: dict[str, float] = {
@@ -79,8 +79,9 @@ class BKTEngine(MasteryEngine):
         self,
         state: CompetencyState,
         evidence: EvidenceInput,
-        codevelopment_links: list[CodevelopmentLink],
+        codevelopment_links: list = (),
         all_states: dict[str, CompetencyState] | None = None,
+        prerequisite_links: list[PrerequisiteLink] | None = None,
     ) -> tuple[CompetencyState, list[BKTUpdateResult]]:
         p_l_original = state.p_learned
         stage_before = state.stage
@@ -109,12 +110,17 @@ class BKTEngine(MasteryEngine):
         p_l_weighted = _clamp(p_l_weighted)
 
         # ── Step 4: LEARNING TRANSITION P(T) ──
-        p_t_adjusted = state.p_transit
-        if evidence.ai_interaction == "hint":
-            p_t_adjusted = min(0.4, p_t_adjusted * 1.5)
-        elif evidence.ai_interaction == "conversation":
-            p_t_adjusted = min(0.5, p_t_adjusted * 2.0)
-        p_l_new = p_l_weighted + (1 - p_l_weighted) * p_t_adjusted
+        # Only apply learning transition on positive evidence, OR when AI helped
+        # Getting an MCQ wrong with no AI doesn't teach you anything
+        if is_positive or evidence.ai_interaction != "none":
+            p_t_adjusted = state.p_transit
+            if evidence.ai_interaction == "hint":
+                p_t_adjusted = min(0.4, p_t_adjusted * 1.5)
+            elif evidence.ai_interaction == "conversation":
+                p_t_adjusted = min(0.5, p_t_adjusted * 2.0)
+            p_l_new = p_l_weighted + (1 - p_l_weighted) * p_t_adjusted
+        else:
+            p_l_new = p_l_weighted
 
         # ── Step 5: CONFIDENCE MODIFIER ──
         if evidence.confidence_report:
@@ -138,56 +144,38 @@ class BKTEngine(MasteryEngine):
         if is_positive and p_l_new > 0.7:
             stability = min(60.0, stability * 1.4)
 
-        # ── Step 8: CO-DEVELOPMENT PROPAGATION (delta transfer) ──
-        propagated_updates: list[BKTUpdateResult] = []
-        if not evidence.is_propagated and all_states and codevelopment_links:
-            primary_delta = p_l_new - p_l_original
-
-            for link in codevelopment_links:
+        # ── Step 8: FIRe — DECAY CLOCK RESET FOR PREREQUISITES (on success) ──
+        # When a student succeeds at an advanced skill, reset the decay clock for
+        # prerequisite ancestors. This prevents unnecessary decay of skills that are
+        # implicitly being exercised. P(L) is NOT modified — only direct evidence
+        # changes mastery estimates. This matches Math Academy's FIRe approach.
+        fire_refreshed: list[str] = []
+        if is_positive and not evidence.is_propagated and prerequisite_links and all_states:
+            for link in prerequisite_links:
                 linked_state = all_states.get(link.linked_competency_id)
                 if linked_state is None:
                     continue
 
-                # Pure delta transfer — no BKT pipeline, just proportional gain/loss
-                transferred_delta = primary_delta * link.transfer_weight
-                linked_p_l_before = linked_state.p_learned
-                linked_p_l_new = _clamp(linked_state.p_learned + transferred_delta)
-
-                linked_stage = _derive_stage(linked_p_l_new)
-                linked_total_evidence = linked_state.total_evidence + 1
-                linked_p_learned_history = (linked_state.p_learned_history + [linked_p_l_new])[-10:]
-                linked_confidence = _derive_confidence(linked_total_evidence, linked_p_learned_history)
-
                 updated_linked = CompetencyState(
                     competency_id=linked_state.competency_id,
-                    p_learned=linked_p_l_new,
+                    p_learned=linked_state.p_learned,
                     p_guess=linked_state.p_guess,
                     p_slip=linked_state.p_slip,
                     p_transit=linked_state.p_transit,
-                    total_evidence=linked_total_evidence,
-                    positive_evidence=linked_state.positive_evidence + (1 if is_positive else 0),
-                    consecutive_failures=linked_state.consecutive_failures,  # unchanged
-                    is_stuck=linked_state.is_stuck,  # unchanged
-                    last_evidence_at=now,
-                    stability=linked_state.stability,  # unchanged
-                    avg_response_time_ms=linked_state.avg_response_time_ms,  # unchanged
-                    stage=linked_stage,
-                    confidence=linked_confidence,
-                    p_learned_history=linked_p_learned_history,
+                    total_evidence=linked_state.total_evidence,
+                    positive_evidence=linked_state.positive_evidence,
+                    consecutive_failures=linked_state.consecutive_failures,
+                    is_stuck=linked_state.is_stuck,
+                    last_evidence_at=now,  # THE core FIRe benefit — prevents decay
+                    stability=linked_state.stability,
+                    avg_response_time_ms=linked_state.avg_response_time_ms,
+                    stage=linked_state.stage,
+                    confidence=linked_state.confidence,
+                    p_learned_history=linked_state.p_learned_history,
                 )
 
-                propagated_updates.append(
-                    BKTUpdateResult(
-                        competency_id=link.linked_competency_id,
-                        p_learned_before=linked_p_l_before,
-                        p_learned_after=linked_p_l_new,
-                        stage_before=linked_state.stage,
-                        stage_after=linked_stage,
-                        is_stuck=linked_state.is_stuck,
-                        delta_transferred=transferred_delta,
-                    )
-                )
                 all_states[link.linked_competency_id] = updated_linked
+                fire_refreshed.append(link.linked_competency_id)
 
         # ── Step 9: DERIVE STAGE ──
         stage = _derive_stage(p_l_new)
@@ -233,10 +221,10 @@ class BKTEngine(MasteryEngine):
             stage_before=stage_before,
             stage_after=stage,
             is_stuck=is_stuck,
-            propagated_updates=propagated_updates,
+            fire_refreshed=fire_refreshed,
         )
 
-        return updated_state, [primary_result] + propagated_updates
+        return updated_state, [primary_result]
 
     def apply_decay(self, state: CompetencyState, now: datetime) -> CompetencyState:
         p_l_decayed = _apply_decay_internal(state, now)

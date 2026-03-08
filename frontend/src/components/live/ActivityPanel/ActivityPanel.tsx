@@ -1,6 +1,6 @@
 import { BookOpen, Loader2, Radio, Clock } from "lucide-react";
-import type { Question, CompetencyState, Session, Activity } from "@/api/types";
-import { Button, Card, ProgressBar } from "@/components/ui";
+import type { Question, Session, Activity } from "@/api/types";
+import { Button, Card } from "@/components/ui";
 import { MCQQuestion } from "../MCQQuestion";
 import * as s from "./ActivityPanel.css";
 
@@ -8,43 +8,43 @@ interface ActivityPanelProps {
   session: Session | null;
   activity: Activity | null;
   activityLoading: boolean;
-  competencyIds: string[];
-  activeCompIdx: number;
-  onCompetencySwitch: (idx: number) => void;
-  competencyState: CompetencyState | null;
-  questions: Question[];
+  question: Question | null;
   questionsLoading: boolean;
-  currentIndex: number;
   selectedOption: string | null;
   onSelectOption: (label: string) => void;
   submitted: boolean;
   onSubmit: () => void;
   onNext: () => void;
   submitting: boolean;
+  timeLeft?: number | null;
+  totalAnswered?: number;
+  correctCount?: number;
 }
 
 export function ActivityPanel({
   session,
   activity,
   activityLoading,
-  competencyIds,
-  activeCompIdx,
-  onCompetencySwitch,
-  competencyState,
-  questions,
+  question,
   questionsLoading,
-  currentIndex,
   selectedOption,
   onSelectOption,
   submitted,
   onSubmit,
   onNext,
   submitting,
+  timeLeft,
+  totalAnswered = 0,
+  correctCount = 0,
 }: ActivityPanelProps) {
-  const currentQuestion = questions[currentIndex] ?? null;
-  const hasMore = currentIndex < questions.length - 1;
+  const timerExpired = timeLeft !== null && timeLeft !== undefined && timeLeft <= 0;
 
-  // No active session — waiting state
+  const formatTime = (secs: number) => {
+    const m = Math.floor(Math.max(0, secs) / 60);
+    const sec = Math.max(0, secs) % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
   if (!session) {
     return (
       <Card elevation="low" style={{ height: "100%" }}>
@@ -73,12 +73,17 @@ export function ActivityPanel({
             <BookOpen size={12} />
             Live Activity
           </span>
-          {activity?.duration_minutes && (
+          {timeLeft != null ? (
+            <span className={s.durationTag} style={timeLeft <= 60 ? { color: "#ef4444", fontWeight: 600 } : undefined}>
+              <Clock size={10} />
+              {formatTime(timeLeft)}
+            </span>
+          ) : activity?.duration_minutes ? (
             <span className={s.durationTag}>
               <Clock size={10} />
               {activity.duration_minutes} min
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Activity name */}
@@ -95,70 +100,63 @@ export function ActivityPanel({
           </>
         ) : null}
 
-        {/* Competency tabs (if activity has multiple) */}
-        {competencyIds.length > 1 && (
-          <div className={s.compTabs}>
-            {competencyIds.map((cId, idx) => (
-              <button
-                key={cId}
-                className={`${s.compTab} ${idx === activeCompIdx ? s.compTabActive : ""}`}
-                onClick={() => onCompetencySwitch(idx)}
-              >
-                {cId}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Current competency progress */}
-        {competencyState && (
-          <div className={s.progressMini}>
-            <span>{Math.round(competencyState.p_learned * 100)}%</span>
-            <div style={{ flex: 1 }}>
-              <ProgressBar
-                value={Math.round(competencyState.p_learned * 100)}
-                color="#4facfe"
-                height="sm"
-              />
-            </div>
+        {totalAnswered > 0 && (
+          <div className={s.progressMini} style={{ gap: "12px", fontSize: "12px", color: "var(--text-secondary)" }}>
+            <span>{totalAnswered} answered</span>
+            <span>{correctCount} correct</span>
+            <span>{Math.round((correctCount / totalAnswered) * 100)}% accuracy</span>
           </div>
         )}
 
         <div className={s.divider} />
 
-        {/* Question area */}
-        <div className={s.questionArea}>
-          {questionsLoading ? (
-            <div className={s.emptyState}>
-              <Loader2
-                size={28}
-                style={{ animation: "spin 1s linear infinite" }}
-              />
-              <div className={s.emptyText}>Loading questions...</div>
-            </div>
-          ) : !currentQuestion ? (
+        {/* Time's up */}
+        {timerExpired ? (
+          <div className={s.questionArea}>
             <div className={s.emptyState}>
               <div className={s.emptyIcon}>
-                <BookOpen size={24} />
+                <Clock size={24} />
               </div>
-              <div className={s.emptyTitle}>All caught up!</div>
+              <div className={s.emptyTitle}>Time's up!</div>
               <div className={s.emptyText}>
-                No more questions for this skill right now. Great work!
+                You answered {totalAnswered} question{totalAnswered !== 1 ? "s" : ""} and
+                got {correctCount} correct ({totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0}%).
+                Great effort!
               </div>
             </div>
-          ) : (
-            <MCQQuestion
-              question={currentQuestion}
-              questionIndex={currentIndex}
-              totalQuestions={questions.length}
-              selectedOption={selectedOption}
-              onSelectOption={onSelectOption}
-              submitted={submitted}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          /* Question area */
+          <div className={s.questionArea}>
+            {questionsLoading ? (
+              <div className={s.emptyState}>
+                <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
+                <div className={s.emptyText}>Loading questions...</div>
+              </div>
+            ) : !question ? (
+              <div className={s.emptyState}>
+                <div className={s.emptyIcon}>
+                  <BookOpen size={24} />
+                </div>
+                <div className={s.emptyTitle}>All caught up!</div>
+                <div className={s.emptyText}>
+                  No more questions for this skill right now. Great work!
+                </div>
+              </div>
+            ) : (
+              <MCQQuestion
+                question={question}
+                questionIndex={0}
+                totalQuestions={1}
+                selectedOption={selectedOption}
+                onSelectOption={onSelectOption}
+                submitted={submitted}
+              />
+            )}
+          </div>
+        )}
 
-        {currentQuestion && (
+        {question && !timerExpired && (
           <div className={s.actions}>
             {!submitted ? (
               <Button
@@ -169,10 +167,7 @@ export function ActivityPanel({
                 style={{ flex: 1 }}
               >
                 {submitting ? (
-                  <Loader2
-                    size={16}
-                    style={{ animation: "spin 1s linear infinite" }}
-                  />
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
                 ) : (
                   "Submit Answer"
                 )}
@@ -184,7 +179,7 @@ export function ActivityPanel({
                 onClick={onNext}
                 style={{ flex: 1 }}
               >
-                {hasMore ? "Next Question" : "Load More"}
+                Next Question
               </Button>
             )}
           </div>

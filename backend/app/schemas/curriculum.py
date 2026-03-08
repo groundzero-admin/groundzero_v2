@@ -28,6 +28,7 @@ class ActivityOut(BaseModel):
     module_id: str
     name: str
     type: str
+    mode: str = "default"
     week: int | None = None
     session_number: int | None = None
     duration_minutes: int | None = None

@@ -394,45 +394,198 @@
       "assessment_method": "both",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.20, "p_slip": 0.12}
     },
+
     {
-      "id": "C4.14", "capability_id": "P",
-      "name": "Number sense & estimation",
-      "description": "Quick mental math, reasonable estimates",
+      "id": "C4.14.4", "capability_id": "P",
+      "name": "Place value & basic operations",
+      "description": "Large numbers, place value, estimation, basic operations",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     },
     {
-      "id": "C4.15", "capability_id": "P",
-      "name": "Fraction operations",
-      "description": "Equivalence, addition, subtraction, multiplication of fractions",
+      "id": "C4.14.5", "capability_id": "P",
+      "name": "HCF, LCM & prime numbers",
+      "description": "Numbers up to crores, HCF, LCM, prime & composite",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     },
     {
-      "id": "C4.16", "capability_id": "P",
-      "name": "Decimal & percentage reasoning",
-      "description": "Converts between forms, applies to real problems",
+      "id": "C4.14.6", "capability_id": "P",
+      "name": "Integers & negative numbers",
+      "description": "Whole number properties, introduction to integers & negative numbers",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     },
     {
-      "id": "C4.17", "capability_id": "P",
-      "name": "Ratio & proportional reasoning",
-      "description": "Understands direct/inverse proportion, applies to real contexts",
+      "id": "C4.14.7", "capability_id": "P",
+      "name": "Integer operations",
+      "description": "Integer operations, multiplication & division of integers",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     },
     {
-      "id": "C4.18", "capability_id": "P",
-      "name": "Algebraic thinking",
-      "description": "Variables, expressions, simple equations",
+      "id": "C4.14.8", "capability_id": "P",
+      "name": "Rational numbers",
+      "description": "Rational numbers, properties, representation on number line",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     },
     {
-      "id": "C4.19", "capability_id": "P",
-      "name": "Geometric reasoning",
-      "description": "Properties of shapes, spatial reasoning, area/perimeter",
+      "id": "C4.14.9", "capability_id": "P",
+      "name": "Real & irrational numbers",
+      "description": "Real number system, irrational numbers, rationalising denominators",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+
+    {
+      "id": "C4.15.4", "capability_id": "P",
+      "name": "Equivalent fractions",
+      "description": "Introduction to fractions, equivalent fractions, comparing with same denominator",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.15.5", "capability_id": "P",
+      "name": "Adding & subtracting fractions",
+      "description": "Like & unlike fractions, addition & subtraction of fractions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.15.6", "capability_id": "P",
+      "name": "Unlike denominator operations",
+      "description": "Types of fractions, comparison, addition & subtraction with unlike denominators",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.15.7", "capability_id": "P",
+      "name": "Multiplying & dividing fractions",
+      "description": "Multiplication & division of fractions and decimals",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+
+    {
+      "id": "C4.16.5", "capability_id": "P",
+      "name": "Intro to decimals",
+      "description": "Introduction to decimals, place value, basic comparison",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.16.6", "capability_id": "P",
+      "name": "Decimal arithmetic",
+      "description": "Decimal place value, addition & subtraction of decimals",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.16.7", "capability_id": "P",
+      "name": "Decimal-fraction conversion",
+      "description": "Multiplication & division of decimals, conversion to fractions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+
+    {
+      "id": "C4.17.6", "capability_id": "P",
+      "name": "Ratios & proportion",
+      "description": "Concept of ratio, equivalent ratios, proportion, unitary method",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.17.7", "capability_id": "P",
+      "name": "Percentages & profit/loss",
+      "description": "Percentages, profit/loss, simple interest",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.17.8", "capability_id": "P",
+      "name": "Compound interest & tax",
+      "description": "Compound interest, discount, tax, increase/decrease percent",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+
+    {
+      "id": "C4.18.5", "capability_id": "P",
+      "name": "Number patterns & sequences",
+      "description": "Number patterns, growing patterns, rule-based sequences",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.18.6", "capability_id": "P",
+      "name": "Variables & expressions",
+      "description": "Variables, expressions, simple equations, use of variables in patterns",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.18.7", "capability_id": "P",
+      "name": "Simple equations",
+      "description": "Simple equations in one variable, algebraic expressions, like terms",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.18.8", "capability_id": "P",
+      "name": "Linear equations & identities",
+      "description": "Linear equations, algebraic identities, factorisation of expressions",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.18.9", "capability_id": "P",
+      "name": "Polynomials & factor theorem",
+      "description": "Polynomials, remainder & factor theorem, linear equations in two variables",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+
+    {
+      "id": "C4.19.4", "capability_id": "P",
+      "name": "2D shapes & symmetry",
+      "description": "2D shapes, symmetry, tessellations, basic pattern recognition",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19.5", "capability_id": "P",
+      "name": "Angles, triangles & area",
+      "description": "Angles, triangles, circles, nets of 3D shapes, area & perimeter of rectangles",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19.6", "capability_id": "P",
+      "name": "Lines, angles & quadrilaterals",
+      "description": "Points, lines, rays, angles, basic triangles, quadrilaterals, circles",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19.7", "capability_id": "P",
+      "name": "Congruence & area formulas",
+      "description": "Congruence of triangles, parallel lines, area of parallelogram/triangle/circle",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19.8", "capability_id": "P",
+      "name": "Pythagoras & 3D solids",
+      "description": "Quadrilateral properties, Pythagoras theorem, surface area & volume of solids",
+      "assessment_method": "mcq",
+      "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
+    },
+    {
+      "id": "C4.19.9", "capability_id": "P",
+      "name": "Proofs, circles & constructions",
+      "description": "Euclid's geometry, triangle proofs, circles, constructions, Heron's formula",
       "assessment_method": "mcq",
       "default_params": {"p_l0": 0.10, "p_transit": 0.15, "p_guess": 0.25, "p_slip": 0.10}
     }

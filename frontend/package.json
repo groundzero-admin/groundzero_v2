@@ -21,6 +21,7 @@
     "@vanilla-extract/sprinkles": "^1.6.5",
     "@vanilla-extract/vite-plugin": "^5.1.4",
     "axios": "^1.13.6",
+    "d3-force": "^3.0.0",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
     "react": "^19.2.0",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/d3-force": "^3.0.10",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

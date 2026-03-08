@@ -154,8 +154,12 @@ async def get_skill_graph(db: AsyncSession = Depends(get_db)):
     comps = (await db.execute(select(Competency).order_by(Competency.id))).scalars().all()
     prereqs = (await db.execute(select(PrerequisiteEdge))).scalars().all()
     codevs = (await db.execute(select(CodevelopmentEdge))).scalars().all()
+    pillars = (await db.execute(select(Pillar).order_by(Pillar.id))).scalars().all()
+    caps = (await db.execute(select(Capability).order_by(Capability.id))).scalars().all()
     return SkillGraphOut(
         competencies=comps,
         prerequisite_edges=prereqs,
         codevelopment_edges=codevs,
+        pillars=pillars,
+        capabilities=caps,
     )

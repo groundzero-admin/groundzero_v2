@@ -90,6 +90,45 @@ export function useLaunchActivity() {
   });
 }
 
+export interface ClassSummary {
+  students: {
+    student_id: string;
+    student_name: string;
+    grade: number;
+    competencies: Record<string, {
+      p_learned: number;
+      stage: number;
+      is_stuck: boolean;
+      total_evidence: number;
+      consecutive_failures: number;
+    }>;
+    overall: number;
+    total_evidence: number;
+    last_active: string | null;
+  }[];
+  interventions: {
+    student_id: string;
+    student_name: string;
+    alert_type: "stuck" | "inactive" | "declining";
+    detail: string;
+    competency_id: string | null;
+    competency_name: string | null;
+    severity: number;
+  }[];
+  competency_ids: string[];
+  competency_names: Record<string, string>;
+}
+
+export function useClassSummary(cohortId: string | null | undefined) {
+  return useQuery<ClassSummary>({
+    queryKey: ["class-summary", cohortId],
+    queryFn: async () =>
+      (await api.get(`/teacher/cohorts/${cohortId}/class-summary`)).data,
+    enabled: !!cohortId,
+    staleTime: 30_000,
+  });
+}
+
 export function useEndSession() {
   const qc = useQueryClient();
   return useMutation({

@@ -25,8 +25,10 @@ export interface SessionActivity {
   activity_id: string;
   order: number;
   status: "pending" | "active" | "completed";
+  launched_at: string | null;
   activity_name: string | null;
   activity_type: string | null;
+  duration_minutes: number | null;
 }
 
 export interface StudentScore {

@@ -9,11 +9,12 @@ import {
   useCohorts,
   useLivePulse,
   useSessionScores,
+  useClassSummary,
 } from "@/api/hooks/useTeacher";
 import SessionCockpit from "@/components/teacher/SessionCockpit";
 import SessionSummary from "@/components/teacher/SessionSummary";
-import PhaseStrip from "@/components/teacher/PhaseStrip";
-import { Users } from "lucide-react";
+import ClassAnalytics from "@/components/teacher/ClassAnalytics";
+import { Users, Loader2 } from "lucide-react";
 import * as s from "./TeacherDashboardPage.css";
 import type { Session, SessionActivity } from "@/api/types";
 
@@ -24,6 +25,7 @@ export default function TeacherDashboardPage() {
   const { data: sessionActivities } = useSessionActivities(activeSession?.id);
   const { data: pulseEvents } = useLivePulse(selectedCohortId, activeSession?.id);
   const { data: sessionScores } = useSessionScores(selectedCohortId, activeSession?.id);
+  const { data: classSummary, isLoading: loadingClass } = useClassSummary(selectedCohortId);
   const startSession = useStartSession();
   const endSession = useEndSession();
   const launchActivity = useLaunchActivity();
@@ -104,7 +106,7 @@ export default function TeacherDashboardPage() {
     );
   }
 
-  // ── State 1: Idle → ready to start ──
+  // ── State 1: Idle → class analytics + start session ──
   const nextSession = selectedCohort?.current_session_number ?? 1;
 
   return (
@@ -125,11 +127,13 @@ export default function TeacherDashboardPage() {
         </button>
       </div>
 
-      <PhaseStrip />
-
-      <div className={s.emptyState}>
-        Start a session to see activities.
-      </div>
+      {loadingClass ? (
+        <div className={s.emptyState}>
+          <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
+        </div>
+      ) : classSummary ? (
+        <ClassAnalytics data={classSummary} />
+      ) : null}
     </div>
   );
 }

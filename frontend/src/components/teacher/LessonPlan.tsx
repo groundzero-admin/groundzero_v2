@@ -1,4 +1,5 @@
-import { Check, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Send, Clock } from "lucide-react";
 import type { SessionActivity } from "@/api/types";
 import * as s from "./LessonPlan.css";
 
@@ -9,6 +10,51 @@ const TYPE_LABELS: Record<string, string> = {
   ai_lab: "AI Lab",
   artifact: "Artifact",
 };
+
+function formatTime(secs: number) {
+  const m = Math.floor(Math.max(0, secs) / 60);
+  const sec = Math.max(0, secs) % 60;
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+function ActivityTimer({ launchedAt, durationMinutes }: { launchedAt: string; durationMinutes: number }) {
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    const raw = launchedAt;
+    const launched = new Date(raw.endsWith("Z") ? raw : raw + "Z").getTime();
+    const endTime = launched + durationMinutes * 60 * 1000;
+    return Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const raw = launchedAt;
+    const launched = new Date(raw.endsWith("Z") ? raw : raw + "Z").getTime();
+    const endTime = launched + durationMinutes * 60 * 1000;
+
+    const id = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+      setTimeLeft(remaining);
+      if (remaining <= 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [launchedAt, durationMinutes, timeLeft <= 0]);
+
+  const expired = timeLeft <= 0;
+  const urgent = timeLeft > 0 && timeLeft <= 60;
+
+  return (
+    <span
+      className={s.timerBadge}
+      style={{
+        color: expired ? "#E53E3E" : urgent ? "#D69E2E" : undefined,
+        fontWeight: expired || urgent ? 600 : undefined,
+      }}
+    >
+      <Clock size={12} />
+      {expired ? "Time's up" : formatTime(timeLeft)}
+    </span>
+  );
+}
 
 interface LessonPlanProps {
   activities: SessionActivity[];
@@ -51,14 +97,20 @@ export default function LessonPlan({ activities, onLaunch, isLaunching }: Lesson
             </div>
             <div className={s.activityType}>
               {TYPE_LABELS[sa.activity_type ?? ""] ?? sa.activity_type}
+              {sa.duration_minutes && ` · ${sa.duration_minutes} min`}
             </div>
           </div>
 
-          {/* Action */}
+          {/* Timer + Action */}
           {sa.status === "active" ? (
-            <span className={s.liveBadge}>
-              <span className={s.liveDot} /> Live
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {sa.launched_at && sa.duration_minutes ? (
+                <ActivityTimer launchedAt={sa.launched_at} durationMinutes={sa.duration_minutes} />
+              ) : null}
+              <span className={s.liveBadge}>
+                <span className={s.liveDot} /> Live
+              </span>
+            </div>
           ) : sa.status === "pending" ? (
             <button
               className={s.launchBtn}

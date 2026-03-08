@@ -15,6 +15,7 @@ class EvidenceCreate(BaseModel):
     weight: float | None = None  # if None, derived from source
 
     # Optional metadata (stored in meta JSONB)
+    question_id: uuid.UUID | None = None
     response_time_ms: int | None = None
     confidence_report: Literal["got_it", "kinda", "lost"] | None = None
     ai_interaction: Literal["none", "hint", "conversation"] = "none"
@@ -44,6 +45,7 @@ class BKTUpdateOut(BaseModel):
     stage_before: int
     stage_after: int
     is_stuck: bool
+    fire_refreshed: list[str] = []  # prerequisite IDs whose decay clocks were reset
 
 
 class EvidenceResultOut(BaseModel):

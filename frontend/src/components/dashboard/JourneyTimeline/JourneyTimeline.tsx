@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router";
-import { Clock, ChevronRight } from "lucide-react";
+import { Clock } from "lucide-react";
 import type { Session, Activity, EvidenceOut } from "@/api/types";
 import { timeAgo } from "@/lib/format";
 import * as s from "./JourneyTimeline.css";
@@ -12,7 +11,6 @@ interface JourneyTimelineProps {
 }
 
 export function JourneyTimeline({ sessions, activities, evidence }: JourneyTimelineProps) {
-  const navigate = useNavigate();
 
   // Build activity lookup
   const activityMap = useMemo(() => {
@@ -100,15 +98,7 @@ export function JourneyTimeline({ sessions, activities, evidence }: JourneyTimel
                       Quiz: {score.correct}/{score.total}
                     </span>
                   )}
-                  {session.ended_at && primaryComp && (
-                    <button
-                      className={s.reviewBtn}
-                      onClick={() => navigate(`/practice?competency=${primaryComp}`)}
-                    >
-                      {score && score.total > 0 ? "Review & Practice" : "Review"}
-                      <ChevronRight size={12} />
-                    </button>
-                  )}
+                  {/* Review navigates to dashboard — topic-based practice available there */}
                 </div>
               )}
             </div>

@@ -17,6 +17,7 @@ import StudioPage from "@/pages/StudioPage";
 import StudioPlayerPage from "@/pages/StudioPlayerPage";
 import TeacherShell from "@/components/layout/TeacherShell";
 import TeacherDashboardPage from "@/pages/teacher/TeacherDashboardPage";
+import SkillGraphPage from "@/pages/SkillGraphPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ export default function App() {
               {/* ── Public routes ── */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/graph" element={<SkillGraphPage />} />
 
               {/* ── Student routes ── */}
               <Route

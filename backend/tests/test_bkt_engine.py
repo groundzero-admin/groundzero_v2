@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.engine.bkt import BKTEngine, _derive_stage
-from app.engine.types import BKTParams, CodevelopmentLink, CompetencyState, EvidenceInput
+from app.engine.types import BKTParams, CompetencyState, EvidenceInput, PrerequisiteLink
 
 
 @pytest.fixture
@@ -296,151 +296,84 @@ class TestAIInteraction:
         assert updated_conv.p_learned > updated_hint.p_learned
 
 
-class TestCodevelopmentPropagation:
-    def test_propagation_delta_transfer(self, engine):
-        """Propagation should transfer delta * transfer_weight, NOT run full BKT."""
-        state_c1_5 = CompetencyState(competency_id="C1.5", p_learned=0.30, last_evidence_at=datetime.utcnow())
-        state_c4_4 = CompetencyState(competency_id="C4.4", p_learned=0.30, last_evidence_at=datetime.utcnow())
+class TestFIReDecayClockReset:
+    """FIRe (Fractional Implicit Repetition): practicing an advanced skill resets
+    the decay clock on prerequisite ancestors WITHOUT modifying their P(L)."""
 
-        links = [CodevelopmentLink(linked_competency_id="C4.4", transfer_weight=0.30)]
-        all_states = {"C1.5": state_c1_5, "C4.4": state_c4_4}
+    def test_fire_resets_decay_clock_on_success(self, engine):
+        """Positive evidence on advanced skill should reset last_evidence_at on prerequisites."""
+        now = datetime.utcnow()
+        old_time = datetime(2024, 1, 1)
 
-        evidence = EvidenceInput(
-            student_id="student-1",
-            competency_id="C1.5",
-            outcome=1.0,
-            source="mcq",
-            weight=1.0,
-            timestamp=datetime.utcnow(),
-        )
+        state_advanced = CompetencyState(competency_id="C4.15.7", p_learned=0.50, last_evidence_at=now)
+        state_prereq = CompetencyState(competency_id="C4.15.6", p_learned=0.70, last_evidence_at=old_time)
 
-        updated_c1_5, results = engine.process_evidence(state_c1_5, evidence, links, all_states)
-
-        primary_delta = updated_c1_5.p_learned - 0.30
-        linked_delta = all_states["C4.4"].p_learned - 0.30
-
-        # Delta transfer: linked gain = primary_delta * transfer_weight
-        assert abs(linked_delta - primary_delta * 0.30) < 0.01, (
-            f"Expected linked delta ~{primary_delta * 0.30:.4f}, got {linked_delta:.4f}"
-        )
-        assert updated_c1_5.p_learned > 0.30
-        assert all_states["C4.4"].p_learned > 0.30
-        assert all_states["C4.4"].p_learned < updated_c1_5.p_learned
-
-    def test_propagation_does_not_compound(self, engine):
-        """Over 15 events, linked gain should be ~transfer_weight * primary gain, NOT ~100%."""
-        state_primary = CompetencyState(competency_id="C2.10", p_learned=0.10, last_evidence_at=datetime.utcnow())
-        state_linked = CompetencyState(competency_id="C3.11", p_learned=0.10, last_evidence_at=datetime.utcnow())
-
-        links = [CodevelopmentLink(linked_competency_id="C3.11", transfer_weight=0.40)]
-        all_states = {"C2.10": state_primary, "C3.11": state_linked}
-
-        for _ in range(15):
-            evidence = EvidenceInput(
-                student_id="s1", competency_id="C2.10", outcome=1.0,
-                source="mcq", weight=1.0, timestamp=datetime.utcnow(),
-            )
-            state_primary, _ = engine.process_evidence(state_primary, evidence, links, all_states)
-
-        primary_gain = state_primary.p_learned - 0.10
-        linked_gain = all_states["C3.11"].p_learned - 0.10
-        ratio = linked_gain / primary_gain if primary_gain > 0 else 0
-
-        assert 0.35 <= ratio <= 0.45, f"Expected ~0.40 ratio, got {ratio:.3f}"
-        assert all_states["C3.11"].p_learned < 0.60, (
-            f"Linked P(L)={all_states['C3.11'].p_learned:.4f}, should be < 0.60 with 0.40 transfer"
-        )
-
-    def test_propagation_negative_delta(self, engine):
-        """Wrong answers should propagate a negative delta to linked competencies."""
-        state_primary = CompetencyState(competency_id="A", p_learned=0.60, last_evidence_at=datetime.utcnow())
-        state_linked = CompetencyState(competency_id="B", p_learned=0.60, last_evidence_at=datetime.utcnow())
-
-        links = [CodevelopmentLink(linked_competency_id="B", transfer_weight=0.30)]
-        all_states = {"A": state_primary, "B": state_linked}
+        prereq_links = [PrerequisiteLink(linked_competency_id="C4.15.6", depth=1, weight=0.7)]
+        all_states = {"C4.15.7": state_advanced, "C4.15.6": state_prereq}
 
         evidence = EvidenceInput(
-            student_id="s1", competency_id="A", outcome=0.0,
-            source="mcq", weight=1.0, timestamp=datetime.utcnow(),
-        )
-        updated_a, _ = engine.process_evidence(state_primary, evidence, links, all_states)
-
-        # Both should decrease
-        assert updated_a.p_learned < 0.60
-        assert all_states["B"].p_learned < 0.60
-        # Linked decrease should be ~30% of primary decrease
-        primary_drop = 0.60 - updated_a.p_learned
-        linked_drop = 0.60 - all_states["B"].p_learned
-        assert abs(linked_drop - primary_drop * 0.30) < 0.01
-
-    def test_propagation_does_not_affect_stuck(self, engine):
-        """Propagated events should NOT increment consecutive_failures on linked state."""
-        state_primary = CompetencyState(competency_id="A", p_learned=0.50, last_evidence_at=datetime.utcnow())
-        state_linked = CompetencyState(
-            competency_id="B", p_learned=0.50,
-            consecutive_failures=3, last_evidence_at=datetime.utcnow(),
+            student_id="s1", competency_id="C4.15.7", outcome=1.0,
+            source="mcq", weight=1.0, timestamp=now,
         )
 
-        links = [CodevelopmentLink(linked_competency_id="B", transfer_weight=0.30)]
-        all_states = {"A": state_primary, "B": state_linked}
+        _, results = engine.process_evidence(
+            state_advanced, evidence, [], all_states, prerequisite_links=prereq_links,
+        )
+
+        # Decay clock should be reset
+        assert all_states["C4.15.6"].last_evidence_at == now
+        # P(L) should NOT change
+        assert all_states["C4.15.6"].p_learned == 0.70
+        # fire_refreshed should list the prerequisite
+        assert "C4.15.6" in results[0].fire_refreshed
+
+    def test_fire_does_not_trigger_on_failure(self, engine):
+        """Negative evidence should NOT reset decay clocks on prerequisites."""
+        now = datetime.utcnow()
+        old_time = datetime(2024, 1, 1)
+
+        state_advanced = CompetencyState(competency_id="C4.15.7", p_learned=0.50, last_evidence_at=now)
+        state_prereq = CompetencyState(competency_id="C4.15.6", p_learned=0.70, last_evidence_at=old_time)
+
+        prereq_links = [PrerequisiteLink(linked_competency_id="C4.15.6", depth=1, weight=0.7)]
+        all_states = {"C4.15.7": state_advanced, "C4.15.6": state_prereq}
 
         evidence = EvidenceInput(
-            student_id="s1", competency_id="A", outcome=0.0,
-            source="mcq", weight=1.0, timestamp=datetime.utcnow(),
+            student_id="s1", competency_id="C4.15.7", outcome=0.0,
+            source="mcq", weight=1.0, timestamp=now,
         )
-        engine.process_evidence(state_primary, evidence, links, all_states)
 
-        # Linked state's stuck counters should be unchanged
-        assert all_states["B"].consecutive_failures == 3
-        assert all_states["B"].is_stuck is False
+        _, results = engine.process_evidence(
+            state_advanced, evidence, [], all_states, prerequisite_links=prereq_links,
+        )
 
-    def test_propagation_max_one_hop(self, engine):
-        """Propagated events should NOT further propagate."""
-        state_a = CompetencyState(competency_id="A", p_learned=0.30, last_evidence_at=datetime.utcnow())
-        state_b = CompetencyState(competency_id="B", p_learned=0.30, last_evidence_at=datetime.utcnow())
-        state_c = CompetencyState(competency_id="C", p_learned=0.30, last_evidence_at=datetime.utcnow())
+        # Decay clock should NOT be reset on failure
+        assert all_states["C4.15.6"].last_evidence_at == old_time
+        assert all_states["C4.15.6"].p_learned == 0.70
+        assert results[0].fire_refreshed == []
 
-        links_a = [CodevelopmentLink(linked_competency_id="B", transfer_weight=0.30)]
-        # B links to C, but propagated events from A→B should NOT further propagate to C
-        all_states = {"A": state_a, "B": state_b, "C": state_c}
+    def test_fire_does_not_trigger_on_propagated_evidence(self, engine):
+        """Propagated evidence should NOT further trigger FIRe."""
+        now = datetime.utcnow()
+        old_time = datetime(2024, 1, 1)
+
+        state = CompetencyState(competency_id="C4.15.7", p_learned=0.50, last_evidence_at=now)
+        state_prereq = CompetencyState(competency_id="C4.15.6", p_learned=0.70, last_evidence_at=old_time)
+
+        prereq_links = [PrerequisiteLink(linked_competency_id="C4.15.6", depth=1, weight=0.7)]
+        all_states = {"C4.15.7": state, "C4.15.6": state_prereq}
 
         evidence = EvidenceInput(
-            student_id="s1",
-            competency_id="A",
-            outcome=1.0,
-            source="mcq",
-            weight=1.0,
-            timestamp=datetime.utcnow(),
+            student_id="s1", competency_id="C4.15.7", outcome=1.0,
+            source="mcq", weight=1.0, is_propagated=True, timestamp=now,
         )
 
-        engine.process_evidence(state_a, evidence, links_a, all_states)
-
-        # B should have been updated (direct propagation from A)
-        assert all_states["B"].p_learned > 0.30
-        # C should NOT have been updated (no second hop)
-        assert all_states["C"].p_learned == 0.30
-
-    def test_no_propagation_when_propagated_flag_set(self, engine):
-        state = CompetencyState(competency_id="C1.5", p_learned=0.30, last_evidence_at=datetime.utcnow())
-        state_linked = CompetencyState(competency_id="C4.4", p_learned=0.30, last_evidence_at=datetime.utcnow())
-
-        links = [CodevelopmentLink(linked_competency_id="C4.4", transfer_weight=0.30)]
-        all_states = {"C1.5": state, "C4.4": state_linked}
-
-        evidence = EvidenceInput(
-            student_id="s1",
-            competency_id="C1.5",
-            outcome=1.0,
-            source="mcq",
-            weight=1.0,
-            is_propagated=True,  # already propagated
-            timestamp=datetime.utcnow(),
+        _, results = engine.process_evidence(
+            state, evidence, [], all_states, prerequisite_links=prereq_links,
         )
 
-        _, results = engine.process_evidence(state, evidence, links, all_states)
-
-        # Should NOT propagate further
-        assert all_states["C4.4"].p_learned == 0.30
+        assert all_states["C4.15.6"].last_evidence_at == old_time
+        assert results[0].fire_refreshed == []
 
 
 class TestSourceWeights:

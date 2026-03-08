@@ -77,3 +77,5 @@ class SkillGraphOut(BaseModel):
     competencies: list[CompetencyOut]
     prerequisite_edges: list[PrerequisiteEdgeOut]
     codevelopment_edges: list[CodevelopmentEdgeOut]
+    pillars: list[PillarOut]
+    capabilities: list[CapabilityOut]
