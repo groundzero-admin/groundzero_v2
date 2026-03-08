@@ -1,34 +1,15 @@
-"""Claude AI service for benchmark answer evaluation.
+"""Benchmark AI service — answer evaluation via Bedrock-Mantle proxy.
 
-Supports direct Anthropic API (local dev) and AWS Bedrock (production).
-Set CLAUDE_PROVIDER=bedrock to use Bedrock, otherwise uses direct API.
+Uses the same SPARK_* credentials (OpenAI-compatible proxy to Bedrock)
+that the SPARK companion uses.
 """
 
 import json
-import os
 import re
 
-import anthropic
-from anthropic import AsyncAnthropicBedrock
+from openai import AsyncOpenAI
 
-BEDROCK_DEFAULT_MODEL = "anthropic.claude-3-haiku-20240307-v1:0"
-
-
-def _get_claude_client():
-    provider = os.getenv("CLAUDE_PROVIDER", "direct").lower()
-    if provider == "bedrock":
-        return AsyncAnthropicBedrock(
-            aws_region=os.getenv("AWS_REGION", "us-west-2"),
-        )
-    return anthropic.AsyncAnthropic(api_key=os.getenv("CLAUDE_API_KEY"))
-
-
-def _get_claude_model():
-    provider = os.getenv("CLAUDE_PROVIDER", "direct").lower()
-    if provider == "bedrock":
-        return os.getenv("BENCHMARK_CLAUDE_MODEL", BEDROCK_DEFAULT_MODEL)
-    return os.getenv("BENCHMARK_CLAUDE_MODEL", "claude-3-haiku-20240307")
-
+from app.config import settings
 
 CHARACTER_PERSONALITIES = {
     "harry_potter": {
@@ -54,6 +35,13 @@ CHARACTER_PERSONALITIES = {
 }
 
 
+def _get_client() -> AsyncOpenAI:
+    return AsyncOpenAI(
+        api_key=settings.SPARK_API_KEY,
+        base_url=settings.SPARK_BASE_URL,
+    )
+
+
 async def evaluate_answers(
     student_name: str,
     age: int,
@@ -61,17 +49,7 @@ async def evaluate_answers(
     character: str,
     qa_pairs: list[dict],
 ) -> dict:
-    """Evaluate all Q&A pairs against rubrics and produce benchmark scores.
-
-    qa_pairs: list of {
-        "question_number": int,
-        "question_text": str,
-        "answer_text": str,
-        "pillars": list[str],
-        "strong_signals": list[str],
-        "watchout_signals": list[str],
-    }
-    """
+    """Evaluate all Q&A pairs against rubrics and produce benchmark scores."""
     qa_block = ""
     for qa in qa_pairs:
         qa_block += f"""
@@ -164,27 +142,33 @@ Return ONLY a valid JSON object:
   "summary": "2-3 paragraph evidence-based narrative of the student's capabilities"
 }}"""
 
-    client = _get_claude_client()
-    model = _get_claude_model()
-    response = await client.messages.create(
+    client = _get_client()
+    model = settings.SPARK_MODEL
+
+    response = await client.chat.completions.create(
         model=model,
         max_tokens=4000,
-        system=system_prompt,
-        messages=[{"role": "user", "content": f"Here are the 20 diagnostic questions and the student's answers:\n{qa_block}"}],
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Here are the 20 diagnostic questions and the student's answers:\n{qa_block}"},
+        ],
     )
 
-    raw_text = response.content[0].text.strip()
+    raw_text = response.choices[0].message.content.strip()
     parsed = _robust_json_parse(raw_text)
     if parsed is not None:
         return parsed
 
-    retry_resp = await client.messages.create(
+    # Retry with a JSON-repair prompt
+    retry_resp = await client.chat.completions.create(
         model=model,
         max_tokens=4000,
-        system="You are a JSON repair tool. Return ONLY a valid JSON object.",
-        messages=[{"role": "user", "content": f"Fix this JSON:\n\n{raw_text}"}],
+        messages=[
+            {"role": "system", "content": "You are a JSON repair tool. Return ONLY a valid JSON object."},
+            {"role": "user", "content": f"Fix this JSON:\n\n{raw_text}"},
+        ],
     )
-    retry_text = retry_resp.content[0].text.strip()
+    retry_text = retry_resp.choices[0].message.content.strip()
     parsed = _robust_json_parse(retry_text)
     if parsed is not None:
         return parsed
@@ -203,65 +187,75 @@ async def generate_answer_feedback(
 ) -> dict:
     """Generate brief, friendly, constructive feedback for a single answer.
 
-    Returns a dict with:
-      - feedback: str (2-3 sentence feedback in character voice)
-      - needs_retry: bool (true if the answer is significantly off-track)
-      - hint: str | None (a gentle nudge if retry is warranted)
+    Returns dict with keys: feedback, needs_retry, hint.
     """
     persona = CHARACTER_PERSONALITIES.get(character, CHARACTER_PERSONALITIES["harry_potter"])
 
-    retry_clause = ""
+    retry_context = ""
     if is_retry:
-        retry_clause = """
-This is the student's SECOND attempt (retry). Be encouraging about their effort.
-Set needs_retry to false regardless of answer quality - they already used their retry."""
+        retry_context = "\nThis is the student's SECOND attempt after receiving a hint. Be encouraging about any improvement."
 
     system_prompt = f"""You are {persona['name']}, talking to {student_name} (grade {grade}).
 Your tone is {persona['tone']}.
 
-Give honest, direct feedback on the student's answer to a question.
-Also decide if the answer needs a retry.
+Give brief, constructive feedback on the student's answer to a question.{retry_context}
 
 Rules:
-- Your "feedback" should be 2-3 sentences MAX. Keep it short and conversational.
-- Be HONEST. Do NOT praise wrong answers. Do NOT say "great thinking" or "nice try" when the answer is incorrect.
-- If the answer is WRONG: clearly point out the mistake in a kid-friendly way. For example: "Uh oh, that's not quite right! You can't just add the denominators like that" or "Hmm, I don't think that's how it works. Think about what happens when...". Be specific about WHAT went wrong.
-- If the answer is CORRECT or mostly right: praise them genuinely and briefly.
-- If the answer is PARTIALLY correct: acknowledge the right part, then point out what's missing or wrong.
+- 2-3 sentences MAX. Keep it short and conversational.
+- Start with something positive about what they said (even if partially correct).
+- If the answer is weak or wrong, gently point toward better thinking without giving the answer away.
 - Use simple, age-appropriate language.
 - Stay in character.
 - Do NOT use markdown, asterisks, or special formatting.
 - Do NOT repeat the question back.
 
-Retry decision:
-- Set "needs_retry" to true if the answer is clearly wrong, off-track, too vague, or shows a misunderstanding. Minor imperfections are fine - do NOT flag those.
-- If needs_retry is true, provide a short "hint" (1 sentence) that nudges the student in the right direction without giving the answer away. Make the hint specific and in character.
-- If the answer is reasonable (even if imperfect), set needs_retry to false and hint to null.
-{retry_clause}
-
-Respond with ONLY a JSON object (no markdown, no code fences):
-{{"feedback": "...", "needs_retry": true/false, "hint": "..." or null}}"""
+After your feedback, on a NEW LINE, write:
+NEEDS_RETRY: true or false (true if the answer is clearly wrong or incomplete and the student should try again)
+HINT: (if NEEDS_RETRY is true, a short 1-sentence hint to help them; otherwise leave blank)"""
 
     user_msg = f"Question {question_number}: {question_text}\n\nStudent's answer: {answer_text}"
 
-    client = _get_claude_client()
-    model = _get_claude_model()
-    response = await client.messages.create(
-        model=model,
+    client = _get_client()
+    response = await client.chat.completions.create(
+        model=settings.SPARK_MODEL,
         max_tokens=300,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_msg}],
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_msg},
+        ],
     )
 
-    raw = response.content[0].text.strip()
-    parsed = _robust_json_parse(raw)
-    if parsed and "feedback" in parsed:
-        return {
-            "feedback": str(parsed["feedback"]),
-            "needs_retry": bool(parsed.get("needs_retry", False)),
-            "hint": parsed.get("hint"),
-        }
-    return {"feedback": raw, "needs_retry": False, "hint": None}
+    raw = response.choices[0].message.content.strip()
+
+    # Parse out feedback, needs_retry, hint
+    feedback = raw
+    needs_retry = False
+    hint = None
+
+    lines = raw.split("\n")
+    feedback_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.upper().startswith("NEEDS_RETRY:"):
+            val = stripped.split(":", 1)[1].strip().lower()
+            needs_retry = val in ("true", "yes", "1")
+        elif stripped.upper().startswith("HINT:"):
+            hint_val = stripped.split(":", 1)[1].strip()
+            if hint_val:
+                hint = hint_val
+        else:
+            feedback_lines.append(line)
+
+    feedback = "\n".join(feedback_lines).strip()
+    if not feedback:
+        feedback = raw  # fallback
+
+    # Don't suggest retry on second attempt
+    if is_retry:
+        needs_retry = False
+        hint = None
+
+    return {"feedback": feedback, "needs_retry": needs_retry, "hint": hint}
 
 
 def _robust_json_parse(text: str):

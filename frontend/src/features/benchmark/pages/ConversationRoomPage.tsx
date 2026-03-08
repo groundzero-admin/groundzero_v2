@@ -9,7 +9,7 @@ import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
 import JourneyMap from "../components/JourneyMap";
 import { CHARACTERS } from "../constants/characters";
-import { Mic, MicOff, CheckCircle, Loader2, Volume2, Trophy, ArrowRight } from "lucide-react";
+import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Mic } from "lucide-react";
 
 interface AnsweredQuestion {
   questionNumber: number;
@@ -49,7 +49,7 @@ export default function ConversationRoomPage() {
   const [retriesUsed, setRetriesUsed] = useState<Record<number, boolean>>({});
   const [retryHint, setRetryHint] = useState<string | null>(null);
 
-  const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording, cancelRecording } =
+  const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording } =
     useVoiceRecording();
 
   const character = selectedCharacter || CHARACTERS[0];
@@ -200,20 +200,23 @@ export default function ConversationRoomPage() {
           URL.revokeObjectURL(url);
           skipTyping();
           textareaRef.current?.focus();
+          startRecording(); // auto-start voice recording when TTS ends
         };
         audio.onerror = () => {
           setIsSpeaking(false);
           setPhase("answering");
           skipTyping();
+          startRecording(); // auto-start even on error
         };
         await audio.play();
       } catch {
         setIsSpeaking(false);
         setPhase("answering");
         skipTyping();
+        startRecording(); // auto-start even on error
       }
     },
-    [character.id, startTypingAnimation, skipTyping, playPop],
+    [character.id, startTypingAnimation, skipTyping, playPop, startRecording],
   );
 
   // ─── Trigger question speech on index change ───
@@ -439,15 +442,6 @@ export default function ConversationRoomPage() {
     }
   }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback, retriesUsed, currentIndex]);
 
-  const handleMicToggle = useCallback(() => {
-    if (isRecording) {
-      const finalText = stopRecording();
-      if (finalText) setAnswerText(finalText);
-    } else {
-      startRecording();
-    }
-  }, [isRecording, startRecording, stopRecording]);
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -460,8 +454,9 @@ export default function ConversationRoomPage() {
     setAnswerText("");
     setRetryHint(null);
     setPhase("answering");
+    startRecording();
     textareaRef.current?.focus();
-  }, [currentIndex]);
+  }, [currentIndex, startRecording]);
 
   const handlePass = useCallback(() => {
     setRetryHint(null);
@@ -721,29 +716,23 @@ export default function ConversationRoomPage() {
         )}
       </div>
 
-      {/* Input area */}
+      {/* Input area — no mic button, voice auto-starts when TTS ends */}
       {phase === "answering" && currentQuestion && (
         <div className="cr-input-area">
-          <div className="cr-input-row">
-            <button
-              onClick={handleMicToggle}
-              disabled={isSubmitting}
-              className="cr-mic-btn"
-              style={{
-                backgroundColor: isRecording ? "#E53E3E" : character.color,
-                animation: !isRecording ? "crMicPulse 2s ease-in-out infinite" : "none",
-                boxShadow: isRecording ? "0 0 16px #E53E3E50" : `0 4px 12px ${character.color}40`,
-              }}
-            >
-              {isRecording ? <MicOff size={20} color="#fff" /> : <Mic size={20} color="#fff" />}
-            </button>
+          {isRecording && (
+            <div className="cr-recording-bar">
+              <div className="cr-recording-dot" />
+              <span>Listening... speak your answer</span>
+            </div>
+          )}
 
+          <div className="cr-input-row">
             <textarea
               ref={textareaRef}
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Listening... speak your answer \uD83C\uDFA4" : "Speak or type your answer..."}
+              placeholder={isRecording ? "Listening... speak your answer" : "Type your answer..."}
               disabled={isSubmitting}
               rows={2}
               className="cr-textarea"
@@ -773,14 +762,6 @@ export default function ConversationRoomPage() {
             </button>
           </div>
 
-          {isRecording && (
-            <div className="cr-recording-bar">
-              <div className="cr-recording-dot" />
-              <span>Listening...</span>
-              <button onClick={cancelRecording} className="cr-cancel-btn"><MicOff size={10} /> Cancel</button>
-            </div>
-          )}
-
           {voiceError && <div className="cr-voice-error">{voiceError}</div>}
 
           <div className="cr-hint">
@@ -803,7 +784,6 @@ const cssStyles = `
   @keyframes crWordIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes crPop { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
   @keyframes crWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
-  @keyframes crMicPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
   @keyframes crRecordPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   @keyframes crDotBlink { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
 
@@ -969,11 +949,6 @@ const cssStyles = `
     background: #ffffffcc; backdrop-filter: blur(10px); flex-shrink: 0;
   }
   .cr-input-row { display: flex; gap: 8px; align-items: flex-end; }
-  .cr-mic-btn {
-    width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    transition: all 200ms;
-  }
   .cr-textarea {
     flex: 1; padding: 10px 14px; border-radius: 14px; border: 2px solid;
     font-size: 14px; outline: none; color: #26221D;
@@ -988,13 +963,8 @@ const cssStyles = `
   }
   .cr-btn-label { display: inline; }
 
-  .cr-recording-bar { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: #E53E3E; font-weight: 600; }
+  .cr-recording-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; color: #E53E3E; font-weight: 600; }
   .cr-recording-dot { width: 8px; height: 8px; border-radius: 50%; background: #E53E3E; animation: crRecordPulse 1s ease-in-out infinite; }
-  .cr-cancel-btn {
-    display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px;
-    border-radius: 5px; border: 1px solid #E53E3E30; background: transparent;
-    color: #E53E3E; cursor: pointer; font-size: 11px; margin-left: auto;
-  }
   .cr-voice-error { margin-top: 4px; font-size: 11px; color: #E53E3E; font-weight: 500; text-align: center; }
   .cr-hint { margin-top: 6px; font-size: 12px; color: #7A7168; text-align: center; font-weight: 600; font-family: 'Nunito', sans-serif; }
 
@@ -1047,7 +1017,6 @@ const cssStyles = `
     .cr-q-text { font-size: 18px; line-height: 1.8; }
     .cr-input-area { padding: 14px 20px; }
     .cr-input-row { gap: 10px; }
-    .cr-mic-btn { width: 56px; height: 56px; }
     .cr-textarea { padding: 14px 18px; border-radius: 18px; font-size: 16px; }
     .cr-submit-btn { height: 56px; padding: 0 24px; border-radius: 28px; font-size: 16px; }
     .cr-hint { font-size: 13px; margin-top: 8px; }

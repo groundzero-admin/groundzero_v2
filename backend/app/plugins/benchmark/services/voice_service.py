@@ -43,7 +43,7 @@ async def sarvam_tts(text: str, character: str) -> bytes:
     if not clean_text:
         raise ValueError("No speakable text after cleaning")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
         response = await client.post(
             "https://api.sarvam.ai/text-to-speech",
             headers={"api-subscription-key": api_key, "Content-Type": "application/json"},
@@ -72,7 +72,7 @@ async def elevenlabs_tts(text: str, character: str) -> bytes:
     if not api_key:
         raise ValueError("ELEVENLABS_API_KEY not configured")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, verify=False) as client:
         response = await client.post(
             f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
             headers={"xi-api-key": api_key, "Content-Type": "application/json"},
@@ -137,7 +137,7 @@ async def sarvam_stt(audio_bytes: bytes, language_code: str = "en-IN") -> str:
     wav_bytes = await _convert_to_wav(audio_bytes)
     logger.info("STT: converted audio to WAV (%d bytes -> %d bytes)", len(audio_bytes), len(wav_bytes))
 
-    async with httpx.AsyncClient(timeout=300.0) as client:
+    async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
         response = await client.post(
             "https://api.sarvam.ai/speech-to-text",
             headers={"api-subscription-key": api_key},
