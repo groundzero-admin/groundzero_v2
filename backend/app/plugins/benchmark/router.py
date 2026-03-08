@@ -206,24 +206,44 @@ async def submit_answer(
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    existing = await db.execute(
+    existing_result = await db.execute(
         select(BenchmarkTurn).where(
             BenchmarkTurn.session_id == session.id,
             BenchmarkTurn.question_id == data.question_id,
         )
     )
-    if existing.scalar_one_or_none():
+    existing_turn = existing_result.scalar_one_or_none()
+
+    if existing_turn and not data.is_retry:
         raise HTTPException(status_code=409, detail="Answer already submitted for this question")
 
-    turn = BenchmarkTurn(
-        session_id=session.id,
-        turn_number=data.question_number,
-        speaker="student",
-        text=data.answer_text,
-        question_id=data.question_id,
-    )
-    db.add(turn)
+    if existing_turn and data.is_retry:
+        existing_turn.text = data.answer_text
+    else:
+        turn = BenchmarkTurn(
+            session_id=session.id,
+            turn_number=data.question_number,
+            speaker="student",
+            text=data.answer_text,
+            question_id=data.question_id,
+        )
+        db.add(turn)
+
     session.total_turns = data.question_number
+
+    entry = {
+        "question_number": question.question_number,
+        "question": question.text,
+        "answer": data.answer_text,
+        "is_retry": data.is_retry,
+    }
+    convo = list(session.conversation or [])
+    if data.is_retry:
+        convo = [e for e in convo if e.get("question_number") != question.question_number]
+    convo.append(entry)
+    convo.sort(key=lambda e: e.get("question_number", 0))
+    session.conversation = convo
+
     await db.commit()
 
     return AnswerOut(
@@ -475,27 +495,33 @@ async def answer_feedback(
     answer_text: str = fastapi.Form(...),
     question_number: int = fastapi.Form(...),
     character: str = fastapi.Form("harry_potter"),
+    is_retry: bool = fastapi.Form(False),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Generate AI feedback for a single answer and return feedback text + TTS audio."""
+    """Generate AI feedback for a single answer and return feedback text + TTS audio + retry info."""
     from app.plugins.benchmark.services.claude_service import generate_answer_feedback
     from app.plugins.benchmark.services.voice_service import text_to_speech
 
     student = await _get_student_for_user(user, db)
 
     try:
-        feedback_text = await generate_answer_feedback(
+        result = await generate_answer_feedback(
             question_text=question_text,
             answer_text=answer_text,
             question_number=question_number,
             character=character,
             student_name=student.name or "Student",
             grade=str(student.grade or "6"),
+            is_retry=is_retry,
         )
     except Exception as e:
         logger.error("Feedback generation failed: %s", e)
         raise HTTPException(status_code=500, detail="Feedback generation failed")
+
+    feedback_text = result["feedback"]
+    needs_retry = result["needs_retry"]
+    hint = result.get("hint")
 
     try:
         audio_bytes = await text_to_speech(feedback_text, character)
@@ -505,6 +531,8 @@ async def answer_feedback(
         return JSONResponse(content={
             "feedback_text": feedback_text,
             "audio_base64": None,
+            "needs_retry": needs_retry,
+            "hint": hint,
         })
 
     import base64
@@ -513,6 +541,8 @@ async def answer_feedback(
     return JSONResponse(content={
         "feedback_text": feedback_text,
         "audio_base64": audio_b64,
+        "needs_retry": needs_retry,
+        "hint": hint,
     })
 
 

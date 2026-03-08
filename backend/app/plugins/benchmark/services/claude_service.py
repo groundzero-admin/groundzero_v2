@@ -199,26 +199,48 @@ async def generate_answer_feedback(
     character: str,
     student_name: str,
     grade: str,
-) -> str:
+    is_retry: bool = False,
+) -> dict:
     """Generate brief, friendly, constructive feedback for a single answer.
 
-    Returns a 2-3 sentence feedback string in the character's voice.
-    Designed to be fast (small prompt, short output).
+    Returns a dict with:
+      - feedback: str (2-3 sentence feedback in character voice)
+      - needs_retry: bool (true if the answer is significantly off-track)
+      - hint: str | None (a gentle nudge if retry is warranted)
     """
     persona = CHARACTER_PERSONALITIES.get(character, CHARACTER_PERSONALITIES["harry_potter"])
+
+    retry_clause = ""
+    if is_retry:
+        retry_clause = """
+This is the student's SECOND attempt (retry). Be encouraging about their effort.
+Set needs_retry to false regardless of answer quality - they already used their retry."""
 
     system_prompt = f"""You are {persona['name']}, talking to {student_name} (grade {grade}).
 Your tone is {persona['tone']}.
 
-Give brief, constructive feedback on the student's answer to a question.
+Give honest, direct feedback on the student's answer to a question.
+Also decide if the answer needs a retry.
+
 Rules:
-- 2-3 sentences MAX. Keep it short and conversational.
-- Start with something positive about what they said (even if partially correct).
-- If the answer is weak or wrong, gently point toward better thinking without giving the answer away.
+- Your "feedback" should be 2-3 sentences MAX. Keep it short and conversational.
+- Be HONEST. Do NOT praise wrong answers. Do NOT say "great thinking" or "nice try" when the answer is incorrect.
+- If the answer is WRONG: clearly point out the mistake in a kid-friendly way. For example: "Uh oh, that's not quite right! You can't just add the denominators like that" or "Hmm, I don't think that's how it works. Think about what happens when...". Be specific about WHAT went wrong.
+- If the answer is CORRECT or mostly right: praise them genuinely and briefly.
+- If the answer is PARTIALLY correct: acknowledge the right part, then point out what's missing or wrong.
 - Use simple, age-appropriate language.
 - Stay in character.
 - Do NOT use markdown, asterisks, or special formatting.
-- Do NOT repeat the question back."""
+- Do NOT repeat the question back.
+
+Retry decision:
+- Set "needs_retry" to true if the answer is clearly wrong, off-track, too vague, or shows a misunderstanding. Minor imperfections are fine - do NOT flag those.
+- If needs_retry is true, provide a short "hint" (1 sentence) that nudges the student in the right direction without giving the answer away. Make the hint specific and in character.
+- If the answer is reasonable (even if imperfect), set needs_retry to false and hint to null.
+{retry_clause}
+
+Respond with ONLY a JSON object (no markdown, no code fences):
+{{"feedback": "...", "needs_retry": true/false, "hint": "..." or null}}"""
 
     user_msg = f"Question {question_number}: {question_text}\n\nStudent's answer: {answer_text}"
 
@@ -226,12 +248,20 @@ Rules:
     model = _get_claude_model()
     response = await client.messages.create(
         model=model,
-        max_tokens=200,
+        max_tokens=300,
         system=system_prompt,
         messages=[{"role": "user", "content": user_msg}],
     )
 
-    return response.content[0].text.strip()
+    raw = response.content[0].text.strip()
+    parsed = _robust_json_parse(raw)
+    if parsed and "feedback" in parsed:
+        return {
+            "feedback": str(parsed["feedback"]),
+            "needs_retry": bool(parsed.get("needs_retry", False)),
+            "hint": parsed.get("hint"),
+        }
+    return {"feedback": raw, "needs_retry": False, "hint": None}
 
 
 def _robust_json_parse(text: str):
