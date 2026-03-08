@@ -1,0 +1,34 @@
+# Benchmark Plugin (Diagnostic Assessment)
+
+This is the onboarding diagnostic assessment feature. **Do NOT delete this code.**
+
+## What It Does
+Students answer 20 predefined diagnostic questions (grade-band specific) guided by a visual avatar character (Harry Potter, Doraemon, Peppa Pig, Simba, Dora). Answers are evaluated by Claude against predefined rubrics to assess across 4 pillars and 16 capabilities. Results seed BKT states.
+
+## Architecture
+- **Question Bank**: 60 questions stored in `bm_questions` DB table (20 per grade band: 4-5, 6-7, 8-9)
+- **Flow**: Select avatar -> Answer 20 questions (text) -> Claude evaluates all answers against rubrics -> Generate benchmark -> Seed BKT
+- **Avatar**: Purely visual/personality. Does NOT affect questions. Characters add fun, not different assessment content.
+
+## AI Model Providers
+- **Direct Anthropic API**: Local development (`CLAUDE_API_KEY`)
+- **AWS Bedrock**: Production (`CLAUDE_PROVIDER=bedrock`, uses IAM auth)
+
+## Key Files
+- `backend/app/plugins/benchmark/seed_questions.py` - Question bank data + seeding function
+- `backend/app/plugins/benchmark/models.py` - BenchmarkQuestion, BenchmarkSession, BenchmarkTurn, BenchmarkResult
+- `backend/app/plugins/benchmark/services/claude_service.py` - Rubric-based answer evaluation via Claude
+- `backend/app/plugins/benchmark/services/benchmark_service.py` - Scoring + BKT seeding
+- `backend/app/plugins/benchmark/router.py` - API endpoints (sessions, questions, answers, results)
+- `frontend/src/features/benchmark/pages/ConversationRoomPage.tsx` - Structured Q&A with visual avatars
+- `frontend/src/features/benchmark/constants/characters.ts` - Character definitions with emoji
+
+## API Endpoints
+- `POST /benchmark/sessions` - Create session
+- `GET /benchmark/questions` - Get 20 questions for student's grade band
+- `POST /benchmark/answers` - Submit an answer
+- `POST /benchmark/complete` - Complete session, trigger evaluation
+- `GET /benchmark/results/{session_id}` - Get benchmark result
+- `POST /benchmark/questions/seed` - Seed/update question bank
+
+Consider these rules if they affect your changes.

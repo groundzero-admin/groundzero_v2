@@ -19,6 +19,16 @@ import TeacherShell from "@/components/layout/TeacherShell";
 import TeacherDashboardPage from "@/pages/teacher/TeacherDashboardPage";
 import SkillGraphPage from "@/pages/SkillGraphPage";
 
+// Plugin: Benchmark (remove this block to disable)
+import {
+  BenchmarkSessionProvider,
+  BenchmarkLandingPage,
+  CharacterSelectPage,
+  ConversationRoomPage,
+  BenchmarkReportPage,
+  BenchmarkHistoryPage,
+} from "@/features/benchmark";
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -109,6 +119,49 @@ export default function App() {
                       <RequireStudent>
                         <FunPage />
                       </RequireStudent>
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              />
+
+              {/* ── Benchmark plugin routes (remove this block to disable) ── */}
+              <Route
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <BenchmarkSessionProvider>
+                        <AppShell />
+                      </BenchmarkSessionProvider>
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              >
+                <Route path="/benchmark" element={<BenchmarkLandingPage />} />
+                <Route path="/benchmark/select" element={<CharacterSelectPage />} />
+                <Route path="/benchmark/history" element={<BenchmarkHistoryPage />} />
+              </Route>
+
+              <Route
+                path="/benchmark/conversation"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <BenchmarkSessionProvider>
+                        <ConversationRoomPage />
+                      </BenchmarkSessionProvider>
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              />
+
+              <Route
+                path="/benchmark/report/:sessionId"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <BenchmarkSessionProvider>
+                        <BenchmarkReportPage />
+                      </BenchmarkSessionProvider>
                     </StudentProvider>
                   </RequireAuth>
                 }

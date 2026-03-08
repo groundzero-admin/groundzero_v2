@@ -8,3 +8,4 @@ from app.models.curriculum_topic import CurriculumTopic, TopicCompetencyMap  # n
 from app.models.session import Cohort, Session, SessionActivity, FacilitatorNote  # noqa: F401
 from app.models.spark import SparkConversation, SparkMessage  # noqa: F401
 from app.models.user import User, RefreshToken  # noqa: F401
+from app.plugins.benchmark.models import BenchmarkSession, BenchmarkTurn, BenchmarkResult  # noqa: F401  # Plugin: benchmark

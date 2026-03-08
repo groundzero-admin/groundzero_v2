@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b1a1a"/>
+      <stop offset="100%" style="stop-color:#d4a843"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="96" fill="url(#bg)" stroke="#6b1515" stroke-width="2"/>
+  <!-- Face -->
+  <circle cx="100" cy="108" r="52" fill="#FDDCB5"/>
+  <!-- Hair -->
+  <path d="M52 90 Q55 50 100 42 Q145 50 148 90 Q148 75 140 68 Q130 58 100 55 Q70 58 60 68 Q52 75 52 90Z" fill="#2D1B0E"/>
+  <path d="M55 92 Q50 80 58 70" stroke="#2D1B0E" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M145 92 Q150 80 142 70" stroke="#2D1B0E" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- Glasses -->
+  <circle cx="82" cy="105" r="14" fill="none" stroke="#333" stroke-width="2.5"/>
+  <circle cx="118" cy="105" r="14" fill="none" stroke="#333" stroke-width="2.5"/>
+  <line x1="96" y1="105" x2="104" y2="105" stroke="#333" stroke-width="2"/>
+  <line x1="68" y1="105" x2="58" y2="100" stroke="#333" stroke-width="2"/>
+  <line x1="132" y1="105" x2="142" y2="100" stroke="#333" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="82" cy="106" r="4" fill="#2D5F2D"/>
+  <circle cx="118" cy="106" r="4" fill="#2D5F2D"/>
+  <circle cx="83" cy="104" r="1.5" fill="white"/>
+  <circle cx="119" cy="104" r="1.5" fill="white"/>
+  <!-- Scar -->
+  <path d="M88 78 L92 86 L86 90 L90 96" stroke="#C53030" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Smile -->
+  <path d="M88 124 Q100 134 112 124" stroke="#C07060" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Scarf -->
+  <path d="M58 148 Q100 165 142 148 Q142 160 100 172 Q58 160 58 148Z" fill="#8b1a1a"/>
+  <path d="M70 152 L70 160 M80 155 L80 163 M90 157 L90 165 M110 157 L110 165 M120 155 L120 163 M130 152 L130 160" stroke="#d4a843" stroke-width="2"/>
+</svg>
