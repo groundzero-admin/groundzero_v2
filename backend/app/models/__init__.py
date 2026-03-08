@@ -8,3 +8,6 @@ from app.models.curriculum_topic import CurriculumTopic, TopicCompetencyMap  # n
 from app.models.session import Cohort, Session, SessionActivity, FacilitatorNote  # noqa: F401
 from app.models.spark import SparkConversation, SparkMessage  # noqa: F401
 from app.models.user import User, RefreshToken  # noqa: F401
+from app.models.template_cohort import TemplateCohort, TemplateSession  # noqa: F401
+from app.models.live_batch import LiveBatch, LiveBatchSession  # noqa: F401
+from app.models.batch_enrollment import BatchStudentEnrollment  # noqa: F401

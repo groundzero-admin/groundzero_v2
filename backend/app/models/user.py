@@ -22,6 +22,7 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     hashed_password: Mapped[str] = mapped_column(String(128))
+    plain_password: Mapped[str | None] = mapped_column(String(128), nullable=True)  # for admin to share with students
     role: Mapped[str] = mapped_column(String(20))  # "student", "teacher", "admin"
     full_name: Mapped[str] = mapped_column(String(200))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default="true")
