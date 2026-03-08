@@ -8,7 +8,7 @@ backend:
 
 frontend:
 	@echo "Starting frontend on port 3000..."
-	cd frontend && npm run dev
+	export NVM_DIR="$$HOME/.nvm" && source "$$NVM_DIR/nvm.sh" && nvm use 22 && cd frontend && npm run dev
 
 # ─── Run both together ───
 

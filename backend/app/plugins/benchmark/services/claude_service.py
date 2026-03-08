@@ -225,7 +225,10 @@ HINT: (if NEEDS_RETRY is true, a short 1-sentence hint to help them; otherwise l
         ],
     )
 
-    raw = response.choices[0].message.content.strip()
+    raw_content = response.choices[0].message.content
+    if not raw_content:
+        return {"feedback": "Let me move on to the next question!", "needs_retry": False, "hint": None}
+    raw = raw_content.strip()
 
     # Parse out feedback, needs_retry, hint
     feedback = raw
