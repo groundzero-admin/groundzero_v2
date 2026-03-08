@@ -23,6 +23,8 @@ import TemplateCohortDetailPage from "@/pages/admin/TemplateCohortDetailPage";
 import LiveBatchListPage from "@/pages/admin/LiveBatchListPage";
 import LiveBatchDetailPage from "@/pages/admin/LiveBatchDetailPage";
 import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
+import LiveClassPage from "@/pages/admin/LiveClassPage";
+import StudentLiveClassPage from "@/pages/student/StudentLiveClassPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -119,6 +121,16 @@ export default function App() {
                 }
               />
 
+              {/* ── Student Live Class (full-screen, no shell) ── */}
+              <Route
+                path="/student/live-class"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentLiveClassPage />
+                  </RequireAuth>
+                }
+              />
+
               {/* ── Teacher routes ── */}
               <Route
                 element={
@@ -145,6 +157,16 @@ export default function App() {
                 <Route path="/admin/batches/:id" element={<LiveBatchDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
               </Route>
+
+              {/* ── Live Class (full-screen, no shell) ── */}
+              <Route
+                path="/admin/live-class"
+                element={
+                  <RequireAuth allowedRoles={["admin"]}>
+                    <LiveClassPage />
+                  </RequireAuth>
+                }
+              />
 
               {/* ── Root redirect ── */}
               <Route path="/" element={<RootRedirect />} />

@@ -46,6 +46,10 @@ export interface LiveBatchSession {
     is_locally_modified: boolean;
     scheduled_date: string | null;
     daily_timing: string | null;
+    hms_room_id: string | null;
+    hms_room_code_host: string | null;
+    hms_room_code_guest: string | null;
+    is_live: boolean;
     created_at: string;
     updated_at: string;
 }

@@ -9,7 +9,7 @@ import {
 } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
 import type { LiveBatchSession } from "@/api/types/admin";
-import { ArrowLeft, Download, Pencil, Link2, FileEdit, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Download, Pencil, Link2, FileEdit, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight, Video, VideoOff } from "lucide-react";
 import * as s from "./admin.css";
 
 // ── Enrollment types ──
@@ -99,6 +99,56 @@ export default function LiveBatchDetailPage() {
         },
     });
 
+    // ── Live class actions ──
+    const [startingSessionId, setStartingSessionId] = useState<string | null>(null);
+
+    async function startAndJoin(sess: LiveBatchSession) {
+        if (!id) return;
+        setStartingSessionId(sess.id);
+        try {
+            let roomCodeHost = sess.hms_room_code_host;
+
+            // Step 1: Create room if none exists
+            if (!sess.hms_room_id) {
+                const roomData = await api
+                    .post(`/live-batches/${id}/sessions/${sess.id}/create-room`)
+                    .then((r) => r.data);
+                roomCodeHost = roomData.hms_room_code_host;
+            }
+
+            // Step 2: Start the class
+            const startData = await api
+                .post(`/live-batches/${id}/sessions/${sess.id}/start-class`)
+                .then((r) => r.data);
+            roomCodeHost = startData.room_code_host || roomCodeHost;
+
+            // Step 3: Open video call in new tab
+            if (roomCodeHost) {
+                const url = `/admin/live-class?roomCode=${encodeURIComponent(roomCodeHost)}&userName=Admin`;
+                window.open(url, "_blank");
+            }
+
+            qc.invalidateQueries({ queryKey: ["live-batches", id] });
+        } catch (err) {
+            console.error("Failed to start class:", err);
+        } finally {
+            setStartingSessionId(null);
+        }
+    }
+
+    const endClassMutation = useMutation({
+        mutationFn: (sessionId: string) =>
+            api.post(`/live-batches/${id}/sessions/${sessionId}/end-class`).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["live-batches", id] }),
+    });
+
+    function joinAgain(sess: LiveBatchSession) {
+        const code = sess.hms_room_code_host;
+        if (!code) return;
+        const url = `/admin/live-class?roomCode=${encodeURIComponent(code)}&userName=Admin`;
+        window.open(url, "_blank");
+    }
+
     // Session handlers
     async function handleImport(templateCohortId: string) {
         if (!id) return;
@@ -185,10 +235,46 @@ export default function LiveBatchDetailPage() {
                                 )}
                             </div>
                         </div>
-                        <div className={s.sessionActions}>
-                            <button className={s.editBtn} onClick={() => openEditSession(sess)}>
-                                <Pencil size={12} /> Edit
-                            </button>
+                        <div className={s.sessionActions} style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+                            {/* Live status indicator */}
+                            {sess.is_live && (
+                                <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#4ade80", fontSize: 12, fontWeight: 600 }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block" }} /> LIVE
+                                </span>
+                            )}
+                            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                                <button className={s.editBtn} onClick={() => openEditSession(sess)}>
+                                    <Pencil size={12} /> Edit
+                                </button>
+                                {sess.is_live ? (
+                                    <>
+                                        <button
+                                            className={s.dangerBtn}
+                                            style={{ fontSize: 12, padding: "4px 10px" }}
+                                            onClick={() => endClassMutation.mutate(sess.id)}
+                                            disabled={endClassMutation.isPending}
+                                        >
+                                            <VideoOff size={12} /> {endClassMutation.isPending ? "Ending..." : "End Class"}
+                                        </button>
+                                        <button
+                                            className={s.submitBtn}
+                                            style={{ fontSize: 12, padding: "4px 10px", background: "#6366f1" }}
+                                            onClick={() => joinAgain(sess)}
+                                        >
+                                            <Video size={12} /> Join Again
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        className={s.submitBtn}
+                                        style={{ fontSize: 12, padding: "4px 10px", background: "#16a34a" }}
+                                        onClick={() => startAndJoin(sess)}
+                                        disabled={startingSessionId === sess.id}
+                                    >
+                                        <Video size={12} /> {startingSessionId === sess.id ? "Starting..." : "Start & Join"}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
