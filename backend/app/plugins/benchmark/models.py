@@ -44,6 +44,7 @@ class BenchmarkSession(Base):
     started_at = Column(DateTime(timezone=True), default=_utcnow)
     ended_at = Column(DateTime(timezone=True), nullable=True)
     total_turns = Column(Integer, default=0)
+    conversation = Column(JSONB, nullable=True, default=list)
 
     student = relationship("Student", lazy="selectin")
     turns = relationship(

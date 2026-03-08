@@ -19,6 +19,7 @@ class BenchmarkSessionOut(BaseModel):
     started_at: datetime
     total_turns: int
     total_questions: int = 20
+    conversation: Optional[list[dict[str, Any]]] = None
 
     model_config = {"from_attributes": True}
 
@@ -38,6 +39,7 @@ class AnswerSubmit(BaseModel):
     question_id: UUID
     question_number: int
     answer_text: str
+    is_retry: bool = False
 
 
 class AnswerOut(BaseModel):

@@ -17,14 +17,14 @@ interface AnsweredQuestion {
   answerText: string;
 }
 
-type Phase = "loading" | "intro" | "speaking" | "answering" | "filler" | "feedback" | "celebration";
+type Phase = "loading" | "intro" | "speaking" | "answering" | "filler" | "feedback" | "retry_prompt" | "celebration";
 
 const FILLER_MESSAGES = [
-  "Great answer! Let me think about that and share some thoughts with you...",
-  "Nice one! Give me a moment to put together some feedback for you...",
-  "Thanks for sharing that! Let me process your answer and tell you what I think...",
-  "Good effort! Just a second while I review what you said...",
-  "Interesting answer! Let me think about it and get back to you...",
+  "Alright, let me think about that for a moment...",
+  "Hmm, give me a second to review your answer...",
+  "Okay, let me take a look at what you said...",
+  "Hold on, let me go through your answer...",
+  "One moment while I check your response...",
 ];
 
 export default function ConversationRoomPage() {
@@ -46,6 +46,8 @@ export default function ConversationRoomPage() {
   const [introTypingDone, setIntroTypingDone] = useState(false);
   const [, setFeedbackText] = useState("");
   const [feedbackTypedWords, setFeedbackTypedWords] = useState<string[]>([]);
+  const [retriesUsed, setRetriesUsed] = useState<Record<number, boolean>>({});
+  const [retryHint, setRetryHint] = useState<string | null>(null);
 
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording, cancelRecording } =
     useVoiceRecording();
@@ -64,12 +66,19 @@ export default function ConversationRoomPage() {
   const typingTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const introTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const feedbackTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
-  // Stores pre-fetched feedback data so it's ready when filler audio ends
-  const pendingFeedbackRef = useRef<{ text: string; audioBase64: string | null } | null>(null);
+  const pendingFeedbackRef = useRef<{ text: string; audioBase64: string | null; needsRetry: boolean; hint: string | null } | null>(null);
   const fillerDoneRef = useRef(false);
+
+  // ─── Redirect if no session ───
+  useEffect(() => {
+    if (!sessionId || !selectedCharacter) {
+      navigate("/benchmark/characters", { replace: true });
+    }
+  }, [sessionId, selectedCharacter, navigate]);
 
   // ─── Load questions ───
   useEffect(() => {
+    if (!sessionId) return;
     benchmarkApi
       .getQuestions()
       .then((res: { data: BenchmarkQuestion[] }) => {
@@ -80,7 +89,7 @@ export default function ConversationRoomPage() {
         alert("Failed to load questions. Please try again.");
         navigate("/benchmark");
       });
-  }, [navigate]);
+  }, [navigate, sessionId]);
 
   // ─── Intro greeting ───
   useEffect(() => {
@@ -226,13 +235,12 @@ export default function ConversationRoomPage() {
   }, [currentQuestion, speakQuestion]);
 
   // ─── Play feedback audio and show typed text ───
-  const playFeedback = useCallback((text: string, audioBase64: string | null) => {
+  const playFeedback = useCallback((text: string, audioBase64: string | null, needsRetry: boolean, hint: string | null) => {
     setPhase("feedback");
     setFeedbackText(text);
     setIsSpeaking(true);
     smallBurst();
 
-    // Type feedback words
     const words = text.split(" ");
     setFeedbackTypedWords([]);
     let idx = 0;
@@ -243,15 +251,24 @@ export default function ConversationRoomPage() {
       if (idx >= words.length) clearInterval(feedbackTimerRef.current);
     }, 80);
 
+    const canRetry = needsRetry && !retriesUsed[currentIndex];
+
     const onFeedbackDone = () => {
       setIsSpeaking(false);
       clearInterval(feedbackTimerRef.current);
       setFeedbackTypedWords(words);
-      // Pause briefly, then advance
-      setTimeout(() => {
-        setPhase("speaking");
-        setCurrentIndex((i) => i + 1);
-      }, 1200);
+
+      if (canRetry && hint) {
+        setTimeout(() => {
+          setRetryHint(hint);
+          setPhase("retry_prompt");
+        }, 800);
+      } else {
+        setTimeout(() => {
+          setPhase("speaking");
+          setCurrentIndex((i) => i + 1);
+        }, 1200);
+      }
     };
 
     if (audioBase64) {
@@ -274,10 +291,9 @@ export default function ConversationRoomPage() {
         onFeedbackDone();
       }
     } else {
-      // No audio - just show text for a few seconds
       setTimeout(onFeedbackDone, 3000);
     }
-  }, [smallBurst]);
+  }, [smallBurst, retriesUsed, currentIndex]);
 
   // Called when filler audio ends - check if feedback is ready
   const onFillerComplete = useCallback(() => {
@@ -285,9 +301,8 @@ export default function ConversationRoomPage() {
     const pending = pendingFeedbackRef.current;
     if (pending) {
       pendingFeedbackRef.current = null;
-      playFeedback(pending.text, pending.audioBase64);
+      playFeedback(pending.text, pending.audioBase64, pending.needsRetry, pending.hint);
     }
-    // If not ready yet, the fetch callback will trigger playFeedback
   }, [playFeedback]);
 
   // ─── Submit answer -> filler -> feedback ───
@@ -297,6 +312,7 @@ export default function ConversationRoomPage() {
     if (isRecording) stopRecording();
     setIsSubmitting(true);
     const trimmedAnswer = answerText.trim();
+    const isRetry = !!retriesUsed[currentIndex];
 
     try {
       await benchmarkApi.submitAnswer({
@@ -304,17 +320,21 @@ export default function ConversationRoomPage() {
         question_id: currentQuestion.id,
         question_number: currentQuestion.question_number,
         answer_text: trimmedAnswer,
+        is_retry: isRetry,
       });
 
-      setAnswered((prev) => [
-        ...prev,
-        {
-          questionNumber: currentQuestion.question_number,
-          questionText: currentQuestion.text,
-          answerText: trimmedAnswer,
-        },
-      ]);
+      if (!isRetry) {
+        setAnswered((prev) => [
+          ...prev,
+          {
+            questionNumber: currentQuestion.question_number,
+            questionText: currentQuestion.text,
+            answerText: trimmedAnswer,
+          },
+        ]);
+      }
       setAnswerText("");
+      setRetryHint(null);
 
       if (isLastQuestion) {
         setPhase("celebration");
@@ -351,6 +371,7 @@ export default function ConversationRoomPage() {
         answer_text: trimmedAnswer,
         question_number: currentQuestion.question_number,
         character: character.id,
+        is_retry: isRetry,
       }).catch(() => null);
 
       // Play filler TTS
@@ -379,7 +400,6 @@ export default function ConversationRoomPage() {
           onFillerComplete();
         });
       } else {
-        // No filler audio, wait 2.5s then proceed
         setTimeout(() => {
           setIsSpeaking(false);
           clearInterval(feedbackTimerRef.current);
@@ -391,21 +411,24 @@ export default function ConversationRoomPage() {
       // Handle feedback arrival
       const feedbackResult = await feedbackPromise;
       if (feedbackResult?.data) {
-        const fb = { text: feedbackResult.data.feedback_text, audioBase64: feedbackResult.data.audio_base64 };
+        const fb = {
+          text: feedbackResult.data.feedback_text,
+          audioBase64: feedbackResult.data.audio_base64,
+          needsRetry: feedbackResult.data.needs_retry,
+          hint: feedbackResult.data.hint,
+        };
         if (fillerDoneRef.current) {
-          playFeedback(fb.text, fb.audioBase64);
+          playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
         } else {
           pendingFeedbackRef.current = fb;
         }
       } else {
-        // Feedback fetch failed - just advance after filler
         if (fillerDoneRef.current) {
           setTimeout(() => {
             setPhase("speaking");
             setCurrentIndex((i) => i + 1);
           }, 800);
         } else {
-          // When filler ends, it will see no pending feedback and we handle it
           pendingFeedbackRef.current = null;
         }
       }
@@ -414,7 +437,7 @@ export default function ConversationRoomPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback]);
+  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback, retriesUsed, currentIndex]);
 
   const handleMicToggle = useCallback(() => {
     if (isRecording) {
@@ -431,6 +454,20 @@ export default function ConversationRoomPage() {
       handleSubmitAnswer();
     }
   };
+
+  const handleRetry = useCallback(() => {
+    setRetriesUsed((prev) => ({ ...prev, [currentIndex]: true }));
+    setAnswerText("");
+    setRetryHint(null);
+    setPhase("answering");
+    textareaRef.current?.focus();
+  }, [currentIndex]);
+
+  const handlePass = useCallback(() => {
+    setRetryHint(null);
+    setPhase("speaking");
+    setCurrentIndex((i) => i + 1);
+  }, []);
 
   // ─── Loading ───
   if (phase === "loading") {
@@ -545,6 +582,38 @@ export default function ConversationRoomPage() {
 
       {/* Main area */}
       <div className="cr-main">
+        {/* Retry prompt */}
+        {phase === "retry_prompt" && currentQuestion && (
+          <div className="cr-feedback-area">
+            <div className="cr-avatar-section">
+              <div
+                className="cr-avatar-ring"
+                style={{ borderColor: character.accent, boxShadow: `0 4px 16px ${character.color}30` }}
+              >
+                <img src={character.image} alt={character.name} className="cr-avatar-img cr-floating" />
+              </div>
+            </div>
+            <div className="cr-feedback-bubble" style={{ borderColor: character.color + "25" }}>
+              <div className="cr-fb-badge" style={{ backgroundColor: "#FEEBC830", color: "#ED8936" }}>
+                {"\u{1F4A1}"} Hint
+              </div>
+              <div className="cr-feedback-text">{retryHint}</div>
+              <div className="cr-retry-actions">
+                <button
+                  onClick={handleRetry}
+                  className="cr-retry-btn"
+                  style={{ background: `linear-gradient(135deg, ${character.color}, ${character.accent})`, boxShadow: `0 4px 12px ${character.color}40` }}
+                >
+                  {"\u{1F504}"} Try Again
+                </button>
+                <button onClick={handlePass} className="cr-pass-btn">
+                  Skip {"\u{27A1}\u{FE0F}"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filler / Feedback overlay */}
         {(phase === "filler" || phase === "feedback") && (
           <div className="cr-feedback-area">
@@ -929,6 +998,26 @@ const cssStyles = `
   .cr-voice-error { margin-top: 4px; font-size: 11px; color: #E53E3E; font-weight: 500; text-align: center; }
   .cr-hint { margin-top: 6px; font-size: 12px; color: #7A7168; text-align: center; font-weight: 600; font-family: 'Nunito', sans-serif; }
 
+  /* ─── Retry prompt ─── */
+  .cr-retry-actions {
+    display: flex; gap: 10px; justify-content: center; margin-top: 16px;
+  }
+  .cr-retry-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: 20px; border: none;
+    color: #fff; font-size: 14px; font-weight: 800; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: transform 150ms;
+  }
+  .cr-retry-btn:hover { transform: scale(1.04); }
+  .cr-pass-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 22px; border-radius: 20px;
+    border: 2px solid #E8E0D8; background: #ffffffdd;
+    color: #7A7168; font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: all 150ms;
+  }
+  .cr-pass-btn:hover { background: #f5f0eb; border-color: #D4C9BD; }
+
   /* ─── Desktop (>=640px) ─── */
   @media (min-width: 640px) {
     .cr-loading-avatar { width: 100px; height: 100px; }
@@ -962,5 +1051,7 @@ const cssStyles = `
     .cr-textarea { padding: 14px 18px; border-radius: 18px; font-size: 16px; }
     .cr-submit-btn { height: 56px; padding: 0 24px; border-radius: 28px; font-size: 16px; }
     .cr-hint { font-size: 13px; margin-top: 8px; }
+    .cr-retry-btn { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
+    .cr-pass-btn { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
   }
 `;

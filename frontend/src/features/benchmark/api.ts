@@ -37,6 +37,7 @@ const benchmarkApi = {
     question_id: string;
     question_number: number;
     answer_text: string;
+    is_retry?: boolean;
   }) => api.post("/benchmark/answers", data),
 
   getAnswers: (sessionId: string) =>
@@ -78,13 +79,20 @@ const benchmarkApi = {
     answer_text: string;
     question_number: number;
     character: string;
+    is_retry?: boolean;
   }) => {
     const formData = new FormData();
     formData.append("question_text", data.question_text);
     formData.append("answer_text", data.answer_text);
     formData.append("question_number", String(data.question_number));
     formData.append("character", data.character);
-    return api.post<{ feedback_text: string; audio_base64: string | null }>(
+    if (data.is_retry) formData.append("is_retry", "true");
+    return api.post<{
+      feedback_text: string;
+      audio_base64: string | null;
+      needs_retry: boolean;
+      hint: string | null;
+    }>(
       "/benchmark/feedback",
       formData,
       { headers: { "Content-Type": "multipart/form-data" } },
