@@ -70,3 +70,31 @@ class QuestionOut(BaseModel):
     explanation: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ActivityUpdate(BaseModel):
+    name: str | None = None
+    module_id: str | None = None
+    type: str | None = None
+    week: int | None = None
+    session_number: int | None = None
+    duration_minutes: int | None = None
+    grade_bands: list[str] | None = None
+    description: str | None = None
+    learning_outcomes: list[str] | None = None
+    primary_competencies: list[dict] | None = None
+    secondary_competencies: list[dict] | None = None
+    prerequisites: list[dict] | None = None
+
+
+class QuestionUpdate(BaseModel):
+    module_id: str | None = None
+    competency_id: str | None = None
+    text: str | None = None
+    type: str | None = None
+    options: list[dict] | None = None
+    correct_answer: str | None = None
+    difficulty: float | None = None
+    grade_band: str | None = None
+    topic_id: str | None = None
+    explanation: str | None = None

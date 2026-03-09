@@ -1,5 +1,7 @@
 """Activity + question routes."""
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.competency import Competency
 from app.models.curriculum import Activity, Question
-from app.schemas.curriculum import ActivityCreate, ActivityOut, QuestionCreate, QuestionOut
+from app.schemas.curriculum import (
+    ActivityCreate, ActivityOut, ActivityUpdate,
+    QuestionCreate, QuestionOut, QuestionUpdate,
+)
 
 activities_router = APIRouter(prefix="/activities", tags=["activities"])
 questions_router = APIRouter(prefix="/questions", tags=["questions"])
@@ -46,7 +51,6 @@ async def list_activities(
     "/{activity_id}",
     response_model=ActivityOut,
     summary="Get Activity Details",
-    description="Retrieve a single activity with its full details including primary competencies, duration, module, and description.",
 )
 async def get_activity(activity_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Activity).where(Activity.id == activity_id))
@@ -61,7 +65,6 @@ async def get_activity(activity_id: str, db: AsyncSession = Depends(get_db)):
     response_model=ActivityOut,
     status_code=201,
     summary="Create Activity",
-    description="Add a new learning activity. Activities are assigned to sessions and link to competencies via primary_competencies.",
 )
 async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(Activity).where(Activity.id == data.id))
@@ -88,6 +91,39 @@ async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_d
     return activity
 
 
+@activities_router.put(
+    "/{activity_id}",
+    response_model=ActivityOut,
+    summary="Update Activity",
+)
+async def update_activity(
+    activity_id: str, data: ActivityUpdate, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = result.scalar_one_or_none()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    for key, val in data.model_dump(exclude_unset=True).items():
+        setattr(activity, key, val)
+    await db.commit()
+    await db.refresh(activity)
+    return activity
+
+
+@activities_router.delete(
+    "/{activity_id}",
+    summary="Delete Activity",
+)
+async def delete_activity(activity_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = result.scalar_one_or_none()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    await db.delete(activity)
+    await db.commit()
+    return {"ok": True}
+
+
 # ── Questions ──
 
 
@@ -95,12 +131,11 @@ async def create_activity(data: ActivityCreate, db: AsyncSession = Depends(get_d
     "",
     response_model=list[QuestionOut],
     summary="Browse Question Bank",
-    description="List questions from the question bank, filterable by competency, module, difficulty range, and grade band. Returns up to 200 questions.",
 )
 async def list_questions(
     competency_id: str | None = Query(None),
     module_id: str | None = Query(None),
-    topic_id: str | None = Query(None, description="Filter by curriculum topic"),
+    topic_id: str | None = Query(None),
     difficulty_min: float | None = Query(None, ge=0.0, le=1.0),
     difficulty_max: float | None = Query(None, ge=0.0, le=1.0),
     grade_band: str | None = Query(None),
@@ -129,17 +164,13 @@ async def list_questions(
     response_model=QuestionOut,
     status_code=201,
     summary="Add Question to Bank",
-    description="Add a new question to the question bank for a specific competency. Questions are served adaptively based on student mastery level.",
 )
 async def create_question(data: QuestionCreate, db: AsyncSession = Depends(get_db)):
-    # Verify competency exists
     comp = await db.execute(select(Competency).where(Competency.id == data.competency_id))
     if not comp.scalar_one_or_none():
         raise HTTPException(status_code=404, detail=f"Competency '{data.competency_id}' not found")
-    # Verify topic exists (if provided)
     if data.topic_id:
         from app.models.curriculum_topic import CurriculumTopic
-
         topic = await db.execute(select(CurriculumTopic).where(CurriculumTopic.id == data.topic_id))
         if not topic.scalar_one_or_none():
             raise HTTPException(status_code=404, detail=f"Topic '{data.topic_id}' not found")
@@ -159,3 +190,37 @@ async def create_question(data: QuestionCreate, db: AsyncSession = Depends(get_d
     await db.commit()
     await db.refresh(question)
     return question
+
+
+@questions_router.put(
+    "/{question_id}",
+    response_model=QuestionOut,
+    summary="Update Question",
+)
+async def update_question(
+    question_id: uuid.UUID, data: QuestionUpdate, db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    question = result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    for key, val in data.model_dump(exclude_unset=True).items():
+        setattr(question, key, val)
+    await db.commit()
+    await db.refresh(question)
+    return question
+
+
+@questions_router.delete(
+    "/{question_id}",
+    summary="Delete Question",
+)
+async def delete_question(question_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Question).where(Question.id == question_id))
+    question = result.scalar_one_or_none()
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    await db.delete(question)
+    await db.commit()
+    return {"ok": True}
+
