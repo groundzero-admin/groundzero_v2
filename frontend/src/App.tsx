@@ -23,6 +23,9 @@ import TemplateCohortDetailPage from "@/pages/admin/TemplateCohortDetailPage";
 import LiveBatchListPage from "@/pages/admin/LiveBatchListPage";
 import LiveBatchDetailPage from "@/pages/admin/LiveBatchDetailPage";
 import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
+import AdminActivitiesPage from "@/pages/admin/AdminActivitiesPage";
+import AdminActivityDetailPage from "@/pages/admin/AdminActivityDetailPage";
+import AdminCompetenciesPage from "@/pages/admin/AdminCompetenciesPage";
 import LiveClassPage from "@/pages/admin/LiveClassPage";
 import StudentLiveClassPage from "@/pages/student/StudentLiveClassPage";
 
@@ -156,6 +159,9 @@ export default function App() {
                 <Route path="/admin/batches" element={<LiveBatchListPage />} />
                 <Route path="/admin/batches/:id" element={<LiveBatchDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
+                <Route path="/admin/activities" element={<AdminActivitiesPage />} />
+                <Route path="/admin/activities/:id" element={<AdminActivityDetailPage />} />
+                <Route path="/admin/competencies" element={<AdminCompetenciesPage />} />
               </Route>
 
               {/* ── Live Class (full-screen, no shell) ── */}

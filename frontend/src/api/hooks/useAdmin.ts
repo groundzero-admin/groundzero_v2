@@ -8,6 +8,11 @@ import type {
     LiveBatchWithSessions,
     LiveBatchSession,
     TemplateSession,
+    Activity,
+    Question,
+    Pillar,
+    Capability,
+    Competency,
 } from "@/api/types/admin";
 
 // ──────────────── Template Cohort hooks ────────────────
@@ -191,5 +196,136 @@ export function useUpdateLiveBatchSession() {
                 .then((r) => r.data),
         onSuccess: (_data, vars) =>
             qc.invalidateQueries({ queryKey: ["live-batches", vars.batchId] }),
+    });
+}
+
+
+// ──────────────── Activity hooks ────────────────
+
+export function useActivities(filters?: { module_id?: string; type?: string }) {
+    return useQuery<Activity[]>({
+        queryKey: ["activities", filters],
+        queryFn: () => api.get("/activities", { params: filters }).then((r) => r.data),
+    });
+}
+
+export function useActivity(id: string | undefined) {
+    return useQuery<Activity>({
+        queryKey: ["activities", id],
+        queryFn: () => api.get(`/activities/${id}`).then((r) => r.data),
+        enabled: !!id,
+    });
+}
+
+export function useCreateActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: Partial<Activity> & { id: string; module_id: string; name: string; type: string }) =>
+            api.post<Activity>("/activities", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useUpdateActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: { id: string } & Partial<Activity>) =>
+            api.put<Activity>(`/activities/${id}`, data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useDeleteActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete(`/activities/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+
+// ──────────────── Question hooks ────────────────
+
+export function useQuestions(filters?: { competency_id?: string; module_id?: string; grade_band?: string }) {
+    return useQuery<Question[]>({
+        queryKey: ["questions", filters],
+        queryFn: () => api.get("/questions", { params: { ...filters, limit: 200 } }).then((r) => r.data),
+    });
+}
+
+export function useCreateQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: Omit<Question, "id">) =>
+            api.post<Question>("/questions", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["questions"] }),
+    });
+}
+
+export function useUpdateQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: { id: string } & Partial<Question>) =>
+            api.put<Question>(`/questions/${id}`, data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["questions"] }),
+    });
+}
+
+export function useDeleteQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete(`/questions/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["questions"] }),
+    });
+}
+
+
+// ──────────────── Competency hooks ────────────────
+
+export function usePillars() {
+    return useQuery<Pillar[]>({
+        queryKey: ["pillars"],
+        queryFn: () => api.get("/competencies/pillars").then((r) => r.data),
+    });
+}
+
+export function useCreatePillar() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: Pillar) =>
+            api.post<Pillar>("/competencies/pillars", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["pillars"] }),
+    });
+}
+
+export function useCapabilities() {
+    return useQuery<Capability[]>({
+        queryKey: ["capabilities"],
+        queryFn: () => api.get("/competencies/capabilities").then((r) => r.data),
+    });
+}
+
+export function useCreateCapability() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: Capability) =>
+            api.post<Capability>("/competencies/capabilities", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["capabilities"] }),
+    });
+}
+
+export function useCompetencies() {
+    return useQuery<Competency[]>({
+        queryKey: ["competencies"],
+        queryFn: () => api.get("/competencies").then((r) => r.data),
+    });
+}
+
+export function useCreateCompetency() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: { id: string; capability_id: string; name: string; description: string; assessment_method: string; default_params?: Record<string, number> }) =>
+            api.post<Competency>("/competencies", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["competencies"] }),
     });
 }
