@@ -23,6 +23,7 @@ class BenchmarkQuestion(Base):
     pillars = Column(JSONB, nullable=False, default=list)
     strong_signals = Column(JSONB, nullable=False, default=list)
     watchout_signals = Column(JSONB, nullable=False, default=list)
+    image_url = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

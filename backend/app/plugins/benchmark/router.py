@@ -160,6 +160,7 @@ async def get_questions(
             text=q.text,
             curriculum_anchor=q.curriculum_anchor,
             pillars=q.pillars or [],
+            image_url=q.image_url,
         )
         for q in questions
     ]

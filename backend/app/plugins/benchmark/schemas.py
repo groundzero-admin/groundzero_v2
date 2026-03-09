@@ -30,6 +30,7 @@ class QuestionOut(BaseModel):
     text: str
     curriculum_anchor: Optional[str] = None
     pillars: list[str] = []
+    image_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

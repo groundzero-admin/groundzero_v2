@@ -6,6 +6,7 @@ export interface BenchmarkQuestion {
   text: string;
   curriculum_anchor: string | null;
   pillars: string[];
+  image_url: string | null;
 }
 
 export interface BenchmarkSessionResponse {

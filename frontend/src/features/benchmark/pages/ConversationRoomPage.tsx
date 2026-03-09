@@ -8,8 +8,8 @@ import useVoiceRecording from "../hooks/useVoiceRecording";
 import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
 import JourneyMap from "../components/JourneyMap";
-import { CHARACTERS } from "../constants/characters";
-import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Mic } from "lucide-react";
+import { CHARACTERS, type CharacterPose } from "../constants/characters";
+import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Pencil } from "lucide-react";
 
 interface AnsweredQuestion {
   questionNumber: number;
@@ -54,6 +54,32 @@ export default function ConversationRoomPage() {
 
   const character = selectedCharacter || CHARACTERS[0];
 
+  const currentPose: CharacterPose = useMemo(() => {
+    if (phase === "celebration") return "happy";
+    if (phase === "retry_prompt") return "encouraging";
+    if (phase === "answering") return "listening";
+    if (phase === "filler" && !isSpeaking) return "thinking";
+    if (isSpeaking) return "speaking";
+    return "idle";
+  }, [phase, isSpeaking]);
+
+  const [prevPose, setPrevPose] = useState<CharacterPose>("idle");
+  const [poseTransitioning, setPoseTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (currentPose !== prevPose) {
+      setPoseTransitioning(true);
+      const timer = setTimeout(() => {
+        setPrevPose(currentPose);
+        setPoseTransitioning(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPose, prevPose]);
+
+  const avatarSrc = character.poses?.[currentPose] || character.image;
+  const prevAvatarSrc = character.poses?.[prevPose] || character.image;
+
   const confettiColors = useMemo(
     () => [character.color, character.accent, "#FFD700", "#FF6B6B", "#4ECDC4"],
     [character.color, character.accent],
@@ -61,7 +87,9 @@ export default function ConversationRoomPage() {
   const { smallBurst, celebrationBurst } = useConfetti(confettiColors);
   const { playPop, playWhoosh, playComplete } = useSoundEffects();
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const isUserEditingRef = useRef(false);
+  const prevWordCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const introTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
@@ -150,8 +178,17 @@ export default function ConversationRoomPage() {
   useEffect(() => {
     if (isRecording && liveTranscript) {
       setAnswerText(liveTranscript);
+      if (bubbleRef.current && !isUserEditingRef.current) {
+        bubbleRef.current.textContent = liveTranscript;
+      }
     }
   }, [liveTranscript, isRecording]);
+
+  const answerWords = answerText.trim() ? answerText.trim().split(/\s+/) : [];
+  const newWordStart = prevWordCountRef.current;
+  useEffect(() => {
+    prevWordCountRef.current = answerWords.length;
+  }, [answerWords.length]);
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length || 20;
@@ -199,8 +236,8 @@ export default function ConversationRoomPage() {
           setPhase("answering");
           URL.revokeObjectURL(url);
           skipTyping();
-          textareaRef.current?.focus();
-          startRecording(); // auto-start voice recording when TTS ends
+          bubbleRef.current?.focus();
+          startRecording();
         };
         audio.onerror = () => {
           setIsSpeaking(false);
@@ -337,6 +374,8 @@ export default function ConversationRoomPage() {
         ]);
       }
       setAnswerText("");
+      prevWordCountRef.current = 0;
+      if (bubbleRef.current) bubbleRef.current.textContent = "";
       setRetryHint(null);
 
       if (isLastQuestion) {
@@ -442,20 +481,16 @@ export default function ConversationRoomPage() {
     }
   }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback, retriesUsed, currentIndex]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmitAnswer();
-    }
-  };
 
   const handleRetry = useCallback(() => {
     setRetriesUsed((prev) => ({ ...prev, [currentIndex]: true }));
     setAnswerText("");
+    prevWordCountRef.current = 0;
+    if (bubbleRef.current) bubbleRef.current.textContent = "";
     setRetryHint(null);
     setPhase("answering");
     startRecording();
-    textareaRef.current?.focus();
+    bubbleRef.current?.focus();
   }, [currentIndex, startRecording]);
 
   const handlePass = useCallback(() => {
@@ -468,7 +503,7 @@ export default function ConversationRoomPage() {
   if (phase === "loading") {
     return (
       <div className="cr-center" style={{ background: character.background }}>
-        <img src={character.image} alt="" className="cr-loading-avatar" />
+        <img src={character.poses?.idle || character.image} alt="" className="cr-loading-avatar" />
         <p className="cr-loading-text">Getting your questions ready...</p>
         <style>{cssStyles}</style>
       </div>
@@ -490,7 +525,7 @@ export default function ConversationRoomPage() {
             }}
           >
             <img
-              src={character.image}
+              src={avatarSrc}
               alt={character.name}
               className={`cr-intro-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
             />
@@ -540,7 +575,7 @@ export default function ConversationRoomPage() {
           </div>
           <h1 className="cr-celeb-title">Assessment Complete!</h1>
           <p className="cr-celeb-sub">You answered all {totalQuestions} questions!</p>
-          <img src={character.image} alt={character.name} className="cr-celeb-avatar" />
+          <img src={character.poses?.happy || character.image} alt={character.name} className="cr-celeb-avatar" />
           <p className="cr-celeb-hint">Generating your report...</p>
         </div>
         <style>{cssStyles}</style>
@@ -553,7 +588,7 @@ export default function ConversationRoomPage() {
     <div className="cr-root" style={{ background: character.background }}>
       {/* Header */}
       <div className="cr-header">
-        <img src={character.image} alt={character.name} className="cr-header-avatar" />
+        <img src={avatarSrc} alt={character.name} className="cr-header-avatar" />
         <div className="cr-header-info">
           <div className="cr-header-name">{character.name}</div>
           <div className="cr-header-sub">with {student?.name || "Student"}</div>
@@ -571,12 +606,19 @@ export default function ConversationRoomPage() {
           current={currentIndex}
           color={character.color}
           accent={character.accent}
-          avatarImage={character.image}
+          avatarImage={avatarSrc}
         />
       </div>
 
       {/* Main area */}
       <div className="cr-main">
+        {/* Question background illustration */}
+        {currentQuestion?.image_url && (phase === "speaking" || phase === "answering" || phase === "filler" || phase === "feedback" || phase === "retry_prompt") && (
+          <div key={currentQuestion.id} className="cr-q-bg">
+            <img src={currentQuestion.image_url} alt="" className="cr-q-bg-img" />
+          </div>
+        )}
+
         {/* Retry prompt */}
         {phase === "retry_prompt" && currentQuestion && (
           <div className="cr-feedback-area">
@@ -585,7 +627,7 @@ export default function ConversationRoomPage() {
                 className="cr-avatar-ring"
                 style={{ borderColor: character.accent, boxShadow: `0 4px 16px ${character.color}30` }}
               >
-                <img src={character.image} alt={character.name} className="cr-avatar-img cr-floating" />
+                <img src={avatarSrc} alt={character.name} className="cr-avatar-img cr-floating" />
               </div>
             </div>
             <div className="cr-feedback-bubble" style={{ borderColor: character.color + "25" }}>
@@ -622,11 +664,10 @@ export default function ConversationRoomPage() {
                     : `0 4px 16px ${character.color}30`,
                 }}
               >
-                <img
-                  src={character.image}
-                  alt={character.name}
-                  className={`cr-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
-                />
+                <div className="cr-pose-container">
+                  <img src={prevAvatarSrc} alt="" className={`cr-avatar-img cr-pose-layer ${poseTransitioning ? "cr-pose-out" : ""}`} />
+                  <img src={avatarSrc} alt={character.name} className={`cr-avatar-img cr-pose-layer ${poseTransitioning ? "cr-pose-in" : "cr-pose-visible"}`} />
+                </div>
               </div>
               {isSpeaking && (
                 <div className="cr-speaking-label" style={{ color: character.color }}>
@@ -671,11 +712,10 @@ export default function ConversationRoomPage() {
                     : `0 4px 16px ${character.color}30`,
                 }}
               >
-                <img
-                  src={character.image}
-                  alt={character.name}
-                  className={`cr-avatar-img ${isSpeaking ? "cr-talking" : "cr-floating"}`}
-                />
+                <div className="cr-pose-container">
+                  <img src={prevAvatarSrc} alt="" className={`cr-avatar-img cr-pose-layer ${poseTransitioning ? "cr-pose-out" : ""}`} />
+                  <img src={avatarSrc} alt={character.name} className={`cr-avatar-img cr-pose-layer ${poseTransitioning ? "cr-pose-in" : "cr-pose-visible"}`} />
+                </div>
               </div>
               {isSpeaking && (
                 <div className="cr-speaking-label" style={{ color: character.color }}>
@@ -716,31 +756,71 @@ export default function ConversationRoomPage() {
         )}
       </div>
 
-      {/* Input area — no mic button, voice auto-starts when TTS ends */}
+      {/* Input area — speech bubble style */}
       {phase === "answering" && currentQuestion && (
         <div className="cr-input-area">
-          {isRecording && (
-            <div className="cr-recording-bar">
-              <div className="cr-recording-dot" />
-              <span>Listening... speak your answer</span>
-            </div>
-          )}
-
-          <div className="cr-input-row">
-            <textarea
-              ref={textareaRef}
-              value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={isRecording ? "Listening... speak your answer" : "Type your answer..."}
-              disabled={isSubmitting}
-              rows={2}
-              className="cr-textarea"
+          <div className="cr-bubble-row">
+            <div
+              className={`cr-answer-bubble ${isRecording ? "cr-bubble-glow" : ""}`}
               style={{
-                borderColor: isRecording ? "#E53E3E40" : `${character.color}30`,
-                backgroundColor: isRecording ? "#FFF5F5" : "#ffffff",
+                borderColor: isRecording ? `${character.color}60` : `${character.color}30`,
+                ["--glow-color" as string]: character.color,
               }}
-            />
+            >
+              {isRecording && (
+                <div className="cr-mic-dot" style={{ background: character.color }} />
+              )}
+
+              {answerWords.length === 0 ? (
+                <div className="cr-bubble-placeholder">
+                  {isRecording ? (
+                    <>
+                      <span className="cr-listening-text">Listening</span>
+                      <span className="cr-dot-wave">
+                        <span className="cr-dot" />
+                        <span className="cr-dot" />
+                        <span className="cr-dot" />
+                      </span>
+                    </>
+                  ) : (
+                    <span className="cr-tap-hint"><Pencil size={12} /> Tap to type your answer...</span>
+                  )}
+                </div>
+              ) : (
+                <div className="cr-bubble-words">
+                  {answerWords.map((word, i) => (
+                    <span
+                      key={`${currentIndex}-${i}`}
+                      className={`cr-bubble-word ${i >= newWordStart ? "cr-word-new" : ""}`}
+                      style={i >= newWordStart ? { animationDelay: `${(i - newWordStart) * 0.06}s` } : undefined}
+                    >
+                      {word}{" "}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div
+                ref={bubbleRef}
+                className="cr-bubble-edit"
+                contentEditable={!isSubmitting}
+                suppressContentEditableWarning
+                onFocus={() => { isUserEditingRef.current = true; }}
+                onBlur={() => { isUserEditingRef.current = false; }}
+                onInput={(e) => {
+                  const text = (e.target as HTMLDivElement).textContent || "";
+                  setAnswerText(text);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmitAnswer();
+                  }
+                }}
+              />
+
+              <div className="cr-bubble-tail" style={{ borderTopColor: isRecording ? `${character.color}12` : "#fff" }} />
+            </div>
 
             <button
               onClick={handleSubmitAnswer}
@@ -877,13 +957,28 @@ const cssStyles = `
   /* ─── Main ─── */
   .cr-main {
     flex: 1; overflow-y: auto; display: flex; align-items: center; justify-content: center;
-    padding: 12px 14px;
+    padding: 12px 14px; position: relative;
+  }
+
+  /* ─── Question background illustration ─── */
+  @keyframes crBgFadeIn { from { opacity: 0; transform: scale(1.08); } to { opacity: 0.18; transform: scale(1); } }
+  @keyframes crBgDrift { 0%, 100% { transform: scale(1.02) translate(0, 0); } 25% { transform: scale(1.04) translate(6px, -4px); } 50% { transform: scale(1.02) translate(-4px, 6px); } 75% { transform: scale(1.04) translate(4px, 4px); } }
+
+  .cr-q-bg {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cr-q-bg-img {
+    width: 85%; max-width: 380px; height: auto; border-radius: 24px;
+    opacity: 0.18; object-fit: contain; filter: blur(1px) saturate(1.3);
+    animation: crBgFadeIn 0.8s ease-out forwards, crBgDrift 20s ease-in-out infinite;
   }
 
   /* ─── Feedback / Filler area ─── */
   .cr-feedback-area {
     display: flex; flex-direction: column; align-items: center;
     gap: 14px; width: 100%; max-width: 580px; animation: crPop 0.4s ease-out;
+    position: relative; z-index: 1;
   }
   .cr-feedback-bubble {
     border-radius: 20px; padding: 16px 20px; width: 100%;
@@ -909,6 +1004,7 @@ const cssStyles = `
   .cr-question-area {
     display: flex; flex-direction: column; align-items: center;
     gap: 14px; width: 100%; max-width: 580px; animation: crPop 0.5s ease-out;
+    position: relative; z-index: 1;
   }
   .cr-avatar-section { display: flex; flex-direction: column; align-items: center; }
   .cr-avatar-ring {
@@ -917,6 +1013,16 @@ const cssStyles = `
     transition: all 0.4s; background: #ffffffcc;
   }
   .cr-avatar-img { width: 68px; height: 68px; border-radius: 50%; object-fit: cover; }
+
+  /* ─── Pose crossfade ─── */
+  .cr-pose-container { position: relative; width: 68px; height: 68px; }
+  .cr-pose-layer { position: absolute; inset: 0; transition: opacity 300ms ease-in-out; }
+  .cr-pose-visible { opacity: 1; }
+  .cr-pose-in { opacity: 0; animation: crPoseFadeIn 300ms ease-in-out forwards; }
+  .cr-pose-out { animation: crPoseFadeOut 300ms ease-in-out forwards; }
+  @keyframes crPoseFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes crPoseFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
   .cr-speaking-label {
     display: flex; align-items: center; gap: 5px; margin-top: 6px;
     font-size: 11px; font-weight: 600; animation: crPulse 1.5s ease-in-out infinite;
@@ -948,13 +1054,71 @@ const cssStyles = `
     border-top: 1px solid #ffffff40; padding: 10px 12px;
     background: #ffffffcc; backdrop-filter: blur(10px); flex-shrink: 0;
   }
-  .cr-input-row { display: flex; gap: 8px; align-items: flex-end; }
-  .cr-textarea {
-    flex: 1; padding: 10px 14px; border-radius: 14px; border: 2px solid;
-    font-size: 14px; outline: none; color: #26221D;
-    font-family: 'Nunito', sans-serif; resize: none; line-height: 1.4;
-    transition: border-color 200ms; min-width: 0;
+  .cr-bubble-row { display: flex; gap: 8px; align-items: flex-end; justify-content: flex-end; }
+
+  /* ─── Speech bubble ─── */
+  @keyframes crBubbleGlow { 0%, 100% { box-shadow: 0 2px 12px var(--glow-color, #7c3aed)30; } 50% { box-shadow: 0 2px 24px var(--glow-color, #7c3aed)50, 0 0 8px var(--glow-color, #7c3aed)20; } }
+  @keyframes crWordPop { from { opacity: 0; transform: scale(0.7) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes crDotBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+
+  .cr-answer-bubble {
+    position: relative; flex: 1; min-height: 48px; max-height: 140px;
+    padding: 12px 16px; border-radius: 20px 20px 4px 20px;
+    border: 2px solid; background: #fff;
+    font-family: 'Nunito', sans-serif; font-size: 14px; color: #26221D; line-height: 1.5;
+    transition: border-color 300ms, box-shadow 300ms;
+    overflow-y: auto;
   }
+  .cr-bubble-glow {
+    animation: crBubbleGlow 2s ease-in-out infinite;
+  }
+  .cr-mic-dot {
+    position: absolute; top: 8px; right: 8px; width: 8px; height: 8px;
+    border-radius: 50%; animation: crRecordPulse 1s ease-in-out infinite;
+  }
+
+  .cr-bubble-placeholder {
+    display: flex; align-items: center; gap: 6px;
+    color: #A89E94; font-weight: 600; font-size: 13px;
+    min-height: 24px; user-select: none;
+  }
+  .cr-listening-text { font-weight: 700; }
+  .cr-dot-wave { display: flex; gap: 3px; align-items: center; }
+  .cr-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #A89E94;
+    animation: crDotBounce 1.2s ease-in-out infinite;
+  }
+  .cr-dot:nth-child(2) { animation-delay: 0.15s; }
+  .cr-dot:nth-child(3) { animation-delay: 0.3s; }
+  .cr-tap-hint { display: flex; align-items: center; gap: 5px; }
+
+  .cr-bubble-words {
+    position: relative; z-index: 1; pointer-events: none;
+  }
+  .cr-bubble-word {
+    display: inline; font-weight: 500;
+  }
+  .cr-word-new {
+    animation: crWordPop 0.2s ease-out both;
+  }
+
+  .cr-bubble-edit {
+    position: absolute; inset: 0; padding: 12px 16px;
+    font-family: 'Nunito', sans-serif; font-size: 14px; color: transparent;
+    caret-color: #26221D; line-height: 1.5; outline: none;
+    border-radius: inherit; overflow-y: auto; word-wrap: break-word;
+    z-index: 2;
+  }
+  .cr-bubble-edit:focus { color: #26221D; }
+  .cr-bubble-edit:focus ~ .cr-bubble-words { opacity: 0; }
+
+  .cr-bubble-tail {
+    position: absolute; bottom: -8px; right: 16px;
+    width: 0; height: 0;
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 8px solid #fff;
+  }
+
   .cr-submit-btn {
     height: 44px; padding: 0 16px; border-radius: 22px; border: none; color: #fff;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -963,8 +1127,6 @@ const cssStyles = `
   }
   .cr-btn-label { display: inline; }
 
-  .cr-recording-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; color: #E53E3E; font-weight: 600; }
-  .cr-recording-dot { width: 8px; height: 8px; border-radius: 50%; background: #E53E3E; animation: crRecordPulse 1s ease-in-out infinite; }
   .cr-voice-error { margin-top: 4px; font-size: 11px; color: #E53E3E; font-weight: 500; text-align: center; }
   .cr-hint { margin-top: 6px; font-size: 12px; color: #7A7168; text-align: center; font-weight: 600; font-family: 'Nunito', sans-serif; }
 
@@ -1006,18 +1168,22 @@ const cssStyles = `
     .cr-header-name { font-size: 16px; }
     .cr-header-count { font-size: 14px; }
     .cr-main { padding: 20px 24px; }
+    .cr-q-bg-img { max-width: 480px; opacity: 0.2; filter: blur(0.5px) saturate(1.3); }
     .cr-feedback-area { max-width: 640px; gap: 20px; }
     .cr-feedback-bubble { padding: 22px 28px; border-radius: 24px; }
     .cr-feedback-text { font-size: 18px; line-height: 1.8; }
     .cr-question-area { gap: 20px; max-width: 640px; }
     .cr-avatar-ring { width: 140px; height: 140px; border-width: 4px; }
     .cr-avatar-img { width: 122px; height: 122px; }
+    .cr-pose-container { width: 122px; height: 122px; }
     .cr-q-bubble { padding: 22px 28px; border-radius: 24px; }
     .cr-q-badge { font-size: 12px; padding: 4px 14px; }
     .cr-q-text { font-size: 18px; line-height: 1.8; }
     .cr-input-area { padding: 14px 20px; }
-    .cr-input-row { gap: 10px; }
-    .cr-textarea { padding: 14px 18px; border-radius: 18px; font-size: 16px; }
+    .cr-bubble-row { gap: 10px; }
+    .cr-answer-bubble { padding: 14px 20px; border-radius: 24px 24px 4px 24px; font-size: 16px; max-height: 180px; }
+    .cr-bubble-edit { padding: 14px 20px; font-size: 16px; }
+    .cr-bubble-placeholder { font-size: 14px; }
     .cr-submit-btn { height: 56px; padding: 0 24px; border-radius: 28px; font-size: 16px; }
     .cr-hint { font-size: 13px; margin-top: 8px; }
     .cr-retry-btn { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
