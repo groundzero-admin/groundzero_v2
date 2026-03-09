@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
-import benchmarkApi, { type BenchmarkQuestion } from "../api";
+import benchmarkApi, { type BenchmarkQuestion, getQuestionAudioUrl } from "../api";
 import useVoiceRecording from "../hooks/useVoiceRecording";
 import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
@@ -218,39 +218,66 @@ export default function ConversationRoomPage() {
     setTypingDone(true);
   }, [currentQuestion]);
 
-  // ─── Speak question via TTS ───
+  // ─── Speak question via pre-generated S3 audio (fallback to live TTS) ───
   const speakQuestion = useCallback(
-    async (text: string) => {
+    async (text: string, question?: BenchmarkQuestion) => {
       setPhase("speaking");
       setIsSpeaking(true);
       startTypingAnimation(text);
       playPop();
-      try {
-        const { data } = await benchmarkApi.tts(text, character.id);
-        const blob = new Blob([data], { type: "audio/wav" });
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => {
-          setIsSpeaking(false);
-          setPhase("answering");
-          URL.revokeObjectURL(url);
-          skipTyping();
-          bubbleRef.current?.focus();
-          startRecording();
-        };
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          setPhase("answering");
-          skipTyping();
-          startRecording(); // auto-start even on error
-        };
-        await audio.play();
-      } catch {
+
+      const onEnded = (objectUrl?: string) => {
+        setIsSpeaking(false);
+        setPhase("answering");
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        skipTyping();
+        bubbleRef.current?.focus();
+        startRecording();
+      };
+      const onError = () => {
         setIsSpeaking(false);
         setPhase("answering");
         skipTyping();
-        startRecording(); // auto-start even on error
+        startRecording();
+      };
+
+      try {
+        let audioUrl: string;
+        let isObjectUrl = false;
+
+        if (question?.grade_band) {
+          audioUrl = getQuestionAudioUrl(character.id, question.grade_band, question.question_number);
+        } else {
+          const { data } = await benchmarkApi.tts(text, character.id);
+          const blob = new Blob([data], { type: "audio/wav" });
+          audioUrl = URL.createObjectURL(blob);
+          isObjectUrl = true;
+        }
+
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audio.onended = () => onEnded(isObjectUrl ? audioUrl : undefined);
+        audio.onerror = async () => {
+          if (!isObjectUrl && question) {
+            onError();
+            return;
+          }
+          try {
+            const { data } = await benchmarkApi.tts(text, character.id);
+            const blob = new Blob([data], { type: "audio/wav" });
+            const fallbackUrl = URL.createObjectURL(blob);
+            const fallback = new Audio(fallbackUrl);
+            audioRef.current = fallback;
+            fallback.onended = () => onEnded(fallbackUrl);
+            fallback.onerror = onError;
+            await fallback.play();
+          } catch {
+            onError();
+          }
+        };
+        await audio.play();
+      } catch {
+        onError();
       }
     },
     [character.id, startTypingAnimation, skipTyping, playPop, startRecording],
@@ -259,7 +286,7 @@ export default function ConversationRoomPage() {
   // ─── Trigger question speech on index change ───
   useEffect(() => {
     if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
-    speakQuestion(currentQuestion.text);
+    speakQuestion(currentQuestion.text, currentQuestion);
     return () => {
       audioRef.current?.pause();
       clearInterval(typingTimerRef.current);
@@ -270,7 +297,7 @@ export default function ConversationRoomPage() {
     audioRef.current?.pause();
     clearInterval(introTimerRef.current);
     if (currentQuestion) {
-      speakQuestion(currentQuestion.text);
+      speakQuestion(currentQuestion.text, currentQuestion);
     }
   }, [currentQuestion, speakQuestion]);
 
@@ -741,7 +768,7 @@ export default function ConversationRoomPage() {
               </div>
               {!isSpeaking && typingDone && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); speakQuestion(currentQuestion.text); }}
+                  onClick={(e) => { e.stopPropagation(); speakQuestion(currentQuestion.text, currentQuestion); }}
                   className="cr-replay-btn"
                   style={{ color: character.color }}
                 >

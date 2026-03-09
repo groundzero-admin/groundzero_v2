@@ -26,6 +26,7 @@ class BenchmarkSessionOut(BaseModel):
 
 class QuestionOut(BaseModel):
     id: UUID
+    grade_band: str
     question_number: int
     text: str
     curriculum_anchor: Optional[str] = None
