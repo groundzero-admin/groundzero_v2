@@ -18,6 +18,9 @@ export default function useVoiceRecording(): UseVoiceRecordingReturn {
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<InstanceType<typeof SpeechRecognition> | null>(null);
   const finalTranscriptRef = useRef("");
+  const isRecordingRef = useRef(false);
+  const startedAtRef = useRef(0);
+  const GRACE_PERIOD_MS = 5000;
 
   const startRecording = useCallback(() => {
     if (!SpeechRecognition) {
@@ -28,6 +31,7 @@ export default function useVoiceRecording(): UseVoiceRecordingReturn {
     setError(null);
     setLiveTranscript("");
     finalTranscriptRef.current = "";
+    startedAtRef.current = Date.now();
 
     const recognition = new SpeechRecognition();
     recognition.lang = "en-IN";
@@ -55,19 +59,35 @@ export default function useVoiceRecording(): UseVoiceRecordingReturn {
     recognition.onerror = (event: { error: string }) => {
       if (event.error === "not-allowed") {
         setError("Microphone access denied. Please allow microphone permission.");
-      } else if (event.error === "no-speech") {
-        setError("No speech detected. Please try speaking again.");
-      } else if (event.error !== "aborted") {
+        isRecordingRef.current = false;
+        setIsRecording(false);
+      } else if (event.error === "no-speech" || event.error === "aborted") {
+        // Transient -- let onend restart recognition automatically
+      } else {
         setError(`Speech recognition error: ${event.error}`);
+        isRecordingRef.current = false;
+        setIsRecording(false);
       }
-      setIsRecording(false);
     };
 
     recognition.onend = () => {
-      if (isRecording) {
+      if (!isRecordingRef.current) return;
+      const elapsed = Date.now() - startedAtRef.current;
+      if (elapsed < GRACE_PERIOD_MS) {
+        setTimeout(() => {
+          if (!isRecordingRef.current) return;
+          try {
+            recognition.start();
+          } catch {
+            isRecordingRef.current = false;
+            setIsRecording(false);
+          }
+        }, GRACE_PERIOD_MS - elapsed);
+      } else {
         try {
           recognition.start();
         } catch {
+          isRecordingRef.current = false;
           setIsRecording(false);
         }
       }
@@ -77,13 +97,15 @@ export default function useVoiceRecording(): UseVoiceRecordingReturn {
 
     try {
       recognition.start();
+      isRecordingRef.current = true;
       setIsRecording(true);
     } catch {
       setError("Failed to start speech recognition.");
     }
-  }, [isRecording]);
+  }, []);
 
   const stopRecording = useCallback((): string => {
+    isRecordingRef.current = false;
     const recognition = recognitionRef.current;
     if (recognition) {
       recognition.onend = null;
@@ -97,6 +119,7 @@ export default function useVoiceRecording(): UseVoiceRecordingReturn {
   }, [liveTranscript]);
 
   const cancelRecording = useCallback(() => {
+    isRecordingRef.current = false;
     const recognition = recognitionRef.current;
     if (recognition) {
       recognition.onend = null;

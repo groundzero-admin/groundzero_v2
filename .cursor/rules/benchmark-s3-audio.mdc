@@ -1,0 +1,34 @@
+---
+description: Pre-generated S3 audio system for benchmark questions
+globs: backend/app/plugins/benchmark/**/*.py, frontend/src/features/benchmark/**/*.ts, frontend/src/features/benchmark/**/*.tsx
+alwaysApply: false
+---
+
+# Benchmark S3 Audio System
+
+## Architecture
+
+All 60 static benchmark questions have pre-generated TTS audio hosted on S3, one copy per character (5 characters x 60 questions = 300 files). The frontend tries S3 first and falls back to live TTS.
+
+## S3 Layout
+
+- **Bucket**: `groundzero-static-ap` (region: `ap-southeast-2`)
+- **Base URL**: `https://groundzero-static-ap.s3.ap-southeast-2.amazonaws.com/question-audio/`
+- **Key pattern**: `question-audio/{character_id}/{grade_band}_{question_number}.wav`
+- **Example**: `question-audio/harry_potter/4-5_1.wav`
+
+## Frontend Integration
+
+`getQuestionAudioUrl(characterId, gradeBand, questionNumber)` in `api.ts` builds the S3 URL. `ConversationRoomPage` checks S3 with a HEAD request first; if the file exists, plays it directly via `Audio()`. Falls back to `benchmarkApi.tts()` on failure.
+
+## Regenerating Audio
+
+```bash
+make generate-audios
+```
+
+Runs `backend/app/plugins/benchmark/generate_question_audios.py`. The script is idempotent (skips files already in S3). Uses Sarvam TTS by default. Caches audio per question text, so identical questions across characters share one TTS call.
+
+## Adding New Questions
+
+After adding questions to the DB, re-run `make generate-audios` to generate audio for any new/missing entries. The script auto-detects gaps.

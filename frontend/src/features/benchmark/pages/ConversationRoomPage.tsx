@@ -220,64 +220,42 @@ export default function ConversationRoomPage() {
 
   // ─── Speak question via pre-generated S3 audio (fallback to live TTS) ───
   const speakQuestion = useCallback(
-    async (text: string, question?: BenchmarkQuestion) => {
+    (text: string, question?: BenchmarkQuestion) => {
       setPhase("speaking");
       setIsSpeaking(true);
       startTypingAnimation(text);
       playPop();
 
-      const onEnded = (objectUrl?: string) => {
+      const finish = (blobUrl?: string) => {
         setIsSpeaking(false);
         setPhase("answering");
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         skipTyping();
         bubbleRef.current?.focus();
         startRecording();
       };
-      const onError = () => {
-        setIsSpeaking(false);
-        setPhase("answering");
-        skipTyping();
-        startRecording();
+
+      const fallbackToTts = () => {
+        benchmarkApi.tts(text, character.id).then(({ data }) => {
+          const blob = new Blob([data], { type: "audio/wav" });
+          const blobUrl = URL.createObjectURL(blob);
+          const fallback = new Audio(blobUrl);
+          audioRef.current = fallback;
+          fallback.onended = () => finish(blobUrl);
+          fallback.onerror = () => finish();
+          fallback.play().catch(() => finish());
+        }).catch(() => finish());
       };
 
-      try {
-        let audioUrl: string;
-        let isObjectUrl = false;
-
-        if (question?.grade_band) {
-          audioUrl = getQuestionAudioUrl(character.id, question.grade_band, question.question_number);
-        } else {
-          const { data } = await benchmarkApi.tts(text, character.id);
-          const blob = new Blob([data], { type: "audio/wav" });
-          audioUrl = URL.createObjectURL(blob);
-          isObjectUrl = true;
-        }
-
-        const audio = new Audio(audioUrl);
+      if (question?.grade_band) {
+        const s3Url = getQuestionAudioUrl(character.id, question.grade_band, question.question_number);
+        const audio = new Audio(s3Url);
         audioRef.current = audio;
-        audio.onended = () => onEnded(isObjectUrl ? audioUrl : undefined);
-        audio.onerror = async () => {
-          if (!isObjectUrl && question) {
-            onError();
-            return;
-          }
-          try {
-            const { data } = await benchmarkApi.tts(text, character.id);
-            const blob = new Blob([data], { type: "audio/wav" });
-            const fallbackUrl = URL.createObjectURL(blob);
-            const fallback = new Audio(fallbackUrl);
-            audioRef.current = fallback;
-            fallback.onended = () => onEnded(fallbackUrl);
-            fallback.onerror = onError;
-            await fallback.play();
-          } catch {
-            onError();
-          }
-        };
-        await audio.play();
-      } catch {
-        onError();
+        audio.onended = () => finish();
+        audio.onerror = () => fallbackToTts();
+        audio.play().catch(() => fallbackToTts());
+      } else {
+        fallbackToTts();
       }
     },
     [character.id, startTypingAnimation, skipTyping, playPop, startRecording],
