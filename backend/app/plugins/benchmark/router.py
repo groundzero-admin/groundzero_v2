@@ -128,12 +128,16 @@ async def list_sessions(
 # ─── Question endpoints ───
 
 
+QUESTIONS_PER_PILLAR = 2
+PILLAR_ORDER = ["communication", "creativity", "ai_systems", "math_logic"]
+
+
 @router.get("/questions", response_model=list[QuestionOut])
 async def get_questions(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get the 20 diagnostic questions for the current student's grade band."""
+    """Get diagnostic questions distributed evenly across all 4 pillars (2 per pillar)."""
     student = await _get_student_for_user(user, db)
     grade_band = get_grade_band(student.grade or 6)
 
@@ -145,13 +149,30 @@ async def get_questions(
         )
         .order_by(BenchmarkQuestion.question_number)
     )
-    questions = result.scalars().all()
+    all_questions = result.scalars().all()
 
-    if not questions:
+    if not all_questions:
         raise HTTPException(
             status_code=404,
             detail=f"No questions found for grade band {grade_band}. Run the seed script first.",
         )
+
+    import random
+
+    selected: list[BenchmarkQuestion] = []
+    used_ids: set[int] = set()
+
+    for pillar in PILLAR_ORDER:
+        candidates = [
+            q for q in all_questions
+            if q.id not in used_ids and pillar in (q.pillars or [])
+        ]
+        picked = random.sample(candidates, min(QUESTIONS_PER_PILLAR, len(candidates)))
+        for q in picked:
+            selected.append(q)
+            used_ids.add(q.id)
+
+    random.shuffle(selected)
 
     return [
         QuestionOut(
@@ -163,7 +184,7 @@ async def get_questions(
             pillars=q.pillars or [],
             image_url=q.image_url,
         )
-        for q in questions
+        for q in selected
     ]
 
 

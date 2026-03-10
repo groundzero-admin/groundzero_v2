@@ -94,8 +94,6 @@ export default function ConversationRoomPage() {
   const typingTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const introTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const feedbackTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
-  const pendingFeedbackRef = useRef<{ text: string; audioBase64: string | null; needsRetry: boolean; hint: string | null } | null>(null);
-  const fillerDoneRef = useRef(false);
 
   // ─── Redirect if no session ───
   useEffect(() => {
@@ -191,7 +189,7 @@ export default function ConversationRoomPage() {
   }, [answerWords.length]);
 
   const currentQuestion = questions[currentIndex];
-  const totalQuestions = questions.length || 20;
+  const totalQuestions = questions.length || 8;
   const isLastQuestion = currentIndex >= totalQuestions - 1;
 
   // ─── Typing animation helpers ───
@@ -298,22 +296,31 @@ export default function ConversationRoomPage() {
     }, 80);
 
     const canRetry = needsRetry && !retriesUsed[currentIndex];
+    const feedbackStartTime = Date.now();
+    const MIN_FEEDBACK_DISPLAY_MS = 3000;
+    let feedbackDone = false;
 
     const onFeedbackDone = () => {
+      if (feedbackDone) return;
+      feedbackDone = true;
+
       setIsSpeaking(false);
       clearInterval(feedbackTimerRef.current);
       setFeedbackTypedWords(words);
+
+      const elapsed = Date.now() - feedbackStartTime;
+      const remaining = Math.max(0, MIN_FEEDBACK_DISPLAY_MS - elapsed);
 
       if (canRetry) {
         setTimeout(() => {
           setRetryHint(hint || "Think about it differently and try again!");
           setPhase("retry_prompt");
-        }, 800);
+        }, remaining + 800);
       } else {
         setTimeout(() => {
           setPhase("speaking");
           setCurrentIndex((i) => i + 1);
-        }, 1200);
+        }, remaining + 1200);
       }
     };
 
@@ -324,31 +331,17 @@ export default function ConversationRoomPage() {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          onFeedbackDone();
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          onFeedbackDone();
-        };
-        audio.play().catch(() => onFeedbackDone());
+        const cleanup = () => URL.revokeObjectURL(url);
+        audio.onended = () => { cleanup(); onFeedbackDone(); };
+        audio.onerror = () => { cleanup(); onFeedbackDone(); };
+        audio.play().catch(() => { cleanup(); onFeedbackDone(); });
       } catch {
         onFeedbackDone();
       }
     } else {
-      setTimeout(onFeedbackDone, 3000);
+      setTimeout(onFeedbackDone, MIN_FEEDBACK_DISPLAY_MS);
     }
   }, [smallBurst, retriesUsed, currentIndex]);
-
-  const onFillerComplete = useCallback(() => {
-    fillerDoneRef.current = true;
-    const pending = pendingFeedbackRef.current;
-    if (pending) {
-      pendingFeedbackRef.current = null;
-      playFeedback(pending.text, pending.audioBase64, pending.needsRetry, pending.hint);
-    }
-  }, [playFeedback]);
 
   // ─── Submit answer -> filler -> feedback ───
   const handleSubmitAnswer = useCallback(async () => {
@@ -395,8 +388,6 @@ export default function ConversationRoomPage() {
       // Enter filler phase
       setPhase("filler");
       setIsSpeaking(true);
-      pendingFeedbackRef.current = null;
-      fillerDoneRef.current = false;
       playWhoosh();
 
       const fillerMsg = FILLER_MESSAGES[Math.floor(Math.random() * FILLER_MESSAGES.length)];
@@ -421,25 +412,7 @@ export default function ConversationRoomPage() {
         is_retry: isRetry,
       }).catch(() => null);
 
-      // When feedback arrives, store or play immediately
-      feedbackPromise.then((feedbackResult) => {
-        const fb = feedbackResult?.data
-          ? {
-              text: feedbackResult.data.feedback_text,
-              audioBase64: feedbackResult.data.audio_base64,
-              needsRetry: feedbackResult.data.needs_retry,
-              hint: feedbackResult.data.hint,
-            }
-          : { text: "Let's move on to the next one!", audioBase64: null, needsRetry: false, hint: null };
-
-        if (fillerDoneRef.current) {
-          playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
-        } else {
-          pendingFeedbackRef.current = fb;
-        }
-      });
-
-      // Play filler TTS, then hand off to feedback
+      // Play filler TTS audio
       const fillerTtsResult = await fillerTtsPromise;
       if (fillerTtsResult?.data) {
         const blob = new Blob([fillerTtsResult.data], { type: "audio/wav" });
@@ -447,7 +420,10 @@ export default function ConversationRoomPage() {
         await new Promise<void>((resolve) => {
           const audio = new Audio(url);
           audioRef.current = audio;
+          let resolved = false;
           const done = () => {
+            if (resolved) return;
+            resolved = true;
             setIsSpeaking(false);
             URL.revokeObjectURL(url);
             clearInterval(feedbackTimerRef.current);
@@ -469,14 +445,28 @@ export default function ConversationRoomPage() {
         );
       }
 
-      // Filler is done -- play feedback if it arrived, otherwise mark ready
-      onFillerComplete();
+      // Filler done — now await feedback and play it
+      const feedbackResult = await feedbackPromise;
+      const fb = feedbackResult?.data
+        ? {
+            text: feedbackResult.data.feedback_text,
+            audioBase64: feedbackResult.data.audio_base64,
+            needsRetry: feedbackResult.data.needs_retry,
+            hint: feedbackResult.data.hint,
+          }
+        : null;
+
+      if (fb) {
+        playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
+      } else {
+        playFeedback("Let me share some thoughts on your answer.", null, false, null);
+      }
     } catch {
       alert("Failed to submit answer. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback, retriesUsed, currentIndex]);
+  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, playFeedback, retriesUsed, currentIndex]);
 
 
   const handleRetry = useCallback(() => {
