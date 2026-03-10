@@ -284,7 +284,8 @@ export default function ConversationRoomPage() {
     setPhase("feedback");
     setFeedbackText(text);
     setIsSpeaking(true);
-    smallBurst();
+
+    if (!needsRetry) smallBurst();
 
     const words = text.split(" ");
     setFeedbackTypedWords([]);
@@ -303,9 +304,9 @@ export default function ConversationRoomPage() {
       clearInterval(feedbackTimerRef.current);
       setFeedbackTypedWords(words);
 
-      if (canRetry && hint) {
+      if (canRetry) {
         setTimeout(() => {
-          setRetryHint(hint);
+          setRetryHint(hint || "Think about it differently and try again!");
           setPhase("retry_prompt");
         }, 800);
       } else {
@@ -340,7 +341,6 @@ export default function ConversationRoomPage() {
     }
   }, [smallBurst, retriesUsed, currentIndex]);
 
-  // Called when filler audio ends - check if feedback is ready
   const onFillerComplete = useCallback(() => {
     fillerDoneRef.current = true;
     const pending = pendingFeedbackRef.current;
@@ -421,64 +421,56 @@ export default function ConversationRoomPage() {
         is_retry: isRetry,
       }).catch(() => null);
 
-      // Play filler TTS
-      const fillerTtsResult = await fillerTtsPromise;
-      if (fillerTtsResult?.data) {
-        const blob = new Blob([fillerTtsResult.data], { type: "audio/wav" });
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        };
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        };
-        await audio.play().catch(() => {
-          setIsSpeaking(false);
-          onFillerComplete();
-        });
-      } else {
-        setTimeout(() => {
-          setIsSpeaking(false);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        }, 2500);
-      }
+      // When feedback arrives, store or play immediately
+      feedbackPromise.then((feedbackResult) => {
+        const fb = feedbackResult?.data
+          ? {
+              text: feedbackResult.data.feedback_text,
+              audioBase64: feedbackResult.data.audio_base64,
+              needsRetry: feedbackResult.data.needs_retry,
+              hint: feedbackResult.data.hint,
+            }
+          : { text: "Let's move on to the next one!", audioBase64: null, needsRetry: false, hint: null };
 
-      // Handle feedback arrival
-      const feedbackResult = await feedbackPromise;
-      if (feedbackResult?.data) {
-        const fb = {
-          text: feedbackResult.data.feedback_text,
-          audioBase64: feedbackResult.data.audio_base64,
-          needsRetry: feedbackResult.data.needs_retry,
-          hint: feedbackResult.data.hint,
-        };
         if (fillerDoneRef.current) {
           playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
         } else {
           pendingFeedbackRef.current = fb;
         }
+      });
+
+      // Play filler TTS, then hand off to feedback
+      const fillerTtsResult = await fillerTtsPromise;
+      if (fillerTtsResult?.data) {
+        const blob = new Blob([fillerTtsResult.data], { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        await new Promise<void>((resolve) => {
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          const done = () => {
+            setIsSpeaking(false);
+            URL.revokeObjectURL(url);
+            clearInterval(feedbackTimerRef.current);
+            setFeedbackTypedWords(fillerWords);
+            resolve();
+          };
+          audio.onended = done;
+          audio.onerror = done;
+          audio.play().catch(done);
+        });
       } else {
-        if (fillerDoneRef.current) {
+        await new Promise<void>((resolve) =>
           setTimeout(() => {
-            setPhase("speaking");
-            setCurrentIndex((i) => i + 1);
-          }, 800);
-        } else {
-          pendingFeedbackRef.current = null;
-        }
+            setIsSpeaking(false);
+            clearInterval(feedbackTimerRef.current);
+            setFeedbackTypedWords(fillerWords);
+            resolve();
+          }, 2500),
+        );
       }
+
+      // Filler is done -- play feedback if it arrived, otherwise mark ready
+      onFillerComplete();
     } catch {
       alert("Failed to submit answer. Please try again.");
     } finally {
