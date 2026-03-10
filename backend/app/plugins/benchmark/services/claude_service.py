@@ -5,9 +5,12 @@ that the SPARK companion uses.
 """
 
 import json
+import logging
 import re
 
 from openai import AsyncOpenAI
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 
@@ -233,7 +236,7 @@ HINT: (if NEEDS_RETRY is true, a short 1-sentence hint that points them in the r
         return {"feedback": "Let me move on to the next question!", "needs_retry": False, "hint": None}
     raw = raw_content.strip()
 
-    # Parse out feedback, needs_retry, hint
+    import re
     feedback = raw
     needs_retry = False
     hint = None
@@ -241,12 +244,12 @@ HINT: (if NEEDS_RETRY is true, a short 1-sentence hint that points them in the r
     lines = raw.split("\n")
     feedback_lines = []
     for line in lines:
-        stripped = line.strip()
-        if stripped.upper().startswith("NEEDS_RETRY:"):
-            val = stripped.split(":", 1)[1].strip().lower()
+        clean = re.sub(r"[*_`\-•]", "", line).strip()
+        if re.match(r"(?i)^NEEDS[_ ]?RETRY\s*:", clean):
+            val = clean.split(":", 1)[1].strip().lower()
             needs_retry = val in ("true", "yes", "1")
-        elif stripped.upper().startswith("HINT:"):
-            hint_val = stripped.split(":", 1)[1].strip()
+        elif re.match(r"(?i)^HINT\s*:", clean):
+            hint_val = clean.split(":", 1)[1].strip()
             if hint_val:
                 hint = hint_val
         else:
@@ -254,7 +257,9 @@ HINT: (if NEEDS_RETRY is true, a short 1-sentence hint that points them in the r
 
     feedback = "\n".join(feedback_lines).strip()
     if not feedback:
-        feedback = raw  # fallback
+        feedback = raw
+
+    logger.info("Feedback parse: needs_retry=%s, hint=%s, raw_tail=%s", needs_retry, hint, repr(raw[-120:]))
 
     # Don't suggest retry on second attempt
     if is_retry:
