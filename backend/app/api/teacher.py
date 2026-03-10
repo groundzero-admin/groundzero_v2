@@ -1,7 +1,7 @@
 """
 Teacher-specific API routes — cohort students, live pulse, session scores, class analytics.
 
-All routes here require role="teacher" (enforced by require_role dependency).
+All routes here require role="teacher" or "admin" (MVP: admin can also teach).
 """
 import uuid
 from datetime import datetime, timedelta
@@ -13,13 +13,98 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
 from app.database import get_db
+from app.models.batch_enrollment import CohortEnrollment
 from app.models.competency import Competency
 from app.models.evidence import EvidenceEvent
+from app.models.session import Cohort, Session
 from app.models.student import Student, StudentCompetencyState
 from app.models.user import User
 from app.schemas.student import StudentOut
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
+
+
+class UpcomingSessionOut(BaseModel):
+    id: str
+    title: str | None
+    description: str | None
+    order: int | None
+    session_number: int
+    scheduled_at: str | None
+    started_at: str | None
+    ended_at: str | None
+
+
+@router.get(
+    "/my-cohorts",
+    summary="List cohorts assigned to this teacher",
+)
+async def get_my_cohorts(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("teacher", "admin")),
+):
+    """Return cohorts for teaching. Admin sees all cohorts; teacher sees only assigned ones."""
+    if user.role == "admin":
+        result = await db.execute(
+            select(Cohort).order_by(Cohort.created_at.desc())
+        )
+    else:
+        result = await db.execute(
+            select(Cohort)
+            .where(
+                Cohort.id.in_(
+                    select(Session.cohort_id).where(Session.teacher_id == user.id).distinct()
+                )
+            )
+            .order_by(Cohort.created_at.desc())
+        )
+    cohorts = result.scalars().all()
+    return [
+        {
+            "id": str(c.id),
+            "name": c.name,
+            "grade_band": c.grade_band,
+            "level": c.level,
+            "schedule": c.schedule,
+            "board": c.board,
+            "current_session_number": c.current_session_number,
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in cohorts
+    ]
+
+
+@router.get(
+    "/cohorts/{cohort_id}/upcoming-sessions",
+    response_model=list[UpcomingSessionOut],
+    summary="List upcoming sessions for a cohort",
+    description="Returns all sessions (started and un-started) for the cohort, ordered by order/session_number. Used by teacher dashboard to pick which session to start.",
+)
+async def get_upcoming_sessions(
+    cohort_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("teacher", "admin")),
+):
+    result = await db.execute(
+        select(Session)
+        .where(Session.cohort_id == cohort_id)
+        .order_by(Session.order.asc().nulls_last(), Session.session_number.asc())
+    )
+    sessions = result.scalars().all()
+
+    return [
+        UpcomingSessionOut(
+            id=str(s.id),
+            title=s.title,
+            description=s.description,
+            order=s.order,
+            session_number=s.session_number,
+            scheduled_at=s.scheduled_at.isoformat() if s.scheduled_at else None,
+            started_at=s.started_at.isoformat() if s.started_at else None,
+            ended_at=s.ended_at.isoformat() if s.ended_at else None,
+        )
+        for s in sessions
+    ]
 
 
 @router.get(
@@ -30,10 +115,14 @@ router = APIRouter(prefix="/teacher", tags=["teacher"])
 async def get_cohort_students(
     cohort_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role("teacher")),
+    user: User = Depends(require_role("teacher", "admin")),
 ):
+    # Get students via CohortEnrollment
     result = await db.execute(
-        select(Student).where(Student.cohort_id == cohort_id).order_by(Student.name)
+        select(Student)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
+        .order_by(Student.name)
     )
     return result.scalars().all()
 
@@ -48,10 +137,10 @@ async def get_live_pulse(
     session_id: uuid.UUID | None = Query(None),
     limit: int = Query(20, le=50),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role("teacher")),
+    user: User = Depends(require_role("teacher", "admin")),
 ):
     # Get student IDs in this cohort
-    student_ids_q = select(Student.id).where(Student.cohort_id == cohort_id)
+    student_ids_q = select(Student.id).join(CohortEnrollment, CohortEnrollment.student_id == Student.id).where(CohortEnrollment.cohort_id == cohort_id)
 
     # Get recent evidence events joined with competency names
     stmt = (
@@ -71,7 +160,9 @@ async def get_live_pulse(
 
     # Join student names for display
     student_result = await db.execute(
-        select(Student.id, Student.name).where(Student.cohort_id == cohort_id)
+        select(Student.id, Student.name)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
     )
     name_map = {row.id: row.name for row in student_result}
 
@@ -100,7 +191,7 @@ async def get_session_scores(
     cohort_id: uuid.UUID,
     session_id: uuid.UUID = Query(...),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role("teacher")),
+    user: User = Depends(require_role("teacher", "admin")),
 ):
     stmt = (
         select(
@@ -111,7 +202,7 @@ async def get_session_scores(
         .where(
             EvidenceEvent.session_id == session_id,
             EvidenceEvent.student_id.in_(
-                select(Student.id).where(Student.cohort_id == cohort_id)
+                select(Student.id).join(CohortEnrollment, CohortEnrollment.student_id == Student.id).where(CohortEnrollment.cohort_id == cohort_id)
             ),
         )
         .group_by(EvidenceEvent.student_id)
@@ -120,7 +211,10 @@ async def get_session_scores(
     score_rows = {row.student_id: row for row in result.all()}
 
     student_result = await db.execute(
-        select(Student.id, Student.name).where(Student.cohort_id == cohort_id).order_by(Student.name)
+        select(Student.id, Student.name)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
+        .order_by(Student.name)
     )
 
     return [
@@ -173,11 +267,14 @@ class ClassSummaryOut(BaseModel):
 async def get_class_summary(
     cohort_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role("teacher")),
+    user: User = Depends(require_role("teacher", "admin")),
 ):
     # 1. Get students in cohort
     students_result = await db.execute(
-        select(Student).where(Student.cohort_id == cohort_id).order_by(Student.name)
+        select(Student)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
+        .order_by(Student.name)
     )
     students = students_result.scalars().all()
     if not students:

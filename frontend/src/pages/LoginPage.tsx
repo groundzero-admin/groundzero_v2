@@ -20,9 +20,8 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-      // AuthContext sets user → RequireAuth will redirect based on role
-      // For now, navigate to role-appropriate home
-      navigate("/home", { replace: true });
+      // AuthContext sets user → RootRedirect handles role-based routing
+      navigate("/", { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data

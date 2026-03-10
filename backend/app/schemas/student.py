@@ -9,7 +9,6 @@ class StudentCreate(BaseModel):
     board: str = Field(default="cbse", pattern=r"^(cbse|icse|ib)$")
     grade: int = Field(ge=4, le=9)
     grade_band: str = Field(pattern=r"^(4-5|6-7|8-9)$")
-    cohort_id: uuid.UUID | None = None
 
 
 class StudentOut(BaseModel):

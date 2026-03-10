@@ -15,9 +15,11 @@ from app.auth import get_current_user, require_role
 from app.database import get_db
 from app.models.student import Student
 from app.models.user import User
+from pydantic import BaseModel, Field
 from app.schemas.auth import TokenResponse, UserLogin, UserOut, UserRegister
 from app.schemas.student import StudentOut
 from app.services import auth_service
+from app.services.invite_service import validate_invite, redeem_invite
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -167,6 +169,50 @@ async def logout(
     return {"detail": "Logged out"}
 
 
+class AcceptInviteRequest(BaseModel):
+    token: str
+    password: str = Field(min_length=8, max_length=128)
+
+
+class InviteInfoOut(BaseModel):
+    email: str
+    full_name: str
+
+
+@router.get("/invite/{token}", response_model=InviteInfoOut, summary="Get invite info")
+async def get_invite_info(token: str, db: AsyncSession = Depends(get_db)):
+    """Public endpoint — returns basic info for a valid invite token."""
+    invite = await validate_invite(db, token)
+    if not invite:
+        raise HTTPException(status_code=410, detail="Invite link is invalid or expired")
+    user = await db.get(User, invite.user_id)
+    if not user:
+        raise HTTPException(status_code=410, detail="Invite link is invalid")
+    return InviteInfoOut(email=user.email, full_name=user.full_name)
+
+
+@router.post("/invite/accept", response_model=TokenResponse, summary="Accept invite & set password")
+async def accept_invite(
+    data: AcceptInviteRequest,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
+    """Public endpoint — student sets password via invite token, gets logged in."""
+    user = await redeem_invite(db, data.token, data.password)
+    if not user:
+        raise HTTPException(status_code=410, detail="Invite link is invalid or expired")
+
+    await db.commit()
+    access_token = auth_service.create_access_token(user.id, user.role)
+    refresh_token = await auth_service.create_refresh_token(db, user.id)
+    _set_refresh_cookie(response, refresh_token)
+
+    return TokenResponse(
+        access_token=access_token,
+        user=UserOut.model_validate(user),
+    )
+
+
 @router.get("/me", response_model=UserOut, summary="Get Current User")
 async def get_me(user: User = Depends(get_current_user)):
     return user
@@ -178,8 +224,20 @@ async def get_my_student(
     db: AsyncSession = Depends(get_db),
 ):
     """For student users — returns their linked Student record with ID, grade, etc."""
+    from app.models.batch_enrollment import CohortEnrollment
+
     result = await db.execute(select(Student).where(Student.user_id == user.id))
     student = result.scalar_one_or_none()
     if not student:
         raise HTTPException(status_code=404, detail="No student record linked to this user")
+
+    # Derive cohort_id from enrollment (single source of truth)
+    enr_result = await db.execute(
+        select(CohortEnrollment.cohort_id)
+        .where(CohortEnrollment.student_id == student.id)
+        .order_by(CohortEnrollment.enrolled_at.desc())
+        .limit(1)
+    )
+    student.cohort_id = enr_result.scalar_one_or_none()
+
     return student

@@ -12,6 +12,6 @@ export function useActiveSession(cohortId: string | null | undefined) {
       return data[0] ?? null;
     },
     enabled: !!cohortId,
-    refetchInterval: 15_000,
+    refetchInterval: 5_000,
   });
 }

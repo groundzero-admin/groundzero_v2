@@ -28,6 +28,13 @@ import {
   BenchmarkReportPage,
   BenchmarkHistoryPage,
 } from "@/features/benchmark";
+import SetPasswordPage from "@/pages/SetPasswordPage";
+import AdminShell from "@/components/layout/AdminShell";
+import TemplateListPage from "@/pages/admin/TemplateCohortListPage";
+import CohortListPage from "@/pages/admin/LiveBatchListPage";
+import CohortDetailPage from "@/pages/admin/LiveBatchDetailPage";
+import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
+import LiveClassPage from "@/pages/admin/LiveClassPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,6 +60,7 @@ function RootRedirect() {
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === "teacher") return <Navigate to="/teacher" replace />;
+  if (user?.role === "admin") return <Navigate to="/admin" replace />;
   return <Navigate to="/home" replace />;
 }
 
@@ -67,6 +75,7 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/graph" element={<SkillGraphPage />} />
+              <Route path="/invite/:token" element={<SetPasswordPage />} />
 
               {/* ── Student routes ── */}
               <Route
@@ -167,16 +176,41 @@ export default function App() {
                 }
               />
 
-              {/* ── Teacher routes ── */}
+              {/* ── Teacher routes (admin can also teach for MVP) ── */}
               <Route
                 element={
-                  <RequireAuth allowedRoles={["teacher"]}>
+                  <RequireAuth allowedRoles={["teacher", "admin"]}>
                     <TeacherShell />
                   </RequireAuth>
                 }
               >
                 <Route path="/teacher" element={<TeacherDashboardPage />} />
               </Route>
+
+              {/* ── Admin routes ── */}
+              <Route
+                element={
+                  <RequireAuth allowedRoles={["admin"]}>
+                    <AdminShell />
+                  </RequireAuth>
+                }
+              >
+                <Route path="/admin" element={<Navigate to="/admin/cohorts" replace />} />
+                <Route path="/admin/templates" element={<TemplateListPage />} />
+                <Route path="/admin/cohorts" element={<CohortListPage />} />
+                <Route path="/admin/cohorts/:id" element={<CohortDetailPage />} />
+                <Route path="/admin/students" element={<AdminStudentsPage />} />
+              </Route>
+
+              {/* ── Live Class (full-screen, no shell) — admin can also teach ── */}
+              <Route
+                path="/teacher/live-class"
+                element={
+                  <RequireAuth allowedRoles={["teacher", "admin"]}>
+                    <LiveClassPage />
+                  </RequireAuth>
+                }
+              />
 
               {/* ── Root redirect ── */}
               <Route path="/" element={<RootRedirect />} />

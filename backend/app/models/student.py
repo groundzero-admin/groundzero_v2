@@ -19,7 +19,7 @@ class Student(Base):
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, unique=True
     )
-    cohort_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # NOT a FK — loose coupling
+    cohort_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)  # derived from cohort_enrollments at read time
     diagnostic_completed: Mapped[bool] = mapped_column(Boolean, server_default="false")
     diagnostic_profile: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

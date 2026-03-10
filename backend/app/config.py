@@ -21,6 +21,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     BCRYPT_ROUNDS: int = 12
 
+    # Frontend URL (for invite links)
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # 100ms Live Class
+    HMS_ACCESS_KEY: str = ""  # from 100ms dashboard
+    HMS_APP_SECRET: str = ""  # from 100ms dashboard
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 

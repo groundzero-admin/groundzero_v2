@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentState } from "@/api/hooks/useStudentState";
 import { useActiveSession } from "@/api/hooks/useActiveSession";
@@ -8,6 +9,7 @@ import { useSessionActivities } from "@/api/hooks/useTeacher";
 import { useSessionScore } from "@/api/hooks/useSessionScore";
 import { useNextQuestion } from "@/api/hooks/useNextQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
+import { api } from "@/api/client";
 import type { BKTUpdate, EvidenceCreate } from "@/api/types";
 import type { SparkTriggerData } from "@/components/live/AICompanionShell";
 import { AICompanionShell } from "@/components/live/AICompanionShell";
@@ -20,6 +22,15 @@ export default function LivePage() {
   const { studentId } = useStudent();
   const { data: studentState, isLoading: loadingState } = useStudentState(studentId);
   const student = studentState?.student ?? null;
+
+  // Fetch student's live sessions to get HMS room code
+  const { data: liveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean }[]>({
+    queryKey: ["my-live-sessions"],
+    queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
+    enabled: !!studentId,
+    refetchInterval: 15_000,
+  });
+  const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
 
   // Session-driven flow: find active session for student's cohort
   const { data: session, isLoading: loadingSession } = useActiveSession(student?.cohort_id);
@@ -225,10 +236,11 @@ export default function LivePage() {
       <div className={s.page}>
         <div className={s.leftCol}>
           <VideoArea
-            facilitatorName={undefined}
             confidence={confidence}
             onConfidenceChange={setConfidence}
             questionActive={!!question && !submitted}
+            roomCode={activeLiveSession?.room_code_guest}
+            userName={activeLiveSession?.student_name ?? student?.full_name ?? "Student"}
           />
         </div>
 

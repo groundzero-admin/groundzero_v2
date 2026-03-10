@@ -5,9 +5,30 @@ import type { Student } from "@/api/types";
 
 export function useCohorts() {
   return useQuery<Cohort[]>({
-    queryKey: ["cohorts"],
-    queryFn: async () => (await api.get("/cohorts")).data,
+    queryKey: ["teacher-cohorts"],
+    queryFn: async () => (await api.get("/teacher/my-cohorts")).data,
     staleTime: 60_000,
+  });
+}
+
+export interface UpcomingSession {
+  id: string;
+  title: string | null;
+  description: string | null;
+  order: number | null;
+  session_number: number;
+  scheduled_at: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+}
+
+export function useUpcomingSessions(cohortId: string | null | undefined) {
+  return useQuery<UpcomingSession[]>({
+    queryKey: ["upcoming-sessions", cohortId],
+    queryFn: async () =>
+      (await api.get(`/teacher/cohorts/${cohortId}/upcoming-sessions`)).data,
+    enabled: !!cohortId,
+    staleTime: 30_000,
   });
 }
 
@@ -60,6 +81,7 @@ export function useStartSession() {
   return useMutation({
     mutationFn: async (params: {
       cohort_id: string;
+      session_id?: string;
       teacher_id?: string;
     }) => {
       const { data } = await api.post<Session>("/sessions", params);
@@ -68,6 +90,7 @@ export function useStartSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["cohort-sessions"] });
+      qc.invalidateQueries({ queryKey: ["upcoming-sessions"] });
       qc.invalidateQueries({ queryKey: ["cohorts"] });
     },
   });
@@ -139,6 +162,7 @@ export function useEndSession() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["cohort-sessions"] });
+      qc.invalidateQueries({ queryKey: ["upcoming-sessions"] });
       qc.invalidateQueries({ queryKey: ["cohorts"] });
     },
   });

@@ -15,6 +15,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (creds: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  acceptInvite: (token: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -53,6 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  const acceptInvite = useCallback(async (token: string, password: string) => {
+    const { data } = await api.post<TokenResponse>("/auth/invite/accept", { token, password });
+    setAccessToken(data.access_token);
+    setUser(data.user);
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
@@ -71,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         login,
         register,
+        acceptInvite,
         logout,
       }}
     >

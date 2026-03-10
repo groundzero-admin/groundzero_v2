@@ -17,7 +17,7 @@ class Activity(Base):
     type: Mapped[str] = mapped_column(String(20))  # warmup, key_topic, diy, ai_lab, artifact
     mode: Mapped[str] = mapped_column(String(20), server_default="default")  # timed_mcq, open_ended, discussion, default
     week: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    session_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    session_number: Mapped[int | None] = mapped_column(Integer, nullable=True)  # deprecated: use template.activities
     duration_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     grade_bands: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # ["4-5", "6-7", "8-9"]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

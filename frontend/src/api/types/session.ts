@@ -4,19 +4,8 @@ export interface Session {
   session_number: number;
   current_activity_id: string | null;
   teacher_id: string | null;
-  started_at: string;
+  started_at: string | null;
   ended_at: string | null;
-}
-
-export interface Cohort {
-  id: string;
-  name: string;
-  grade_band: string;
-  level: number;
-  schedule: string | null;
-  board: string | null;
-  current_session_number: number;
-  created_at: string;
 }
 
 export interface SessionActivity {

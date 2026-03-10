@@ -16,7 +16,6 @@ async def create_student(db: AsyncSession, data: StudentCreate) -> Student:
         name=data.name,
         grade=data.grade,
         grade_band=data.grade_band,
-        cohort_id=data.cohort_id,
     )
     db.add(student)
     await db.flush()  # get the generated id

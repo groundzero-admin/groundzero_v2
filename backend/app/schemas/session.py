@@ -27,6 +27,7 @@ class CohortOut(BaseModel):
 
 class SessionCreate(BaseModel):
     cohort_id: uuid.UUID | None = None
+    session_id: uuid.UUID | None = None
     teacher_id: uuid.UUID | None = None
 
 
@@ -36,7 +37,7 @@ class SessionOut(BaseModel):
     session_number: int
     current_activity_id: str | None = None
     teacher_id: uuid.UUID | None = None
-    started_at: datetime
+    started_at: datetime | None = None
     ended_at: datetime | None = None
 
     model_config = {"from_attributes": True}

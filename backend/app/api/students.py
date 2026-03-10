@@ -52,29 +52,6 @@ async def get_student(student_id: uuid.UUID, db: AsyncSession = Depends(get_db))
     return student
 
 
-class StudentPatch(BaseModel):
-    cohort_id: uuid.UUID | None = None
-
-
-@router.patch(
-    "/{student_id}",
-    response_model=StudentOut,
-    summary="Assign Student to Cohort",
-    description="Update a student's cohort assignment. Used to enroll a student into a class group.",
-)
-async def patch_student(
-    student_id: uuid.UUID, data: StudentPatch, db: AsyncSession = Depends(get_db)
-):
-    student = await student_service.get_student(db, student_id)
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
-    if data.cohort_id is not None:
-        student.cohort_id = data.cohort_id
-    await db.commit()
-    await db.refresh(student)
-    return student
-
-
 @router.get(
     "/{student_id}/state",
     response_model=StudentStateOut,
@@ -82,9 +59,21 @@ async def patch_student(
     description="Retrieve the student's mastery state across all 59 competencies, including P(Learned), stage, and streak data.",
 )
 async def get_student_state(student_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    from app.models.batch_enrollment import CohortEnrollment
+
     student = await student_service.get_student(db, student_id)
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
+
+    # Derive cohort_id from enrollment (single source of truth)
+    enr_result = await db.execute(
+        select(CohortEnrollment.cohort_id)
+        .where(CohortEnrollment.student_id == student.id)
+        .order_by(CohortEnrollment.enrolled_at.desc())
+        .limit(1)
+    )
+    student.cohort_id = enr_result.scalar_one_or_none()
+
     states = await student_service.get_student_states(db, student_id)
     return StudentStateOut(student=StudentOut.model_validate(student), states=states)
 
