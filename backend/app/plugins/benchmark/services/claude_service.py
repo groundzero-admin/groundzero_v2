@@ -236,7 +236,7 @@ Rules for HINT:
 
     raw_content = response.choices[0].message.content
     if not raw_content:
-        return {"feedback": "Let me move on to the next question!", "needs_retry": False, "hint": None}
+        return {"feedback": "Good effort on that one! Let's keep going.", "needs_retry": False, "hint": None}
     raw = raw_content.strip()
 
     is_correct = False
@@ -260,7 +260,7 @@ Rules for HINT:
     feedback = re.sub(r"\n{2,}", "\n", feedback).strip()
 
     if not feedback:
-        feedback = re.sub(r"[*_`•]", "", raw.split("\n")[0]).strip() or "Let's look at this together."
+        feedback = re.sub(r"[*_`•]", "", raw.split("\n")[0]).strip() or "Good effort! Let's see the next one."
 
     needs_retry = not is_correct
 

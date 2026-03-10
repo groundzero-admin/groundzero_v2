@@ -48,6 +48,7 @@ export default function ConversationRoomPage() {
   const [feedbackTypedWords, setFeedbackTypedWords] = useState<string[]>([]);
   const [retriesUsed, setRetriesUsed] = useState<Record<number, boolean>>({});
   const [retryHint, setRetryHint] = useState<string | null>(null);
+  const [showContinueBtn, setShowContinueBtn] = useState(false);
 
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording } =
     useVoiceRecording();
@@ -262,6 +263,7 @@ export default function ConversationRoomPage() {
   // ─── Trigger question speech on index change ───
   useEffect(() => {
     if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
+    setShowContinueBtn(false);
     speakQuestion(currentQuestion.text, currentQuestion);
     return () => {
       audioRef.current?.pause();
@@ -318,9 +320,8 @@ export default function ConversationRoomPage() {
         }, remaining + 800);
       } else {
         setTimeout(() => {
-          setPhase("speaking");
-          setCurrentIndex((i) => i + 1);
-        }, remaining + 1200);
+          setShowContinueBtn(true);
+        }, remaining + 500);
       }
     };
 
@@ -459,7 +460,7 @@ export default function ConversationRoomPage() {
       if (fb) {
         playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
       } else {
-        playFeedback("Let me share some thoughts on your answer.", null, false, null);
+        playFeedback("Good effort on that one! Let's keep going.", null, false, null);
       }
     } catch {
       alert("Failed to submit answer. Please try again.");
@@ -482,6 +483,12 @@ export default function ConversationRoomPage() {
 
   const handlePass = useCallback(() => {
     setRetryHint(null);
+    setPhase("speaking");
+    setCurrentIndex((i) => i + 1);
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    setShowContinueBtn(false);
     setPhase("speaking");
     setCurrentIndex((i) => i + 1);
   }, []);
@@ -681,6 +688,15 @@ export default function ConversationRoomPage() {
                   <span>Thinking</span>
                   <span className="cr-dot-anim">...</span>
                 </div>
+              )}
+              {phase === "feedback" && showContinueBtn && (
+                <button
+                  onClick={handleContinue}
+                  className="cr-continue-btn"
+                  style={{ background: `linear-gradient(135deg, ${character.color}, ${character.accent})`, boxShadow: `0 4px 12px ${character.color}40` }}
+                >
+                  Next Question <ArrowRight size={16} />
+                </button>
               )}
             </div>
           </div>
@@ -1136,6 +1152,15 @@ const cssStyles = `
     font-family: 'Nunito', sans-serif; transition: all 150ms;
   }
   .cr-pass-btn:hover { background: #f5f0eb; border-color: #D4C9BD; }
+
+  .cr-continue-btn {
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    margin-top: 16px; padding: 12px 28px; border-radius: 20px; border: none;
+    color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: transform 150ms;
+    animation: crPop 0.4s ease-out;
+  }
+  .cr-continue-btn:hover { transform: scale(1.04); }
 
   /* ─── Desktop (>=640px) ─── */
   @media (min-width: 640px) {
