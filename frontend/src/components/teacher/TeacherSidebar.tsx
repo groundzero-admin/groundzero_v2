@@ -53,7 +53,7 @@ export default function TeacherSidebar() {
             >
               <div className={s.cohortName}>{c.name}</div>
               <div className={s.cohortMeta}>
-                Level {c.level}{c.schedule ? ` · ${c.schedule}` : ""}
+                {c.grade_band}{c.board ? ` · ${c.board}` : ""}
               </div>
             </button>
           ))}

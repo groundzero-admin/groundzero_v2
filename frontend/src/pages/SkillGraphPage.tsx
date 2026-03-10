@@ -77,7 +77,7 @@ export default function SkillGraphPage() {
 
   /* ── Build layout ── */
 
-  const { nodes, links, nodeMap, pillarBoxes, totalW, totalH, pillars } = useMemo(() => {
+  const { nodes, links, nodeMap, pillarBoxes, pillars } = useMemo(() => {
     if (!data) return { nodes: [], links: [], nodeMap: new Map<string, GraphNode>(), pillarBoxes: [] as any[], totalW: 0, totalH: 0, pillars: [] as PillarInfo[] };
 
     const pMap = new Map<string, PillarInfo>();

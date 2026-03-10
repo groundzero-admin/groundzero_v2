@@ -36,7 +36,7 @@ export function JourneyTimeline({ sessions, activities, evidence }: JourneyTimel
     const byNum = new Map<number, Session>();
     for (const sess of sessions) {
       const existing = byNum.get(sess.session_number);
-      if (!existing || new Date(sess.started_at) > new Date(existing.started_at)) {
+      if (!existing || new Date(sess.started_at!) > new Date(existing.started_at!)) {
         byNum.set(sess.session_number, sess);
       }
     }
@@ -89,7 +89,7 @@ export function JourneyTimeline({ sessions, activities, evidence }: JourneyTimel
               <div className={s.timestamp}>
                 {isLive
                   ? "Happening now"
-                  : `Completed ${timeAgo(session.ended_at ?? session.started_at)}`}
+                  : `Completed ${timeAgo(session.ended_at ?? session.started_at ?? "")}`}
               </div>
               {(score || (session.ended_at && primaryComp)) && (
                 <div className={s.tags}>

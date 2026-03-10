@@ -240,7 +240,7 @@ export default function LivePage() {
             onConfidenceChange={setConfidence}
             questionActive={!!question && !submitted}
             roomCode={activeLiveSession?.room_code_guest}
-            userName={activeLiveSession?.student_name ?? student?.full_name ?? "Student"}
+            userName={activeLiveSession?.student_name ?? student?.name ?? "Student"}
           />
         </div>
 

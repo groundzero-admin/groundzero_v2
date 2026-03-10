@@ -221,7 +221,7 @@ export function NextSessionCard() {
 
 // ─── Your Journey Card ───
 export function YourJourneyCard() {
-    const { sessions, loading } = useMyLiveSessions();
+    const { sessions } = useMyLiveSessions();
 
     // Split into past + at most 2 upcoming, then reverse (newest first)
     const pastSessions = sessions.filter((s) => isPast(s.scheduled_at));
@@ -256,7 +256,7 @@ export function YourJourneyCard() {
 
                 {sorted.map((sess, i) => {
                     const past = isPast(sess.scheduled_at);
-                    const isNext = !past && (i === sorted.length - 1 || isPast(sorted[i + 1]?.scheduled_date));
+                    const isNext = !past && (i === sorted.length - 1 || isPast(sorted[i + 1]?.scheduled_at));
 
                     // Dot color: blue for next/current, green for past, gray for future
                     let dotColor = "#d1d5db"; // gray — future

@@ -18,7 +18,7 @@ export const filterBar = style({
   padding: `${vars.space[3]} ${vars.space[5]}`,
   backgroundColor: vars.color.surface.card,
   borderBottom: `1px solid ${vars.color.border.subtle}`,
-  zIndex: vars.zIndex[10],
+  zIndex: 10,
   flexShrink: 0,
   flexWrap: "wrap",
 });
@@ -70,7 +70,7 @@ export const filterDot = style({
 export const filterCount = style({
   fontSize: vars.font.size.xs,
   color: vars.color.text.tertiary,
-  fontWeight: vars.font.weight.normal,
+  fontWeight: vars.font.weight.regular,
 });
 
 export const filterLegend = style({
@@ -104,7 +104,7 @@ export const tooltip = style({
   color: vars.color.text.primary,
   fontFamily: vars.font.family.body,
   maxWidth: "280px",
-  zIndex: vars.zIndex[50],
+  zIndex: 50,
 });
 
 export const sidePanel = style({
@@ -118,7 +118,7 @@ export const sidePanel = style({
   boxShadow: vars.shadow.xl,
   padding: vars.space[6],
   overflowY: "auto",
-  zIndex: vars.zIndex[20],
+  zIndex: 20,
   display: "flex",
   flexDirection: "column",
   gap: vars.space[4],
@@ -203,7 +203,7 @@ export const panelEdgeItem = style({
 export const panelEdgeSub = style({
   fontSize: vars.font.size.xs,
   color: vars.color.text.tertiary,
-  fontWeight: vars.font.weight.normal,
+  fontWeight: vars.font.weight.regular,
 });
 
 export const loadingOverlay = style({
@@ -213,7 +213,7 @@ export const loadingOverlay = style({
   alignItems: "center",
   justifyContent: "center",
   backgroundColor: vars.color.surface.page,
-  zIndex: vars.zIndex[50],
+  zIndex: 50,
 });
 
 export const loadingText = style({
@@ -228,7 +228,7 @@ export const controls = style({
   left: vars.space[4],
   display: "flex",
   gap: vars.space[2],
-  zIndex: vars.zIndex[10],
+  zIndex: 10,
 });
 
 export const controlBtn = style({

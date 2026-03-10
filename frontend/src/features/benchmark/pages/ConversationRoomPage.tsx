@@ -9,7 +9,7 @@ import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
 import JourneyMap from "../components/JourneyMap";
 import { CHARACTERS } from "../constants/characters";
-import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Mic } from "lucide-react";
+import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight } from "lucide-react";
 
 interface AnsweredQuestion {
   questionNumber: number;

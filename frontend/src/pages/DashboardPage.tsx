@@ -21,9 +21,9 @@ export default function DashboardPage() {
     student_id: studentId,
     limit: 200,
   });
-  const { data: pillars = [] } = usePillars();
-  const { data: competencies = [] } = useCompetencies();
-  const { data: allActivities = [] } = useActivities();
+  const { data: _pillars = [] } = usePillars();
+  const { data: _competencies = [] } = useCompetencies();
+  const { data: _allActivities = [] } = useActivities();
 
   const student = studentState?.student ?? null;
 

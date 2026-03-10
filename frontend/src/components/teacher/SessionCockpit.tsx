@@ -9,7 +9,7 @@ import {
   selectIsLocalVideoEnabled,
   selectIsLocalScreenShared,
 } from "@100mslive/react-sdk";
-import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff, CheckCircle, AlertTriangle, MessageCircle, PenLine } from "lucide-react";
+import { CheckCircle, AlertTriangle, MessageCircle, PenLine } from "lucide-react";
 import type { Session, SessionActivity, LivePulseEvent, StudentScore } from "@/api/types";
 import LessonPlan from "./LessonPlan";
 import * as s from "./SessionCockpit.css";
@@ -259,7 +259,7 @@ export default function SessionCockpit({
                 ? `Active: ${currentActivity.activity_name ?? currentActivity.activity_id}`
                 : "No activity launched yet"}
               {" · "}
-              Started {new Date(session.started_at).toLocaleTimeString()}
+              Started {session.started_at ? new Date(session.started_at).toLocaleTimeString() : ""}
             </div>
           </div>
         </div>

@@ -18,7 +18,7 @@ export default function SessionSummary({
   const completedCount = activities.filter((a) => a.status === "completed").length;
   const duration = session.ended_at
     ? Math.round(
-        (new Date(session.ended_at).getTime() - new Date(session.started_at).getTime()) / 60000,
+        (new Date(session.ended_at).getTime() - new Date(session.started_at!).getTime()) / 60000,
       )
     : 0;
 
@@ -27,7 +27,7 @@ export default function SessionSummary({
       <div className={s.card}>
         <div className={s.title}>Session {session.session_number} — Completed</div>
         <div className={s.subtitle}>
-          {new Date(session.started_at).toLocaleDateString(undefined, {
+          {new Date(session.started_at!).toLocaleDateString(undefined, {
             weekday: "long",
             month: "short",
             day: "numeric",
