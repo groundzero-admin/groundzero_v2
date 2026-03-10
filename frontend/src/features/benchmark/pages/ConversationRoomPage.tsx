@@ -48,6 +48,7 @@ export default function ConversationRoomPage() {
   const [feedbackTypedWords, setFeedbackTypedWords] = useState<string[]>([]);
   const [retriesUsed, setRetriesUsed] = useState<Record<number, boolean>>({});
   const [retryHint, setRetryHint] = useState<string | null>(null);
+  const [showContinueBtn, setShowContinueBtn] = useState(false);
 
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording } =
     useVoiceRecording();
@@ -94,8 +95,6 @@ export default function ConversationRoomPage() {
   const typingTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const introTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
   const feedbackTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
-  const pendingFeedbackRef = useRef<{ text: string; audioBase64: string | null; needsRetry: boolean; hint: string | null } | null>(null);
-  const fillerDoneRef = useRef(false);
 
   // ─── Redirect if no session ───
   useEffect(() => {
@@ -191,7 +190,7 @@ export default function ConversationRoomPage() {
   }, [answerWords.length]);
 
   const currentQuestion = questions[currentIndex];
-  const totalQuestions = questions.length || 20;
+  const totalQuestions = questions.length || 8;
   const isLastQuestion = currentIndex >= totalQuestions - 1;
 
   // ─── Typing animation helpers ───
@@ -264,6 +263,7 @@ export default function ConversationRoomPage() {
   // ─── Trigger question speech on index change ───
   useEffect(() => {
     if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
+    setShowContinueBtn(false);
     speakQuestion(currentQuestion.text, currentQuestion);
     return () => {
       audioRef.current?.pause();
@@ -284,7 +284,8 @@ export default function ConversationRoomPage() {
     setPhase("feedback");
     setFeedbackText(text);
     setIsSpeaking(true);
-    smallBurst();
+
+    if (!needsRetry) smallBurst();
 
     const words = text.split(" ");
     setFeedbackTypedWords([]);
@@ -297,22 +298,30 @@ export default function ConversationRoomPage() {
     }, 80);
 
     const canRetry = needsRetry && !retriesUsed[currentIndex];
+    const feedbackStartTime = Date.now();
+    const MIN_FEEDBACK_DISPLAY_MS = 3000;
+    let feedbackDone = false;
 
     const onFeedbackDone = () => {
+      if (feedbackDone) return;
+      feedbackDone = true;
+
       setIsSpeaking(false);
       clearInterval(feedbackTimerRef.current);
       setFeedbackTypedWords(words);
 
-      if (canRetry && hint) {
+      const elapsed = Date.now() - feedbackStartTime;
+      const remaining = Math.max(0, MIN_FEEDBACK_DISPLAY_MS - elapsed);
+
+      if (canRetry) {
         setTimeout(() => {
-          setRetryHint(hint);
+          setRetryHint(hint || "Think about it differently and try again!");
           setPhase("retry_prompt");
-        }, 800);
+        }, remaining + 800);
       } else {
         setTimeout(() => {
-          setPhase("speaking");
-          setCurrentIndex((i) => i + 1);
-        }, 1200);
+          setShowContinueBtn(true);
+        }, remaining + 500);
       }
     };
 
@@ -323,32 +332,17 @@ export default function ConversationRoomPage() {
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          onFeedbackDone();
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          onFeedbackDone();
-        };
-        audio.play().catch(() => onFeedbackDone());
+        const cleanup = () => URL.revokeObjectURL(url);
+        audio.onended = () => { cleanup(); onFeedbackDone(); };
+        audio.onerror = () => { cleanup(); onFeedbackDone(); };
+        audio.play().catch(() => { cleanup(); onFeedbackDone(); });
       } catch {
         onFeedbackDone();
       }
     } else {
-      setTimeout(onFeedbackDone, 3000);
+      setTimeout(onFeedbackDone, MIN_FEEDBACK_DISPLAY_MS);
     }
   }, [smallBurst, retriesUsed, currentIndex]);
-
-  // Called when filler audio ends - check if feedback is ready
-  const onFillerComplete = useCallback(() => {
-    fillerDoneRef.current = true;
-    const pending = pendingFeedbackRef.current;
-    if (pending) {
-      pendingFeedbackRef.current = null;
-      playFeedback(pending.text, pending.audioBase64, pending.needsRetry, pending.hint);
-    }
-  }, [playFeedback]);
 
   // ─── Submit answer -> filler -> feedback ───
   const handleSubmitAnswer = useCallback(async () => {
@@ -395,8 +389,6 @@ export default function ConversationRoomPage() {
       // Enter filler phase
       setPhase("filler");
       setIsSpeaking(true);
-      pendingFeedbackRef.current = null;
-      fillerDoneRef.current = false;
       playWhoosh();
 
       const fillerMsg = FILLER_MESSAGES[Math.floor(Math.random() * FILLER_MESSAGES.length)];
@@ -421,70 +413,61 @@ export default function ConversationRoomPage() {
         is_retry: isRetry,
       }).catch(() => null);
 
-      // Play filler TTS
+      // Play filler TTS audio
       const fillerTtsResult = await fillerTtsPromise;
       if (fillerTtsResult?.data) {
         const blob = new Blob([fillerTtsResult.data], { type: "audio/wav" });
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        };
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(url);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        };
-        await audio.play().catch(() => {
-          setIsSpeaking(false);
-          onFillerComplete();
+        await new Promise<void>((resolve) => {
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          let resolved = false;
+          const done = () => {
+            if (resolved) return;
+            resolved = true;
+            setIsSpeaking(false);
+            URL.revokeObjectURL(url);
+            clearInterval(feedbackTimerRef.current);
+            setFeedbackTypedWords(fillerWords);
+            resolve();
+          };
+          audio.onended = done;
+          audio.onerror = done;
+          audio.play().catch(done);
         });
       } else {
-        setTimeout(() => {
-          setIsSpeaking(false);
-          clearInterval(feedbackTimerRef.current);
-          setFeedbackTypedWords(fillerWords);
-          onFillerComplete();
-        }, 2500);
+        await new Promise<void>((resolve) =>
+          setTimeout(() => {
+            setIsSpeaking(false);
+            clearInterval(feedbackTimerRef.current);
+            setFeedbackTypedWords(fillerWords);
+            resolve();
+          }, 2500),
+        );
       }
 
-      // Handle feedback arrival
+      // Filler done — now await feedback and play it
       const feedbackResult = await feedbackPromise;
-      if (feedbackResult?.data) {
-        const fb = {
-          text: feedbackResult.data.feedback_text,
-          audioBase64: feedbackResult.data.audio_base64,
-          needsRetry: feedbackResult.data.needs_retry,
-          hint: feedbackResult.data.hint,
-        };
-        if (fillerDoneRef.current) {
-          playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
-        } else {
-          pendingFeedbackRef.current = fb;
-        }
+      const fb = feedbackResult?.data
+        ? {
+            text: feedbackResult.data.feedback_text,
+            audioBase64: feedbackResult.data.audio_base64,
+            needsRetry: feedbackResult.data.needs_retry,
+            hint: feedbackResult.data.hint,
+          }
+        : null;
+
+      if (fb) {
+        playFeedback(fb.text, fb.audioBase64, fb.needsRetry, fb.hint);
       } else {
-        if (fillerDoneRef.current) {
-          setTimeout(() => {
-            setPhase("speaking");
-            setCurrentIndex((i) => i + 1);
-          }, 800);
-        } else {
-          pendingFeedbackRef.current = null;
-        }
+        playFeedback("Good effort on that one! Let's keep going.", null, false, null);
       }
     } catch {
       alert("Failed to submit answer. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
-  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, onFillerComplete, playFeedback, retriesUsed, currentIndex]);
+  }, [answerText, sessionId, currentQuestion, isSubmitting, isLastQuestion, isRecording, stopRecording, navigate, celebrationBurst, playComplete, playWhoosh, character.id, playFeedback, retriesUsed, currentIndex]);
 
 
   const handleRetry = useCallback(() => {
@@ -500,6 +483,12 @@ export default function ConversationRoomPage() {
 
   const handlePass = useCallback(() => {
     setRetryHint(null);
+    setPhase("speaking");
+    setCurrentIndex((i) => i + 1);
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    setShowContinueBtn(false);
     setPhase("speaking");
     setCurrentIndex((i) => i + 1);
   }, []);
@@ -699,6 +688,15 @@ export default function ConversationRoomPage() {
                   <span>Thinking</span>
                   <span className="cr-dot-anim">...</span>
                 </div>
+              )}
+              {phase === "feedback" && showContinueBtn && (
+                <button
+                  onClick={handleContinue}
+                  className="cr-continue-btn"
+                  style={{ background: `linear-gradient(135deg, ${character.color}, ${character.accent})`, boxShadow: `0 4px 12px ${character.color}40` }}
+                >
+                  Next Question <ArrowRight size={16} />
+                </button>
               )}
             </div>
           </div>
@@ -1154,6 +1152,15 @@ const cssStyles = `
     font-family: 'Nunito', sans-serif; transition: all 150ms;
   }
   .cr-pass-btn:hover { background: #f5f0eb; border-color: #D4C9BD; }
+
+  .cr-continue-btn {
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    margin-top: 16px; padding: 12px 28px; border-radius: 20px; border: none;
+    color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: transform 150ms;
+    animation: crPop 0.4s ease-out;
+  }
+  .cr-continue-btn:hover { transform: scale(1.04); }
 
   /* ─── Desktop (>=640px) ─── */
   @media (min-width: 640px) {

@@ -196,35 +196,38 @@ async def generate_answer_feedback(
 
     retry_context = ""
     if is_retry:
-        retry_context = "\nThis is the student's SECOND attempt after receiving a hint. Be encouraging about any improvement."
+        retry_context = "\nThis is the student's SECOND attempt after receiving a hint. Acknowledge improvement if any, but still be honest."
 
     system_prompt = f"""You are {persona['name']}, talking to {student_name} (grade {grade}).
 Your tone is {persona['tone']}.
 
-Give honest, direct feedback on the student's answer.{retry_context}
+Evaluate the student's answer and respond in EXACTLY this format (three lines, no extras):
 
-Rules:
-- 2-3 sentences MAX. Keep it short and conversational.
-- FIRST, clearly state whether the answer is RIGHT or WRONG. Never hedge.
-- If WRONG: Start with "That's not right." or "Nope, that's incorrect." Then say exactly what's wrong. For example: "You multiplied the numbers but adding fractions doesn't work that way." NEVER say "you're on the right track" or "good thinking" when the answer is wrong. NEVER find something to praise in a wrong answer.
-- If the student says "I don't know" or gives a nonsense/unrelated answer: Say "You need to give this a try!" Do NOT praise them.
-- If RIGHT: Say "That's correct!" or "Exactly right!" and briefly explain why.
-- If PARTIALLY right: Say which part is right and which part is wrong. Be specific.
-- Use simple, age-appropriate language.
-- Stay in character but NEVER let character voice override honesty. Being in character does NOT mean being falsely positive.
-- Do NOT use markdown, asterisks, or special formatting.
-- Do NOT repeat the question back.
+FEEDBACK: <your 1-3 sentence feedback here>
+CORRECT: <true or false>
+HINT: <if incorrect, a specific 1-sentence hint; if correct, write "none">
 
-After your feedback, on a NEW LINE, write:
-NEEDS_RETRY: true or false (true if the answer is wrong, incomplete, or the student said "I don't know")
-HINT: (if NEEDS_RETRY is true, a short 1-sentence hint that points them in the right direction without giving the answer away; otherwise leave blank)"""
+Rules for FEEDBACK:
+- If CORRECT: Start with "That's correct!" or "Exactly right!" then briefly say WHY it's correct.
+- If WRONG: Start with "That's not quite right." or "Nope, that's incorrect." then explain SPECIFICALLY what's wrong. Example: "You added the numerators directly, but you need a common denominator first." NEVER praise a wrong answer. NEVER say "good thinking" or "you're on the right track" for wrong answers.
+- If the student said "I don't know" or gave a nonsense/unrelated answer: Say "You need to give this a real try!" and explain what the question is asking.
+- If PARTIALLY correct: Say exactly which part is right and which is wrong.
+- Use simple language appropriate for grade {grade}.
+- No markdown, no asterisks, no special formatting.
+- Do NOT repeat the question.
+
+Rules for HINT:
+- Must be a SPECIFIC, actionable clue that guides toward the answer without giving it away.
+- Bad hint: "Think harder" or "Try again" (too vague)
+- Good hint: "Try finding a number that both 3 and 7 divide into evenly" (specific and helpful)
+- For correct answers, write "none".{retry_context}"""
 
     user_msg = f"Question {question_number}: {question_text}\n\nStudent's answer: {answer_text}"
 
     client = _get_client()
     response = await client.chat.completions.create(
         model=settings.SPARK_MODEL,
-        max_tokens=300,
+        max_tokens=400,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_msg},
@@ -233,35 +236,39 @@ HINT: (if NEEDS_RETRY is true, a short 1-sentence hint that points them in the r
 
     raw_content = response.choices[0].message.content
     if not raw_content:
-        return {"feedback": "Let me move on to the next question!", "needs_retry": False, "hint": None}
+        return {"feedback": "Good effort on that one! Let's keep going.", "needs_retry": False, "hint": None}
     raw = raw_content.strip()
 
-    import re
-    feedback = raw
-    needs_retry = False
+    is_correct = False
     hint = None
 
-    lines = raw.split("\n")
-    feedback_lines = []
-    for line in lines:
-        clean = re.sub(r"[*_`\-•]", "", line).strip()
-        if re.match(r"(?i)^NEEDS[_ ]?RETRY\s*:", clean):
-            val = clean.split(":", 1)[1].strip().lower()
-            needs_retry = val in ("true", "yes", "1")
-        elif re.match(r"(?i)^HINT\s*:", clean):
-            hint_val = clean.split(":", 1)[1].strip()
-            if hint_val:
-                hint = hint_val
-        else:
-            feedback_lines.append(line)
+    correct_match = re.search(r"(?i)\bCORRECT\s*:\s*(true|false|yes|no)", raw)
+    if correct_match:
+        is_correct = correct_match.group(1).lower() in ("true", "yes")
 
-    feedback = "\n".join(feedback_lines).strip()
+    hint_match = re.search(r"(?i)\bHINT\s*:\s*(.+?)(?:\n|$)", raw)
+    if hint_match:
+        hint_val = hint_match.group(1).strip()
+        if hint_val.lower() not in ("none", "n/a", ""):
+            hint = hint_val
+
+    feedback = raw
+    feedback = re.sub(r"(?i)\bFEEDBACK\s*:\s*", "", feedback)
+    feedback = re.sub(r"(?i)\bCORRECT\s*:\s*(true|false|yes|no)\b", "", feedback)
+    feedback = re.sub(r"(?i)\bHINT\s*:\s*.+?(?:\n|$)", "", feedback)
+    feedback = re.sub(r"[*_`•]", "", feedback).strip()
+    feedback = re.sub(r"\n{2,}", "\n", feedback).strip()
+
     if not feedback:
-        feedback = raw
+        feedback = re.sub(r"[*_`•]", "", raw.split("\n")[0]).strip() or "Good effort! Let's see the next one."
 
-    logger.info("Feedback parse: needs_retry=%s, hint=%s, raw_tail=%s", needs_retry, hint, repr(raw[-120:]))
+    needs_retry = not is_correct
 
-    # Don't suggest retry on second attempt
+    logger.info(
+        "Feedback parse: correct=%s, needs_retry=%s, hint=%r, feedback_start=%r",
+        is_correct, needs_retry, hint, feedback[:80],
+    )
+
     if is_retry:
         needs_retry = False
         hint = None
