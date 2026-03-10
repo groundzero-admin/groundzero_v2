@@ -1,0 +1,39 @@
+---
+description: Benchmark character pose system and image generation conventions
+globs: frontend/src/features/benchmark/**/*.ts,frontend/src/features/benchmark/**/*.tsx,backend/app/plugins/benchmark/generate_character_images.py
+alwaysApply: false
+---
+
+# Benchmark Character Poses
+
+## Architecture
+
+Each character has 6 AI-generated pose images stored as static PNGs in `frontend/public/characters/{id}_{pose}.png`. The poses are:
+
+- `idle` - neutral standing, used as default and loading state
+- `speaking` - mouth open, gesture, used when TTS is playing
+- `listening` - leaning in, attentive, used during student answer phase
+- `thinking` - finger on chin, used during filler/processing phase
+- `happy` - arms up, celebrating, used for correct answers and completion
+- `encouraging` - thumbs up, supportive, used for wrong answers and retry prompts
+
+## Phase-to-pose mapping
+
+The `currentPose` is derived from `phase` and `isSpeaking` in `ConversationRoomPage.tsx`:
+
+| Phase | isSpeaking | Pose |
+|-------|-----------|------|
+| loading, intro (idle) | false | idle |
+| intro, speaking, filler, feedback | true | speaking |
+| answering | any | listening |
+| filler | false | thinking |
+| celebration | any | happy |
+| retry_prompt | any | encouraging |
+
+## Crossfade transitions
+
+Pose changes use a 300ms CSS crossfade (two stacked `<img>` elements with opacity transition) via `cr-pose-container`, `cr-pose-in`, `cr-pose-out` classes.
+
+## Generating images
+
+Run `make generate-characters` to regenerate. The script is idempotent and skips existing files. Character visual descriptions are in `generate_character_images.py`.

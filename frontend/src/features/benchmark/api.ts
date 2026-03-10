@@ -2,10 +2,12 @@ import { api } from "@/api/client";
 
 export interface BenchmarkQuestion {
   id: string;
+  grade_band: string;
   question_number: number;
   text: string;
   curriculum_anchor: string | null;
   pillars: string[];
+  image_url: string | null;
 }
 
 export interface BenchmarkSessionResponse {
@@ -18,6 +20,12 @@ export interface BenchmarkSessionResponse {
   started_at: string;
   total_turns: number;
   total_questions: number;
+}
+
+const S3_AUDIO_BASE = "https://groundzero-static-ap.s3.ap-southeast-2.amazonaws.com/question-audio";
+
+export function getQuestionAudioUrl(characterId: string, gradeBand: string, questionNumber: number): string {
+  return `${S3_AUDIO_BASE}/${characterId}/${gradeBand}_${questionNumber}.wav`;
 }
 
 const benchmarkApi = {

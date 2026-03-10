@@ -156,10 +156,12 @@ async def get_questions(
     return [
         QuestionOut(
             id=q.id,
+            grade_band=q.grade_band,
             question_number=q.question_number,
             text=q.text,
             curriculum_anchor=q.curriculum_anchor,
             pillars=q.pillars or [],
+            image_url=q.image_url,
         )
         for q in questions
     ]

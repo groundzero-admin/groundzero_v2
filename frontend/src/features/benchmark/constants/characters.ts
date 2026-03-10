@@ -1,7 +1,10 @@
+export type CharacterPose = "idle" | "speaking" | "listening" | "thinking" | "happy" | "encouraging";
+
 export interface Character {
   id: string;
   name: string;
   image: string;
+  poses: Record<CharacterPose, string>;
   color: string;
   accent: string;
   greeting: string;
@@ -22,6 +25,14 @@ export const CHARACTERS: Character[] = [
     id: "harry_potter",
     name: "Harry Potter",
     image: "/characters/harry_potter.svg",
+    poses: {
+      idle: "/characters/harry_potter_idle.png",
+      speaking: "/characters/harry_potter_speaking.png",
+      listening: "/characters/harry_potter_listening.png",
+      thinking: "/characters/harry_potter_thinking.png",
+      happy: "/characters/harry_potter_happy.png",
+      encouraging: "/characters/harry_potter_encouraging.png",
+    },
     color: "#8b1a1a",
     accent: "#d4a843",
     greeting: "Hey! I'm Harry. Let's explore some brilliant questions together!",
@@ -44,6 +55,14 @@ export const CHARACTERS: Character[] = [
     id: "doraemon",
     name: "Doraemon",
     image: "/characters/doraemon.svg",
+    poses: {
+      idle: "/characters/doraemon_idle.png",
+      speaking: "/characters/doraemon_speaking.png",
+      listening: "/characters/doraemon_listening.png",
+      thinking: "/characters/doraemon_thinking.png",
+      happy: "/characters/doraemon_happy.png",
+      encouraging: "/characters/doraemon_encouraging.png",
+    },
     color: "#2563eb",
     accent: "#60a5fa",
     greeting: "Hello! I'm Doraemon. I've got some really interesting questions for you!",
@@ -66,6 +85,14 @@ export const CHARACTERS: Character[] = [
     id: "peppa_pig",
     name: "Peppa Pig",
     image: "/characters/peppa_pig.svg",
+    poses: {
+      idle: "/characters/peppa_pig_idle.png",
+      speaking: "/characters/peppa_pig_speaking.png",
+      listening: "/characters/peppa_pig_listening.png",
+      thinking: "/characters/peppa_pig_thinking.png",
+      happy: "/characters/peppa_pig_happy.png",
+      encouraging: "/characters/peppa_pig_encouraging.png",
+    },
     color: "#e85d75",
     accent: "#f9a8d4",
     greeting: "Hi there! I'm Peppa! Let's have some fun answering questions together!",
@@ -88,6 +115,14 @@ export const CHARACTERS: Character[] = [
     id: "simba",
     name: "Simba",
     image: "/characters/simba.svg",
+    poses: {
+      idle: "/characters/simba_idle.png",
+      speaking: "/characters/simba_speaking.png",
+      listening: "/characters/simba_listening.png",
+      thinking: "/characters/simba_thinking.png",
+      happy: "/characters/simba_happy.png",
+      encouraging: "/characters/simba_encouraging.png",
+    },
     color: "#b45309",
     accent: "#fbbf24",
     greeting: "Hey! I'm Simba. Ready for an adventure through some cool questions?",
@@ -110,6 +145,14 @@ export const CHARACTERS: Character[] = [
     id: "dora",
     name: "Dora",
     image: "/characters/dora.svg",
+    poses: {
+      idle: "/characters/dora_idle.png",
+      speaking: "/characters/dora_speaking.png",
+      listening: "/characters/dora_listening.png",
+      thinking: "/characters/dora_thinking.png",
+      happy: "/characters/dora_happy.png",
+      encouraging: "/characters/dora_encouraging.png",
+    },
     color: "#7c3aed",
     accent: "#a78bfa",
     greeting: "Hola! I'm Dora. Let's explore these questions together, amigo!",

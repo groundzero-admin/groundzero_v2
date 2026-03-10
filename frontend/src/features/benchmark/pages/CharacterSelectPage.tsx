@@ -68,7 +68,7 @@ export default function CharacterSelectPage() {
                 }}
               >
                 <img
-                  src={char.image}
+                  src={char.poses?.idle || char.image}
                   alt={char.name}
                   className={`cs-avatar-img ${isSelected ? "cs-bounce" : isHovered ? "cs-wobble" : ""}`}
                 />

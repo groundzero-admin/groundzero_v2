@@ -1,4 +1,4 @@
-.PHONY: backend frontend dev stop db seed-questions
+.PHONY: backend frontend dev stop db seed-questions generate-images generate-characters generate-audios
 
 # ─── Individual services ───
 
@@ -36,3 +36,15 @@ db:
 seed-questions:
 	@echo "Seeding benchmark questions..."
 	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.seed_questions
+
+generate-images:
+	@echo "Generating question background images via Bedrock Titan..."
+	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.generate_question_images
+
+generate-characters:
+	@echo "Generating character pose images via Bedrock Titan..."
+	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.generate_character_images
+
+generate-audios:
+	@echo "Generating question TTS audio and uploading to S3..."
+	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.generate_question_audios
