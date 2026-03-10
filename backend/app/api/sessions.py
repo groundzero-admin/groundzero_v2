@@ -158,7 +158,7 @@ async def get_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db),
     summary="Get Session Lesson Plan",
     description="Returns all activities assigned to a session with their statuses and order. Joined with Activity for name/type.",
 )
-async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("teacher", "admin"))):
+async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("student", "teacher", "admin"))):
     result = await db.execute(
         select(SessionActivity, Activity.name, Activity.type, Activity.mode, Activity.duration_minutes)
         .outerjoin(Activity, SessionActivity.activity_id == Activity.id)
