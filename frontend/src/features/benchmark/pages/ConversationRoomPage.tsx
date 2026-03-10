@@ -50,6 +50,16 @@ export default function ConversationRoomPage() {
   const [retryHint, setRetryHint] = useState<string | null>(null);
   const [showContinueBtn, setShowContinueBtn] = useState(false);
 
+  // Streak tracking
+  const [streak, setStreak] = useState(0);
+  const streakRef = useRef(0);
+  const [streakDisplay, setStreakDisplay] = useState<{
+    count: number;
+    message: string;
+    emoji: string;
+    level: "nice" | "fire" | "unstoppable";
+  } | null>(null);
+
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording } =
     useVoiceRecording();
 
@@ -85,8 +95,8 @@ export default function ConversationRoomPage() {
     () => [character.color, character.accent, "#FFD700", "#FF6B6B", "#4ECDC4"],
     [character.color, character.accent],
   );
-  const { smallBurst, celebrationBurst } = useConfetti(confettiColors);
-  const { playPop, playWhoosh, playComplete } = useSoundEffects();
+  const { smallBurst, doubleBurst, tripleBurst, screenWideBurst, celebrationBurst } = useConfetti(confettiColors);
+  const { playPop, playWhoosh, playComplete, playStreak } = useSoundEffects();
 
   const bubbleRef = useRef<HTMLDivElement>(null);
   const isUserEditingRef = useRef(false);
@@ -264,6 +274,7 @@ export default function ConversationRoomPage() {
   useEffect(() => {
     if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
     setShowContinueBtn(false);
+    setStreakDisplay(null);
     speakQuestion(currentQuestion.text, currentQuestion);
     return () => {
       audioRef.current?.pause();
@@ -284,8 +295,19 @@ export default function ConversationRoomPage() {
     setPhase("feedback");
     setFeedbackText(text);
     setIsSpeaking(true);
+    setStreakDisplay(null);
 
-    if (!needsRetry) smallBurst();
+    // Streak tracking
+    let newStreak = streakRef.current;
+    if (!needsRetry) {
+      newStreak = streakRef.current + 1;
+      streakRef.current = newStreak;
+      setStreak(newStreak);
+      smallBurst();
+    } else {
+      streakRef.current = 0;
+      setStreak(0);
+    }
 
     const words = text.split(" ");
     setFeedbackTypedWords([]);
@@ -301,6 +323,16 @@ export default function ConversationRoomPage() {
     const feedbackStartTime = Date.now();
     const MIN_FEEDBACK_DISPLAY_MS = 3000;
     let feedbackDone = false;
+
+    // Determine streak milestone
+    let streakMilestone: { count: number; message: string; emoji: string; level: "nice" | "fire" | "unstoppable" } | null = null;
+    if (!needsRetry && newStreak >= 5) {
+      streakMilestone = { count: newStreak, message: "UNSTOPPABLE!", emoji: "\u{26A1}", level: "unstoppable" };
+    } else if (!needsRetry && newStreak >= 3) {
+      streakMilestone = { count: newStreak, message: "On fire!", emoji: "\u{1F525}", level: "fire" };
+    } else if (!needsRetry && newStreak >= 2) {
+      streakMilestone = { count: newStreak, message: "Nice streak!", emoji: "\u{1F525}", level: "nice" };
+    }
 
     const onFeedbackDone = () => {
       if (feedbackDone) return;
@@ -318,6 +350,17 @@ export default function ConversationRoomPage() {
           setRetryHint(hint || "Think about it differently and try again!");
           setPhase("retry_prompt");
         }, remaining + 800);
+      } else if (streakMilestone) {
+        // Show big streak celebration before continue button
+        setTimeout(() => {
+          setStreakDisplay(streakMilestone);
+          playStreak();
+          if (streakMilestone!.level === "unstoppable") screenWideBurst();
+          else if (streakMilestone!.level === "fire") tripleBurst();
+          else doubleBurst();
+          // After celebration, show continue button
+          setTimeout(() => setShowContinueBtn(true), 2800);
+        }, remaining + 400);
       } else {
         setTimeout(() => {
           setShowContinueBtn(true);
@@ -342,7 +385,7 @@ export default function ConversationRoomPage() {
     } else {
       setTimeout(onFeedbackDone, MIN_FEEDBACK_DISPLAY_MS);
     }
-  }, [smallBurst, retriesUsed, currentIndex]);
+  }, [smallBurst, doubleBurst, tripleBurst, screenWideBurst, playStreak, retriesUsed, currentIndex]);
 
   // ─── Submit answer -> filler -> feedback ───
   const handleSubmitAnswer = useCallback(async () => {
@@ -483,12 +526,15 @@ export default function ConversationRoomPage() {
 
   const handlePass = useCallback(() => {
     setRetryHint(null);
+    streakRef.current = 0;
+    setStreak(0);
     setPhase("speaking");
     setCurrentIndex((i) => i + 1);
   }, []);
 
   const handleContinue = useCallback(() => {
     setShowContinueBtn(false);
+    setStreakDisplay(null);
     setPhase("speaking");
     setCurrentIndex((i) => i + 1);
   }, []);
@@ -587,9 +633,16 @@ export default function ConversationRoomPage() {
           <div className="cr-header-name">{character.name}</div>
           <div className="cr-header-sub">with {student?.name || "Student"}</div>
         </div>
-        <span className="cr-header-count" style={{ color: character.color }}>
-          {answered.length}/{totalQuestions}
-        </span>
+        <div className="cr-header-right">
+          {streak >= 2 && (
+            <div className="cr-streak-badge" style={{ backgroundColor: character.color + "18", color: character.color }}>
+              {"\u{1F525}"} {streak}
+            </div>
+          )}
+          <span className="cr-header-count" style={{ color: character.color }}>
+            {answered.length}/{totalQuestions}
+          </span>
+        </div>
       </div>
 
       {/* Journey Map */}
@@ -689,6 +742,23 @@ export default function ConversationRoomPage() {
                   <span className="cr-dot-anim">...</span>
                 </div>
               )}
+              {/* Streak celebration overlay -- BIG and center */}
+              {phase === "feedback" && streakDisplay && (
+                <div className={`cr-streak-overlay cr-streak-${streakDisplay.level}`} style={{ ["--streak-color" as string]: character.color }}>
+                  <div className="cr-streak-emoji">
+                    {streakDisplay.level === "unstoppable" ? "\u{26A1}\u{1F525}\u{26A1}" : streakDisplay.level === "fire" ? "\u{1F525}\u{1F525}\u{1F525}" : "\u{1F525}"}
+                  </div>
+                  <div className="cr-streak-count" style={{ color: character.color }}>{streakDisplay.count} in a row!</div>
+                  <div className="cr-streak-label">{streakDisplay.message}</div>
+                  <img
+                    src={character.poses?.happy || character.image}
+                    alt={character.name}
+                    className="cr-streak-avatar"
+                    style={{ borderColor: character.color }}
+                  />
+                </div>
+              )}
+
               {phase === "feedback" && showContinueBtn && (
                 <button
                   onClick={handleContinue}
@@ -942,6 +1012,57 @@ const cssStyles = `
   .cr-celeb-avatar { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #fff; margin-top: 12px; animation: crFloat 2s ease-in-out infinite; }
   .cr-celeb-hint { font-size: 13px; color: #ffffff99; margin-top: 12px; }
 
+  /* ─── Streak celebration ─── */
+  @keyframes crStreakIn { from { opacity: 0; transform: scale(0.5) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes crStreakPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+  @keyframes crStreakShake { 0%, 100% { transform: rotate(0deg); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 80% { transform: rotate(5deg); } }
+  @keyframes crFlameFlicker { 0%, 100% { text-shadow: 0 0 10px #ff440040, 0 0 20px #ff660020; } 50% { text-shadow: 0 0 20px #ff440080, 0 0 40px #ff660040, 0 0 60px #ff880020; } }
+
+  .cr-streak-overlay {
+    margin-top: 16px; padding: 20px 24px; border-radius: 20px; text-align: center;
+    animation: crStreakIn 0.5s ease-out;
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border: 2px solid #FFD54F;
+    box-shadow: 0 8px 32px rgba(255, 152, 0, 0.25);
+  }
+  .cr-streak-fire {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 50%, #ffcc80 100%);
+    border-color: #FF9800;
+    box-shadow: 0 8px 32px rgba(255, 87, 34, 0.3);
+  }
+  .cr-streak-unstoppable {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffe082 30%, #ffab40 70%, #ff6d00 100%);
+    border-color: #FF6D00;
+    box-shadow: 0 8px 40px rgba(255, 109, 0, 0.4), 0 0 60px rgba(255, 152, 0, 0.15);
+    animation: crStreakIn 0.5s ease-out, crStreakPulse 1.5s ease-in-out infinite 0.5s;
+  }
+
+  .cr-streak-emoji {
+    font-size: 40px; line-height: 1; margin-bottom: 6px;
+    animation: crFlameFlicker 1s ease-in-out infinite;
+  }
+  .cr-streak-unstoppable .cr-streak-emoji { font-size: 52px; animation: crStreakShake 0.6s ease-in-out infinite; }
+
+  .cr-streak-count {
+    font-size: 22px; font-weight: 900; font-family: 'Nunito', sans-serif;
+    margin-bottom: 2px;
+  }
+  .cr-streak-unstoppable .cr-streak-count { font-size: 28px; }
+
+  .cr-streak-label {
+    font-size: 16px; font-weight: 800; color: #E65100;
+    font-family: 'Nunito', sans-serif; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .cr-streak-fire .cr-streak-label { font-size: 18px; color: #D84315; }
+  .cr-streak-unstoppable .cr-streak-label { font-size: 22px; color: #BF360C; letter-spacing: 2px; }
+
+  .cr-streak-avatar {
+    width: 56px; height: 56px; border-radius: 50%; border: 3px solid;
+    object-fit: cover; animation: crStreakShake 1s ease-in-out infinite;
+  }
+  .cr-streak-unstoppable .cr-streak-avatar { width: 72px; height: 72px; border-width: 4px; }
+
   /* ─── Header ─── */
   .cr-header {
     padding: 8px 14px; background: #ffffffcc; backdrop-filter: blur(10px);
@@ -952,7 +1073,15 @@ const cssStyles = `
   .cr-header-info { flex: 1; min-width: 0; }
   .cr-header-name { font-size: 14px; font-weight: 800; color: #26221D; font-family: 'Nunito', sans-serif; }
   .cr-header-sub { font-size: 11px; color: #7A7168; }
-  .cr-header-count { font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; flex-shrink: 0; }
+  .cr-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .cr-header-count { font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; }
+
+  .cr-streak-badge {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    animation: crStreakPulse 1.5s ease-in-out infinite;
+  }
 
   /* ─── Journey ─── */
   .cr-journey { background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
@@ -1200,5 +1329,15 @@ const cssStyles = `
     .cr-hint { font-size: 13px; margin-top: 8px; }
     .cr-retry-btn { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
     .cr-pass-btn { padding: 12px 28px; font-size: 15px; border-radius: 24px; }
+    .cr-streak-overlay { padding: 28px 32px; margin-top: 20px; border-radius: 24px; }
+    .cr-streak-emoji { font-size: 52px; }
+    .cr-streak-unstoppable .cr-streak-emoji { font-size: 64px; }
+    .cr-streak-count { font-size: 26px; }
+    .cr-streak-unstoppable .cr-streak-count { font-size: 34px; }
+    .cr-streak-label { font-size: 18px; }
+    .cr-streak-unstoppable .cr-streak-label { font-size: 26px; }
+    .cr-streak-avatar { width: 72px; height: 72px; }
+    .cr-streak-unstoppable .cr-streak-avatar { width: 88px; height: 88px; }
+    .cr-streak-badge { font-size: 14px; padding: 4px 12px; }
   }
 `;

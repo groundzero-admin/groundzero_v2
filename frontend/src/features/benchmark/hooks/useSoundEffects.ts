@@ -49,16 +49,46 @@ function createChord(freqs: number[], duration: number): () => void {
   };
 }
 
+function createArpeggio(freqs: number[], noteDuration: number): () => void {
+  return () => {
+    try {
+      const ctx = new AudioContext();
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = VOLUME * 0.7;
+      masterGain.connect(ctx.destination);
+
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const g = ctx.createGain();
+        g.gain.value = 0;
+        g.gain.setValueAtTime(0, ctx.currentTime + i * noteDuration);
+        g.gain.linearRampToValueAtTime(0.4, ctx.currentTime + i * noteDuration + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (i + 1) * noteDuration);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(ctx.currentTime + i * noteDuration);
+        osc.stop(ctx.currentTime + (i + 1) * noteDuration + 0.1);
+      });
+
+      setTimeout(() => ctx.close(), (freqs.length * noteDuration + 0.5) * 1000);
+    } catch { /* audio not available */ }
+  };
+}
+
 export default function useSoundEffects() {
   const popFn = useRef(createTone(880, 0.12, "sine"));
   const whooshFn = useRef(createTone(440, 0.2, "triangle"));
   const cheerFn = useRef(createChord([523, 659, 784], 0.5));
   const completeFn = useRef(createChord([523, 659, 784, 1047], 0.8));
+  const streakFn = useRef(createArpeggio([523, 659, 784, 1047, 1319], 0.1));
 
   const playPop = useCallback(() => popFn.current(), []);
   const playWhoosh = useCallback(() => whooshFn.current(), []);
   const playCheer = useCallback(() => cheerFn.current(), []);
   const playComplete = useCallback(() => completeFn.current(), []);
+  const playStreak = useCallback(() => streakFn.current(), []);
 
-  return { playPop, playWhoosh, playCheer, playComplete };
+  return { playPop, playWhoosh, playCheer, playComplete, playStreak };
 }
