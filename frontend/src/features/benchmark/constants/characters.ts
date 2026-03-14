@@ -11,6 +11,7 @@ export interface Character {
   background: string;
   reactions: string[];
   milestoneReactions: Record<number, string>;
+  runVideo?: string;
 }
 
 export const PILLAR_ICONS: Record<string, string> = {
@@ -50,6 +51,7 @@ export const CHARACTERS: Character[] = [
       10: "Halfway there! You're flying through these! \u{1F3C6}",
       15: "Only 5 left! Nearly there, champion! \u{26A1}",
     },
+    runVideo: "/characters/harry_potter_run.mp4",
   },
   {
     id: "doraemon",
@@ -80,6 +82,7 @@ export const CHARACTERS: Character[] = [
       10: "Halfway! Time for a dorayaki break... just kidding! \u{1F369}",
       15: "Almost there! Only 5 more to go! \u{1F389}",
     },
+    runVideo: "/characters/doraemon_run.mp4",
   },
   {
     id: "peppa_pig",
@@ -110,6 +113,7 @@ export const CHARACTERS: Character[] = [
       10: "Halfway done! You're a superstar! \u{2B50}",
       15: "Nearly finished! Just 5 more, easy peasy! \u{1F37D}",
     },
+    runVideo: "/characters/peppa_pig_run.mp4",
   },
   {
     id: "simba",

@@ -7,7 +7,7 @@ import benchmarkApi, { type BenchmarkQuestion, getQuestionAudioUrl } from "../ap
 import useVoiceRecording from "../hooks/useVoiceRecording";
 import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
-import JourneyMap from "../components/JourneyMap";
+import AdventureMap from "../components/AdventureMap";
 import { CHARACTERS, type CharacterPose } from "../constants/characters";
 import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Pencil } from "lucide-react";
 
@@ -17,7 +17,7 @@ interface AnsweredQuestion {
   answerText: string;
 }
 
-type Phase = "loading" | "intro" | "speaking" | "answering" | "filler" | "feedback" | "retry_prompt" | "celebration";
+type Phase = "loading" | "intro" | "map" | "speaking" | "answering" | "filler" | "feedback" | "retry_prompt" | "celebration";
 
 const FILLER_MESSAGES = [
   "Alright, let me think about that for a moment...",
@@ -50,6 +50,8 @@ export default function ConversationRoomPage() {
   const [retryHint, setRetryHint] = useState<string | null>(null);
   const [showContinueBtn, setShowContinueBtn] = useState(false);
 
+  const [autoRunOnMap, setAutoRunOnMap] = useState(false);
+
   // Streak tracking
   const [streak, setStreak] = useState(0);
   const streakRef = useRef(0);
@@ -63,7 +65,7 @@ export default function ConversationRoomPage() {
   const { isRecording, liveTranscript, error: voiceError, startRecording, stopRecording } =
     useVoiceRecording();
 
-  const character = selectedCharacter || CHARACTERS[0];
+  const character = CHARACTERS.find((c) => c.id === selectedCharacter?.id) || selectedCharacter || CHARACTERS[0];
 
   const currentPose: CharacterPose = useMemo(() => {
     if (phase === "celebration") return "happy";
@@ -272,7 +274,7 @@ export default function ConversationRoomPage() {
 
   // ─── Trigger question speech on index change ───
   useEffect(() => {
-    if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration") return;
+    if (!currentQuestion || phase === "loading" || phase === "intro" || phase === "celebration" || phase === "map") return;
     setShowContinueBtn(false);
     setStreakDisplay(null);
     speakQuestion(currentQuestion.text, currentQuestion);
@@ -285,9 +287,13 @@ export default function ConversationRoomPage() {
   const handleStartQuestions = useCallback(() => {
     audioRef.current?.pause();
     clearInterval(introTimerRef.current);
-    if (currentQuestion) {
-      speakQuestion(currentQuestion.text, currentQuestion);
-    }
+    setPhase("map");
+  }, []);
+
+  const handleOpenQuestion = useCallback(() => {
+    if (!currentQuestion) return;
+    setAutoRunOnMap(false);
+    speakQuestion(currentQuestion.text, currentQuestion);
   }, [currentQuestion, speakQuestion]);
 
   // ─── Play feedback audio and show typed text ───
@@ -528,16 +534,18 @@ export default function ConversationRoomPage() {
     setRetryHint(null);
     streakRef.current = 0;
     setStreak(0);
-    setPhase("speaking");
     setCurrentIndex((i) => i + 1);
-  }, []);
+    setAutoRunOnMap(!!character.runVideo);
+    setPhase("map");
+  }, [character.runVideo]);
 
   const handleContinue = useCallback(() => {
     setShowContinueBtn(false);
     setStreakDisplay(null);
-    setPhase("speaking");
     setCurrentIndex((i) => i + 1);
-  }, []);
+    setAutoRunOnMap(!!character.runVideo);
+    setPhase("map");
+  }, [character.runVideo]);
 
   // ─── Loading ───
   if (phase === "loading") {
@@ -605,6 +613,22 @@ export default function ConversationRoomPage() {
     );
   }
 
+  // ─── Adventure Map ───
+  if (phase === "map") {
+    return (
+      <AdventureMap
+        questions={questions}
+        completed={answered.length}
+        current={currentIndex}
+        character={character}
+        avatarImage={character.poses?.idle || character.image}
+        onOpenQuestion={handleOpenQuestion}
+        studentName={student?.name || "Student"}
+        autoRun={autoRunOnMap}
+      />
+    );
+  }
+
   // ─── Celebration ───
   if (phase === "celebration") {
     return (
@@ -645,16 +669,20 @@ export default function ConversationRoomPage() {
         </div>
       </div>
 
-      {/* Journey Map */}
-      <div className="cr-journey">
-        <JourneyMap
-          total={totalQuestions}
-          completed={answered.length}
-          current={currentIndex}
-          color={character.color}
-          accent={character.accent}
-          avatarImage={avatarSrc}
-        />
+      {/* Progress bar (compact, replaces old journey map) */}
+      <div className="cr-progress-strip">
+        <div className="cr-progress-bar" style={{ backgroundColor: character.color + "25" }}>
+          <div
+            className="cr-progress-fill"
+            style={{
+              width: `${(answered.length / totalQuestions) * 100}%`,
+              backgroundColor: character.color,
+            }}
+          />
+        </div>
+        <span className="cr-progress-label" style={{ color: character.color }}>
+          Q{currentIndex + 1} of {totalQuestions}
+        </span>
       </div>
 
       {/* Main area */}
@@ -1083,8 +1111,26 @@ const cssStyles = `
     animation: crStreakPulse 1.5s ease-in-out infinite;
   }
 
-  /* ─── Journey ─── */
-  .cr-journey { background: rgba(255,255,255,0.25); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
+  /* ─── Progress strip ─── */
+  .cr-progress-strip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 14px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+  .cr-progress-bar {
+    flex: 1; height: 5px; border-radius: 3px; overflow: hidden;
+  }
+  .cr-progress-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 600ms ease;
+  }
+  .cr-progress-label {
+    font-size: 11px; font-weight: 800; font-family: 'Nunito', sans-serif;
+    white-space: nowrap; flex-shrink: 0;
+  }
 
   /* ─── Main ─── */
   .cr-main {
