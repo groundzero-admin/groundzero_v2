@@ -186,7 +186,13 @@ export default function AdventureMap({
     if (!autoRun || !hasRunVideo || current <= 0) return;
 
     const startAnim = () => {
-      const w = mapRef.current?.clientWidth || mapWidth;
+      const scrollEl = scrollRef.current;
+      const mapEl = mapRef.current;
+      if (!scrollEl || !mapEl) return;
+
+      const w = mapEl.clientWidth || mapWidth;
+      const viewW = scrollEl.clientWidth;
+      const viewH = scrollEl.clientHeight;
       const fromIdx = current - 1;
       const toIdx = current;
 
@@ -198,18 +204,19 @@ export default function AdventureMap({
       const toY = Y_START + toIdx * Y_SPACING;
       const my = (fromY + toY) / 2;
       const charTopOffset = ACTIVE_SIZE / 2 + 10 + CHAR_SIZE;
+      const ZOOM = 1.8;
 
       if (charRef.current) {
         charRef.current.style.left = `${fromX}px`;
         charRef.current.style.top = `${fromY - charTopOffset}px`;
         charRef.current.style.transition = "none";
       }
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({
-          top: Math.max(0, fromY - scrollRef.current.clientHeight / 2),
-          behavior: "auto",
-        });
-      }
+
+      scrollEl.scrollTop = 0;
+      scrollEl.style.overflow = "hidden";
+      mapEl.style.transformOrigin = "0 0";
+      const charCY = fromY - charTopOffset + CHAR_SIZE / 2;
+      mapEl.style.transform = `translate(${viewW / 2 - fromX * ZOOM}px, ${viewH / 2 - charCY * ZOOM}px) scale(${ZOOM})`;
 
       setIsRunning(true);
 
@@ -239,18 +246,27 @@ export default function AdventureMap({
             charRef.current.style.top = `${y - charTopOffset}px`;
           }
 
-          if (scrollRef.current) {
-            scrollRef.current.scrollTo({
-              top: Math.max(0, y - scrollRef.current.clientHeight / 2),
-              behavior: "auto",
-            });
-          }
+          const ccy = y - charTopOffset + CHAR_SIZE / 2;
+          mapEl.style.transform = `translate(${viewW / 2 - x * ZOOM}px, ${viewH / 2 - ccy * ZOOM}px) scale(${ZOOM})`;
 
           if (t < 1) {
             runAnimRef.current = requestAnimationFrame(animate);
           } else {
-            setIsRunning(false);
-            runDelayRef.current = setTimeout(() => onOpenQuestion(), 400);
+            const scrollTarget = Math.max(0, toY - viewH / 2);
+            mapEl.style.transition = "transform 0.5s ease-out";
+            mapEl.style.transform = `translate(0px, ${-scrollTarget}px) scale(1)`;
+
+            const onZoomOut = () => {
+              mapEl.removeEventListener("transitionend", onZoomOut);
+              mapEl.style.transition = "";
+              mapEl.style.transform = "";
+              mapEl.style.transformOrigin = "";
+              scrollEl.style.overflow = "";
+              scrollEl.scrollTop = scrollTarget;
+              setIsRunning(false);
+              runDelayRef.current = setTimeout(() => onOpenQuestion(), 300);
+            };
+            mapEl.addEventListener("transitionend", onZoomOut, { once: true });
           }
         };
 
