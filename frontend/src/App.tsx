@@ -35,6 +35,7 @@ import CohortListPage from "@/pages/admin/LiveBatchListPage";
 import CohortDetailPage from "@/pages/admin/LiveBatchDetailPage";
 import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
 import LiveClassPage from "@/pages/admin/LiveClassPage";
+import QuestionTemplatesPage from "@/pages/admin/QuestionTemplatesPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,7 +49,8 @@ const queryClient = new QueryClient({
 
 /** Requires a linked studentId before showing child content */
 function RequireStudent({ children }: { children: React.ReactNode }) {
-  const { studentId } = useStudent();
+  const { studentId, isLoading } = useStudent();
+  if (isLoading) return null;
   if (!studentId) return <Navigate to="/home" replace />;
   return <>{children}</>;
 }
@@ -200,6 +202,7 @@ export default function App() {
                 <Route path="/admin/cohorts" element={<CohortListPage />} />
                 <Route path="/admin/cohorts/:id" element={<CohortDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
+                <Route path="/admin/question-templates" element={<QuestionTemplatesPage />} />
               </Route>
 
               {/* ── Live Class (full-screen, no shell) — admin can also teach ── */}

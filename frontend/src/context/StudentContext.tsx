@@ -11,6 +11,7 @@ import { api } from "@/api/client";
 
 interface StudentContextValue {
   studentId: string | null;
+  isLoading: boolean;
   setStudentId: (id: string) => void;
   clearStudent: () => void;
 }
@@ -20,16 +21,19 @@ const StudentContext = createContext<StudentContextValue | null>(null);
 export function StudentProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [studentId, setStudentIdState] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // When a student user logs in, fetch their linked Student record
   useEffect(() => {
     if (user?.role === "student") {
+      setIsLoading(true);
       api
         .get("/auth/me/student")
         .then(({ data }) => setStudentIdState(data.id))
-        .catch(() => setStudentIdState(null));
+        .catch(() => setStudentIdState(null))
+        .finally(() => setIsLoading(false));
     } else {
       setStudentIdState(null);
+      setIsLoading(false);
     }
   }, [user]);
 
@@ -42,7 +46,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <StudentContext.Provider value={{ studentId, setStudentId, clearStudent }}>
+    <StudentContext.Provider value={{ studentId, isLoading, setStudentId, clearStudent }}>
       {children}
     </StudentContext.Provider>
   );

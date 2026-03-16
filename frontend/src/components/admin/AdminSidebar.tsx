@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router";
-import { LayoutTemplate, Rocket, Users, MonitorPlay } from "lucide-react";
+import { LayoutTemplate, Rocket, Users, MonitorPlay, Puzzle } from "lucide-react";
 import * as s from "./AdminSidebar.css";
 
 const NAV_ITEMS = [
     { label: "Sessions", path: "/teacher", icon: MonitorPlay },
     { label: "Templates", path: "/admin/templates", icon: LayoutTemplate },
+    { label: "Question Patterns", path: "/admin/question-templates", icon: Puzzle },
     { label: "Cohorts", path: "/admin/cohorts", icon: Rocket },
     { label: "All Students", path: "/admin/students", icon: Users },
 ];

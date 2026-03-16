@@ -6,6 +6,7 @@ import type {
     Cohort,
     CohortWithSessions,
     CohortSession,
+    QuestionTemplate,
 } from "@/api/types/admin";
 
 // ──────────────── Template hooks ────────────────
@@ -138,3 +139,32 @@ export function useUpdateCohortSession() {
 
 // Keep old name as alias
 export const useLiveBatches = useCohorts;
+
+// ──────────────── Question Template hooks ────────────────
+
+export function useQuestionTemplates() {
+    return useQuery<QuestionTemplate[]>({
+        queryKey: ["question-templates"],
+        queryFn: () => api.get("/admin/question-templates").then((r) => r.data),
+    });
+}
+
+export function useQuestionTemplate(id: string | undefined) {
+    return useQuery<QuestionTemplate>({
+        queryKey: ["question-templates", id],
+        queryFn: () => api.get(`/admin/question-templates/${id}`).then((r) => r.data),
+        enabled: !!id,
+    });
+}
+
+export function useUpdateQuestionTemplate() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: { id: string } & Partial<QuestionTemplate>) =>
+            api.put<QuestionTemplate>(`/admin/question-templates/${id}`, data).then((r) => r.data),
+        onSuccess: (_data, vars) => {
+            qc.invalidateQueries({ queryKey: ["question-templates"] });
+            qc.invalidateQueries({ queryKey: ["question-templates", vars.id] });
+        },
+    });
+}

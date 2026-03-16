@@ -10,6 +10,31 @@ export interface Template {
     updated_at: string;
 }
 
+export interface InputField {
+    key: string;
+    type: string;
+    label: string;
+    required: boolean;
+    options?: string[];
+}
+
+export interface QuestionTemplate {
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    example_use_cases: string;
+    frontend_component: string;
+    icon: string;
+    scorable: boolean;
+    input_schema: { fields: InputField[] };
+    llm_prompt_template: string;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface Cohort {
     id: string;
     name: string;
