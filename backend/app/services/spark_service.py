@@ -1,52 +1,142 @@
-"""SPARK service — orchestrates agent invocation + DB persistence."""
+"""SPARK service — direct LLM invocation (no DeepAgent graph)."""
 
 import logging
 import uuid
 from datetime import datetime
 
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agent.spark_agent import create_hint_agent, create_spark_agent, get_checkpointer, invoke_spark
 from app.models.spark import SparkConversation, SparkMessage
 from app.schemas.spark import SparkConversationCreate, SparkHintRequest
+from app.config import settings
 
 logger = logging.getLogger("spark")
 
-# Module-level cache for agents + checkpointer
-_agent = None
-_hint_agent = None
-_checkpointer = None
+SYSTEM_PROMPT = """\
+You are SPARK, a warm and curious AI learning companion for students aged 9-15.
+
+Your job right now: give the student a HINT — a nudge that helps them think, NOT the answer.
+
+Rules:
+- Never reveal the correct answer directly
+- Ask one guiding question or give one small clue
+- Use simple, friendly language
+- Keep your response SHORT (2-4 sentences max)
+- If the student seems frustrated, be extra encouraging
+- Emoji use is encouraged but keep it light (1-2 max)
+"""
 
 
-async def _get_agent():
-    """Lazy-init the SPARK diagnosis agent (reused across requests)."""
-    global _agent, _checkpointer
-    if _agent is None:
-        logger.info("SPARK: creating checkpointer...")
-        _checkpointer = await get_checkpointer()
-        logger.info("SPARK: creating agent...")
-        _agent = await create_spark_agent(_checkpointer)
-        logger.info("SPARK: agent ready")
-    return _agent
+def _get_llm() -> ChatOpenAI:
+    return ChatOpenAI(
+        model=settings.SPARK_MODEL,
+        api_key=settings.SPARK_API_KEY,
+        base_url=settings.SPARK_BASE_URL,
+        timeout=30,
+        max_retries=1,
+    )
 
 
-async def _get_hint_agent():
-    """Lazy-init the SPARK hint agent (reused across requests)."""
-    global _hint_agent, _checkpointer
-    if _hint_agent is None:
-        if _checkpointer is None:
-            _checkpointer = await get_checkpointer()
-        _hint_agent = await create_hint_agent(_checkpointer)
-    return _hint_agent
+async def _fetch_question_context(db: AsyncSession, question_id: uuid.UUID | None) -> str:
+    """Fetch question text and options from DB to include in the prompt."""
+    if not question_id:
+        return ""
+    from app.models.curriculum import Question
+    from app.models.competency import Competency
+    q = await db.get(Question, question_id)
+    if not q:
+        return ""
+    options_txt = "\n".join(
+        f"  {'✓' if o.get('is_correct') else '•'} {o['label']}: {o['text']}"
+        for o in (q.options or [])
+    )
+    comp = await db.get(Competency, q.competency_id) if q.competency_id else None
+    comp_name = comp.name if comp else str(q.competency_id)
+    return f"Question: {q.text}\nOptions:\n{options_txt}\nSkill: {comp_name}"
 
+
+async def _fetch_student_name(db: AsyncSession, student_id: uuid.UUID) -> str:
+    from app.models.student import Student
+    s = await db.get(Student, student_id)
+    return s.name.split()[0] if s and s.name else "there"
+
+
+async def _build_opening_message(
+    db: AsyncSession,
+    data: SparkConversationCreate,
+) -> str:
+    """Ask LLM to generate SPARK's opening hint message."""
+    q_ctx = await _fetch_question_context(db, data.question_id)
+    student_name = await _fetch_student_name(db, data.student_id)
+
+    user_content_parts = [f"Student name: {student_name}"]
+    if data.trigger:
+        user_content_parts.append(f"Trigger: {data.trigger}")
+    if data.selected_option:
+        user_content_parts.append(f"Student selected: {data.selected_option}")
+    if q_ctx:
+        user_content_parts.append(q_ctx)
+    user_content_parts.append(
+        "\nPlease give a warm opening hint to help the student think through this."
+    )
+
+    llm = _get_llm()
+    try:
+        resp = await llm.ainvoke([
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content="\n".join(user_content_parts)),
+        ])
+        return resp.content or "Hey! Let me help you think through this. What part felt tricky? 🤔"
+    except Exception as e:
+        logger.error(f"SPARK opening message error: {e}")
+        return f"Hey {student_name}! Let me help you think through this. What part felt confusing? 🤔"
+
+
+async def _build_turn_response(
+    db: AsyncSession,
+    conv: SparkConversation,
+    history: list[SparkMessage],
+    student_message: str,
+) -> str:
+    """Ask LLM to continue the conversation."""
+    q_ctx = await _fetch_question_context(db, conv.question_id)
+
+    messages: list = [SystemMessage(content=SYSTEM_PROMPT)]
+
+    # Add question context as first assistant note
+    if q_ctx:
+        messages.append(HumanMessage(content=f"[Context for this conversation]\n{q_ctx}"))
+        messages.append(AIMessage(content="Got it, I'll use this to guide my hints."))
+
+    # Add conversation history
+    for msg in history:
+        if msg.role == "spark":
+            messages.append(AIMessage(content=msg.content))
+        else:
+            messages.append(HumanMessage(content=msg.content))
+
+    # Add current student message
+    messages.append(HumanMessage(content=student_message))
+
+    llm = _get_llm()
+    try:
+        resp = await llm.ainvoke(messages)
+        return resp.content or "Hmm, interesting thinking! Can you tell me more about why you chose that? 🧐"
+    except Exception as e:
+        logger.error(f"SPARK turn error: {e}")
+        return "I had a small issue — but I'm here! Can you tell me what you were thinking? 😊"
+
+
+# ── Public service functions ──
 
 async def start_conversation(
     db: AsyncSession,
     data: SparkConversationCreate,
 ) -> tuple[SparkConversation, SparkMessage]:
-    """Create a conversation and get SPARK's opening message."""
-    # 1. Create conversation record
+    """Create a conversation and get SPARK's opening hint message."""
     conv = SparkConversation(
         student_id=data.student_id,
         question_id=data.question_id,
@@ -57,19 +147,8 @@ async def start_conversation(
     db.add(conv)
     await db.flush()
 
-    # 2. Invoke agent for first turn (no student message — agent opens)
-    agent = await _get_agent()
-    context = {
-        "trigger": data.trigger,
-        "question_id": str(data.question_id) if data.question_id else None,
-        "selected_option": data.selected_option,
-        "confidence_report": data.confidence_report,
-        "competency_id": data.competency_id,
-        "student_id": str(data.student_id),
-    }
-    response_text = await invoke_spark(agent, thread_id=str(conv.id), context=context)
+    response_text = await _build_opening_message(db, data)
 
-    # 3. Save SPARK's opening message
     msg = SparkMessage(
         conversation_id=conv.id,
         role="spark",
@@ -79,7 +158,6 @@ async def start_conversation(
     await db.commit()
     await db.refresh(conv)
     await db.refresh(msg)
-
     return conv, msg
 
 
@@ -88,16 +166,20 @@ async def process_turn(
     conversation_id: uuid.UUID,
     student_message: str,
 ) -> tuple[SparkMessage, bool, bool]:
-    """Process a student message and return SPARK's response.
-
-    Returns: (spark_message, evidence_submitted, is_complete)
-    """
-    # 1. Verify conversation exists and is active
+    """Process a student message and return SPARK's response."""
     conv = await db.get(SparkConversation, conversation_id)
     if not conv or conv.status != "active":
         raise ValueError("Conversation not found or already ended")
 
-    # 2. Save student message
+    # Load history
+    hist_result = await db.execute(
+        select(SparkMessage)
+        .where(SparkMessage.conversation_id == conversation_id)
+        .order_by(SparkMessage.created_at)
+    )
+    history = list(hist_result.scalars().all())
+
+    # Save student message
     student_msg = SparkMessage(
         conversation_id=conversation_id,
         role="student",
@@ -106,11 +188,8 @@ async def process_turn(
     db.add(student_msg)
     await db.flush()
 
-    # 3. Invoke agent (resumes from checkpoint)
-    agent = await _get_agent()
-    response_text = await invoke_spark(agent, thread_id=str(conversation_id), message=student_message)
+    response_text = await _build_turn_response(db, conv, history, student_message)
 
-    # 4. Save SPARK's response
     spark_msg = SparkMessage(
         conversation_id=conversation_id,
         role="spark",
@@ -118,29 +197,9 @@ async def process_turn(
     )
     db.add(spark_msg)
 
-    # 5. Check if evidence was submitted by querying for llm_spark evidence
-    #    created during this conversation's lifetime
-    from app.models.evidence import EvidenceEvent
-    ev_result = await db.execute(
-        select(EvidenceEvent).where(
-            EvidenceEvent.student_id == conv.student_id,
-            EvidenceEvent.source == "llm_spark",
-            EvidenceEvent.created_at >= conv.created_at,
-        )
-    )
-    evidence_submitted = len(ev_result.scalars().all()) > 0
-    if evidence_submitted:
-        conv.evidence_submitted = True
-
-    # Count messages to check if we've hit max turns
-    msg_count_result = await db.execute(
-        select(SparkMessage).where(SparkMessage.conversation_id == conversation_id)
-    )
-    total_messages = len(msg_count_result.scalars().all()) + 2  # + student + spark this turn
-
-    # Auto-complete after max turns (~4 exchanges)
-    max_msg = 10
-    is_complete = total_messages >= max_msg or conv.evidence_submitted
+    total_messages = len(history) + 2  # student + spark this turn
+    max_msg = settings.SPARK_MAX_TURNS * 2
+    is_complete = total_messages >= max_msg
 
     if is_complete:
         conv.status = "completed"
@@ -148,76 +207,66 @@ async def process_turn(
 
     await db.commit()
     await db.refresh(spark_msg)
-
-    return spark_msg, conv.evidence_submitted, is_complete
+    return spark_msg, False, is_complete
 
 
 async def end_conversation(
     db: AsyncSession,
     conversation_id: uuid.UUID,
 ) -> SparkMessage:
-    """End a conversation. Agent wraps up."""
+    """End a conversation with an encouraging closing message."""
     conv = await db.get(SparkConversation, conversation_id)
     if not conv:
         raise ValueError("Conversation not found")
 
-    # Invoke agent with a wrap-up prompt
-    agent = await _get_agent()
-    response_text = await invoke_spark(
-        agent,
-        thread_id=str(conversation_id),
-        message="[The student is leaving. Wrap up with a short encouraging message. If you haven't submitted evidence yet and have enough information, do so now.]",
-    )
+    llm = _get_llm()
+    try:
+        resp = await llm.ainvoke([
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content="The student is leaving. Give a short, warm, encouraging closing message (1-2 sentences)."),
+        ])
+        closing = resp.content or "Great effort today! Keep thinking — you're getting there! ⭐"
+    except Exception:
+        closing = "Great effort! Keep at it — you're making progress! ⭐"
 
-    # Save message and close
     spark_msg = SparkMessage(
         conversation_id=conversation_id,
         role="spark",
-        content=response_text,
+        content=closing,
     )
     db.add(spark_msg)
-
     conv.status = "completed"
     conv.ended_at = datetime.utcnow()
-
     await db.commit()
     await db.refresh(spark_msg)
-
     return spark_msg
 
 
-async def generate_hint(
-    db: AsyncSession,
-    data: SparkHintRequest,
-) -> str:
-    """One-shot hint generation. Uses dedicated hint agent (spark_hint feature)."""
-    agent = await _get_hint_agent()
-
-    # Use a random thread_id (no persistence needed for hints)
-    thread_id = str(uuid.uuid4())
-    context = {
-        "trigger": "hint_request",
-        "question_id": str(data.question_id),
-        "student_id": str(data.student_id),
-    }
-    hint_text = await invoke_spark(agent, thread_id=thread_id, context=context)
-    return hint_text
+async def generate_hint(db: AsyncSession, data: SparkHintRequest) -> str:
+    """One-shot hint generation."""
+    q_ctx = await _fetch_question_context(db, data.question_id)
+    llm = _get_llm()
+    try:
+        resp = await llm.ainvoke([
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(content=f"Give a short hint for this question:\n{q_ctx}"),
+        ])
+        return resp.content or "Think carefully about what each option is really saying! 🤔"
+    except Exception as e:
+        logger.error(f"SPARK hint error: {e}")
+        return "Think about it step by step — what does each option really mean? 💭"
 
 
 async def get_conversation_detail(
     db: AsyncSession,
     conversation_id: uuid.UUID,
 ) -> tuple[SparkConversation, list[SparkMessage]]:
-    """Get conversation with all messages."""
     conv = await db.get(SparkConversation, conversation_id)
     if not conv:
         raise ValueError("Conversation not found")
-
     result = await db.execute(
         select(SparkMessage)
         .where(SparkMessage.conversation_id == conversation_id)
         .order_by(SparkMessage.created_at)
     )
-    messages = list(result.scalars().all())
-
-    return conv, messages
+    return conv, list(result.scalars().all())

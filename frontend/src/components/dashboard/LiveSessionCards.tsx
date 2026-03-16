@@ -27,10 +27,16 @@ function useMyLiveSessions() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get("/students/me/live-sessions")
-            .then(({ data }) => setSessions(data))
-            .catch(() => setSessions([]))
-            .finally(() => setLoading(false));
+        let active = true;
+        const fetchSessions = () => {
+            api.get("/students/me/live-sessions")
+                .then(({ data }) => { if (active) setSessions(data); })
+                .catch(() => { if (active) setSessions([]); })
+                .finally(() => { if (active) setLoading(false); });
+        };
+        fetchSessions();
+        const interval = setInterval(fetchSessions, 10_000); // poll every 10s
+        return () => { active = false; clearInterval(interval); };
     }, []);
 
     return { sessions, loading };

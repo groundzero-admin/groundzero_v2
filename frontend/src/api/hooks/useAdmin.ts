@@ -42,6 +42,7 @@ export function useUpdateTemplate() {
         onSuccess: (_data, vars) => {
             qc.invalidateQueries({ queryKey: ["templates"] });
             qc.invalidateQueries({ queryKey: ["templates", vars.id] });
+            qc.invalidateQueries({ queryKey: ["cohorts"] });  // sync template changes to sessions
         },
     });
 }
@@ -100,12 +101,18 @@ export function useDeleteCohort() {
     });
 }
 
+export interface ImportTemplateItem {
+    template_id: string;
+    scheduled_at?: string;
+    teacher_id?: string;
+}
+
 export function useImportTemplates() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ cohortId, templateIds }: { cohortId: string; templateIds: string[] }) =>
+        mutationFn: ({ cohortId, items }: { cohortId: string; items: ImportTemplateItem[] }) =>
             api
-                .post<CohortSession[]>(`/cohorts/${cohortId}/import-templates`, templateIds)
+                .post<CohortSession[]>(`/cohorts/${cohortId}/import-templates`, items)
                 .then((r) => r.data),
         onSuccess: (_data, vars) =>
             qc.invalidateQueries({ queryKey: ["cohorts", vars.cohortId] }),

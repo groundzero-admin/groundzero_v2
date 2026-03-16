@@ -14,7 +14,7 @@ from app.auth import require_role
 from app.database import get_db
 from app.models.curriculum import Activity
 from app.models.evidence import EvidenceEvent
-from app.models.session import Cohort, FacilitatorNote, Session, SessionActivity
+from app.models.session import Cohort, FacilitatorNote, LiveRoom, Session, SessionActivity
 from app.models.user import User
 from app.schemas.session import (
     FacilitatorNoteCreate,
@@ -225,7 +225,7 @@ async def launch_activity(
     if session.ended_at:
         raise HTTPException(status_code=400, detail="Session already ended")
 
-    # Mark any currently active SessionActivity as completed
+    # Pause any currently active SessionActivity
     sa_result = await db.execute(
         select(SessionActivity).where(
             SessionActivity.session_id == session_id,
@@ -233,7 +233,7 @@ async def launch_activity(
         )
     )
     for sa in sa_result.scalars().all():
-        sa.status = "completed"
+        sa.status = "paused"
 
     # Mark target activity as active
     target_result = await db.execute(
@@ -271,23 +271,114 @@ async def end_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db),
         raise HTTPException(status_code=400, detail="Session already ended")
 
     session.ended_at = datetime.utcnow()
+    session.current_activity_id = None
 
-    # Mark all remaining active/pending SessionActivities as completed
+    # Pause any currently active activities (don't complete them)
     sa_result = await db.execute(
         select(SessionActivity).where(
             SessionActivity.session_id == session_id,
-            SessionActivity.status.in_(["pending", "active"]),
+            SessionActivity.status == "active",
+        )
+    )
+    for sa in sa_result.scalars().all():
+        sa.status = "paused"
+
+    await db.commit()
+    await db.refresh(session)
+    return session
+
+
+@router.post(
+    "/{session_id}/restart",
+    response_model=SessionOut,
+    summary="Restart an ended session",
+    description="Clears ended_at so the session can be used again. Does not change activity statuses.",
+)
+async def restart_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("teacher", "admin"))):
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if not session.ended_at:
+        raise HTTPException(status_code=400, detail="Session is not ended")
+
+    session.ended_at = None
+    session.started_at = datetime.utcnow()
+
+    # Re-enable HMS room so room codes work again
+    room_result = await db.execute(select(LiveRoom).where(LiveRoom.session_id == session_id))
+    room = room_result.scalar_one_or_none()
+    if room:
+        room.is_live = True
+
+    await db.commit()
+    await db.refresh(session)
+    return session
+
+
+@router.post(
+    "/{session_id}/mark-done",
+    response_model=SessionOut,
+    summary="Mark session as completed/done",
+    description="Finalizes the session: marks all activities as completed and advances the cohort.",
+)
+async def mark_session_done(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("teacher", "admin"))):
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Ensure it is ended first
+    if not session.ended_at:
+        session.ended_at = datetime.utcnow()
+
+    session.current_activity_id = None
+
+    # Mark ALL activities as completed
+    sa_result = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.status.in_(["pending", "active", "paused"]),
         )
     )
     for sa in sa_result.scalars().all():
         sa.status = "completed"
 
-    # Auto-advance cohort's current_session_number
+    # Auto-advance cohort
     if session.cohort_id:
         cohort_result = await db.execute(select(Cohort).where(Cohort.id == session.cohort_id))
         cohort = cohort_result.scalar_one_or_none()
         if cohort and cohort.current_session_number < MAX_SESSION_NUMBER:
             cohort.current_session_number += 1
+
+    await db.commit()
+    await db.refresh(session)
+    return session
+
+
+@router.put(
+    "/{session_id}/pause-activity",
+    response_model=SessionOut,
+    summary="Pause the currently active activity",
+    description="Pauses the active activity without launching a new one.",
+)
+async def pause_activity(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("teacher", "admin"))):
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Pause the currently active activity
+    sa_result = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.status == "active",
+        )
+    )
+    for sa in sa_result.scalars().all():
+        sa.status = "paused"
+
+    session.current_activity_id = None
 
     await db.commit()
     await db.refresh(session)

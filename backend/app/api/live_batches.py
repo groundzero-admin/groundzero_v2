@@ -117,7 +117,7 @@ async def list_teachers(
     _admin: User = Depends(require_role("admin")),
 ):
     result = await db.execute(
-        select(User).where(User.role == "teacher").order_by(User.full_name)
+        select(User).where(User.role.in_(["teacher", "admin"])).order_by(User.full_name)
     )
     return [
         {"id": str(u.id), "full_name": u.full_name, "email": u.email}
@@ -208,15 +208,21 @@ async def delete_cohort(
 
 # ── Import templates into cohort ──
 
+class ImportTemplateItem(BaseModel):
+    template_id: str
+    scheduled_at: str | None = None
+    teacher_id: str | None = None
+
+
 @router.post(
     "/{cohort_id}/import-templates",
     response_model=list[SessionOut],
     summary="Import templates as sessions into a cohort",
-    description="Each template becomes a session. Activities from the template are copied into session_activities.",
+    description="Each template becomes a session. Activities from the template are copied into session_activities. Optionally assign scheduled_at and teacher_id per template.",
 )
 async def import_templates(
     cohort_id: uuid.UUID,
-    template_ids: list[str],
+    items: list[ImportTemplateItem],
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_role("admin")),
 ):
@@ -242,8 +248,8 @@ async def import_templates(
     )
     existing_ids = {row for row in existing_result.scalars().all()}
 
-    for tid_str in template_ids:
-        tid = uuid.UUID(tid_str)
+    for item in items:
+        tid = uuid.UUID(item.template_id)
         if tid in existing_ids:
             continue
 
@@ -252,12 +258,26 @@ async def import_templates(
             continue
 
         max_order += 1
+
+        # Parse scheduled_at if provided
+        from datetime import datetime as dt
+        sched = None
+        if item.scheduled_at:
+            try:
+                sched = dt.fromisoformat(item.scheduled_at)
+            except ValueError:
+                pass
+
+        t_id = uuid.UUID(item.teacher_id) if item.teacher_id else None
+
         sess = Session(
             cohort_id=cohort_id,
             template_id=tid,
             title=template.title,
             description=template.description,
             order=max_order,
+            scheduled_at=sched,
+            teacher_id=t_id,
         )
         db.add(sess)
         await db.flush()
@@ -308,6 +328,17 @@ async def update_session(
 
     updates = data.model_dump(exclude_unset=True)
     if updates:
+        # Parse scheduled_at string → datetime
+        if "scheduled_at" in updates and updates["scheduled_at"]:
+            from datetime import datetime as dt
+            try:
+                updates["scheduled_at"] = dt.fromisoformat(updates["scheduled_at"])
+            except (ValueError, TypeError):
+                pass
+        # Parse teacher_id string → UUID
+        if "teacher_id" in updates and updates["teacher_id"]:
+            updates["teacher_id"] = uuid.UUID(updates["teacher_id"])
+
         for field, value in updates.items():
             setattr(session, field, value)
         await db.commit()

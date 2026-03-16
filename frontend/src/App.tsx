@@ -34,6 +34,8 @@ import TemplateListPage from "@/pages/admin/TemplateCohortListPage";
 import CohortListPage from "@/pages/admin/LiveBatchListPage";
 import CohortDetailPage from "@/pages/admin/LiveBatchDetailPage";
 import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
+import AdminActivitiesPage from "@/pages/admin/AdminActivitiesPage";
+import AdminQuestionsPage from "@/pages/admin/AdminQuestionsPage";
 import LiveClassPage from "@/pages/admin/LiveClassPage";
 
 const queryClient = new QueryClient({
@@ -77,7 +79,7 @@ export default function App() {
               <Route path="/graph" element={<SkillGraphPage />} />
               <Route path="/invite/:token" element={<SetPasswordPage />} />
 
-              {/* ── Student routes ── */}
+              {/* ── Student routes (with shell / navbar) ── */}
               <Route
                 element={
                   <RequireAuth allowedRoles={["student"]}>
@@ -89,9 +91,30 @@ export default function App() {
               >
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/live" element={<LivePage />} />
                 <Route path="/practice" element={<PracticePage />} />
               </Route>
+
+              {/* ── Student Live Class — fullscreen (no AppShell padding) ── */}
+              <Route
+                path="/live"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <LivePage />
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/student/live-class"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <LivePage />
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              />
 
               <Route
                 element={
@@ -197,6 +220,8 @@ export default function App() {
               >
                 <Route path="/admin" element={<Navigate to="/admin/cohorts" replace />} />
                 <Route path="/admin/templates" element={<TemplateListPage />} />
+                <Route path="/admin/activities" element={<AdminActivitiesPage />} />
+                <Route path="/admin/questions" element={<AdminQuestionsPage />} />
                 <Route path="/admin/cohorts" element={<CohortListPage />} />
                 <Route path="/admin/cohorts/:id" element={<CohortDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
@@ -211,6 +236,9 @@ export default function App() {
                   </RequireAuth>
                 }
               />
+
+
+
 
               {/* ── Root redirect ── */}
               <Route path="/" element={<RootRedirect />} />

@@ -7,6 +7,7 @@ import {
     useImportTemplates,
     useUpdateCohortSession,
 } from "@/api/hooks/useAdmin";
+import type { ImportTemplateItem } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
 import type { CohortSession } from "@/api/types/admin";
 import { ArrowLeft, Download, Pencil, Link2, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -59,7 +60,7 @@ export default function CohortDetailPage() {
 
     // Session modals
     const [showImportModal, setShowImportModal] = useState(false);
-    const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
+    const [importItems, setImportItems] = useState<Map<string, { scheduled_at: string; teacher_id: string }>>(new Map());
     const [editingSession, setEditingSession] = useState<CohortSession | null>(null);
     const [formTitle, setFormTitle] = useState("");
     const [formDesc, setFormDesc] = useState("");
@@ -107,18 +108,34 @@ export default function CohortDetailPage() {
     const importedTemplateIds = new Set(cohort?.sessions.map(s => s.template_id).filter(Boolean));
 
     function toggleTemplate(tid: string) {
-        setSelectedTemplateIds(prev => {
-            const next = new Set(prev);
+        setImportItems(prev => {
+            const next = new Map(prev);
             if (next.has(tid)) next.delete(tid);
-            else next.add(tid);
+            else next.set(tid, { scheduled_at: "", teacher_id: "" });
+            return next;
+        });
+    }
+
+    function updateImportItem(tid: string, field: "scheduled_at" | "teacher_id", value: string) {
+        setImportItems(prev => {
+            const next = new Map(prev);
+            const item = next.get(tid);
+            if (item) {
+                next.set(tid, { ...item, [field]: value });
+            }
             return next;
         });
     }
 
     async function handleImport() {
-        if (!id || selectedTemplateIds.size === 0) return;
-        await importTemplates.mutateAsync({ cohortId: id, templateIds: Array.from(selectedTemplateIds) });
-        setSelectedTemplateIds(new Set());
+        if (!id || importItems.size === 0) return;
+        const items: ImportTemplateItem[] = Array.from(importItems.entries()).map(([tid, config]) => ({
+            template_id: tid,
+            scheduled_at: config.scheduled_at || undefined,
+            teacher_id: config.teacher_id || undefined,
+        }));
+        await importTemplates.mutateAsync({ cohortId: id, items });
+        setImportItems(new Map());
         setShowImportModal(false);
     }
 
@@ -305,33 +322,61 @@ export default function CohortDetailPage() {
             {/* ── Import Templates Modal ── */}
             {showImportModal && (
                 <div className={s.overlay} onClick={() => setShowImportModal(false)}>
-                    <div className={s.modal} onClick={(e) => e.stopPropagation()}>
+                    <div className={s.modal} style={{ maxWidth: 600 }} onClick={(e) => e.stopPropagation()}>
                         <h2 className={s.modalTitle}>Import Templates</h2>
                         <p className={s.subtitle} style={{ marginBottom: 16 }}>
-                            Select templates to import as sessions. Each template becomes one session.
+                            Select templates, assign a schedule and teacher for each.
                         </p>
                         {!templates?.length && <p className={s.emptyState}>No templates available.</p>}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 400, overflowY: "auto" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 450, overflowY: "auto" }}>
                             {templates?.map((t) => {
                                 const alreadyImported = importedTemplateIds.has(t.id);
-                                const selected = selectedTemplateIds.has(t.id);
+                                const selected = importItems.has(t.id);
+                                const config = importItems.get(t.id);
                                 return (
-                                    <button
-                                        key={t.id}
-                                        className={s.templatePickerCard}
-                                        style={{
-                                            opacity: alreadyImported ? 0.5 : 1,
-                                            border: selected ? "2px solid var(--color-primary, #6366f1)" : undefined,
-                                        }}
-                                        onClick={() => !alreadyImported && toggleTemplate(t.id)}
-                                        disabled={alreadyImported}
-                                    >
-                                        <div className={s.cardTitle} style={{ fontSize: 14 }}>{t.title}</div>
-                                        <div className={s.cardMeta}>
-                                            {t.activities.length} activities
-                                            {alreadyImported && " · Already imported"}
-                                        </div>
-                                    </button>
+                                    <div key={t.id} style={{ opacity: alreadyImported ? 0.5 : 1 }}>
+                                        <button
+                                            className={s.templatePickerCard}
+                                            style={{
+                                                border: selected ? "2px solid var(--color-primary, #6366f1)" : undefined,
+                                                width: "100%",
+                                            }}
+                                            onClick={() => !alreadyImported && toggleTemplate(t.id)}
+                                            disabled={alreadyImported}
+                                        >
+                                            <div className={s.cardTitle} style={{ fontSize: 14 }}>{t.title}</div>
+                                            <div className={s.cardMeta}>
+                                                {t.activities.length} activities
+                                                {alreadyImported && " · Already imported"}
+                                            </div>
+                                        </button>
+                                        {selected && config && (
+                                            <div style={{ display: "flex", gap: 8, padding: "8px 4px", flexWrap: "wrap" }}>
+                                                <div style={{ flex: 1, minWidth: 180 }}>
+                                                    <label className={s.label} style={{ fontSize: 11 }}>Scheduled Date & Time</label>
+                                                    <input
+                                                        className={s.input}
+                                                        type="datetime-local"
+                                                        value={config.scheduled_at}
+                                                        onChange={(e) => updateImportItem(t.id, "scheduled_at", e.target.value)}
+                                                    />
+                                                </div>
+                                                <div style={{ flex: 1, minWidth: 180 }}>
+                                                    <label className={s.label} style={{ fontSize: 11 }}>Assign Teacher</label>
+                                                    <select
+                                                        className={s.select}
+                                                        value={config.teacher_id}
+                                                        onChange={(e) => updateImportItem(t.id, "teacher_id", e.target.value)}
+                                                    >
+                                                        <option value="">-- No teacher --</option>
+                                                        {teachers?.map(tc => (
+                                                            <option key={tc.id} value={tc.id}>{tc.full_name} ({tc.email})</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>
@@ -340,9 +385,9 @@ export default function CohortDetailPage() {
                             <button
                                 className={s.submitBtn}
                                 onClick={handleImport}
-                                disabled={selectedTemplateIds.size === 0 || importTemplates.isPending}
+                                disabled={importItems.size === 0 || importTemplates.isPending}
                             >
-                                {importTemplates.isPending ? "Importing..." : `Import ${selectedTemplateIds.size} template${selectedTemplateIds.size !== 1 ? "s" : ""}`}
+                                {importTemplates.isPending ? "Importing..." : `Import ${importItems.size} template${importItems.size !== 1 ? "s" : ""}`}
                             </button>
                         </div>
                     </div>
