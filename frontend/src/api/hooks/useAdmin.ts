@@ -7,6 +7,7 @@ import type {
     CohortWithSessions,
     CohortSession,
     QuestionTemplate,
+    ActivityQuestion,
 } from "@/api/types/admin";
 
 // ──────────────── Template hooks ────────────────
@@ -166,5 +167,41 @@ export function useUpdateQuestionTemplate() {
             qc.invalidateQueries({ queryKey: ["question-templates"] });
             qc.invalidateQueries({ queryKey: ["question-templates", vars.id] });
         },
+    });
+}
+
+// ──────────────── Activity Question hooks ────────────────
+
+export function useActivityQuestions(templateId?: string) {
+    const params = templateId ? `?template_id=${templateId}` : "";
+    return useQuery<ActivityQuestion[]>({
+        queryKey: ["activity-questions", templateId ?? "all"],
+        queryFn: () => api.get(`/admin/activity-questions${params}`).then((r) => r.data),
+    });
+}
+
+export function useCreateActivityQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: { template_id: string; title: string; data: Record<string, unknown>; grade_band?: string; is_published?: boolean }) =>
+            api.post<ActivityQuestion>("/admin/activity-questions", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
+    });
+}
+
+export function useUpdateActivityQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: { id: string; title?: string; data?: Record<string, unknown>; grade_band?: string; is_published?: boolean }) =>
+            api.put<ActivityQuestion>(`/admin/activity-questions/${id}`, data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
+    });
+}
+
+export function useDeleteActivityQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete(`/admin/activity-questions/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
     });
 }

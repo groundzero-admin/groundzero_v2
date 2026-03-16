@@ -65,3 +65,17 @@ export interface CohortSession {
 export interface CohortWithSessions extends Cohort {
     sessions: CohortSession[];
 }
+
+export interface ActivityQuestion {
+    id: string;
+    template_id: string;
+    template_slug: string | null;
+    template_name: string | null;
+    title: string;
+    data: Record<string, unknown>;
+    grade_band: string;
+    created_by: string | null;
+    is_published: boolean;
+    created_at: string;
+    updated_at: string;
+}
