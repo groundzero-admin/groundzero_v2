@@ -36,7 +36,9 @@ const ZONE: CSSProperties = {
   transition: "all 0.15s",
 };
 const ZONE_HOVER: CSSProperties = { ...ZONE, border: "2px dashed #805AD5", background: "#FAF5FF" };
-const ZONE_FILLED: CSSProperties = { ...ZONE, border: "2px solid #38A169", background: "#F0FFF4", color: "#276749", cursor: "pointer" };
+const ZONE_FILLED: CSSProperties = { ...ZONE, border: "2px solid #805AD5", background: "#FAF5FF", color: "#553C9A", cursor: "pointer", fontWeight: 600 };
+const ZONE_CORRECT: CSSProperties = { ...ZONE, border: "2px solid #38A169", background: "#F0FFF4", color: "#276749", fontWeight: 600 };
+const ZONE_WRONG: CSSProperties = { ...ZONE, border: "2px solid #E53E3E", background: "#FFF5F5", color: "#C53030", fontWeight: 600 };
 const BTN: CSSProperties = {
   padding: "8px 20px", borderRadius: 8, fontWeight: 600, fontSize: 13,
   background: "#805AD5", color: "#fff", border: "none", cursor: "pointer",
@@ -225,7 +227,7 @@ function McqPreview({ data, timed }: { data: Record<string, unknown>; timed: boo
       </div>
       {selected !== null && !submitted && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={() => setSubmitted(true)}>Submit</button>
+          <button style={BTN} onClick={() => setSubmitted(true)}>Check Answer</button>
         </div>
       )}
       {submitted && str(data.explanation) && (
@@ -257,7 +259,7 @@ function ShortAnswerPreview({ data }: { data: Record<string, unknown> }) {
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: wordCount > maxWords ? "#E53E3E" : "#a0aec0" }}>
         <span>{wordCount} / {maxWords} words</span>
-        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }}>Submit</button>
+        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }}>Check Answer</button>
       </div>
     </div>
   );
@@ -273,6 +275,7 @@ function DragDropPlacementPreview({ data }: { data: Record<string, unknown> }) {
   const zoneList = zones.length > 0 ? zones : items.map((_, i) => `Zone ${i + 1}`);
   const [placed, setPlaced] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
 
   const usedItems = new Set(Object.values(placed));
 
@@ -286,10 +289,21 @@ function DragDropPlacementPreview({ data }: { data: Record<string, unknown> }) {
     const item = e.dataTransfer.getData("text/plain");
     if (item) setPlaced((prev) => ({ ...prev, [zoneIdx]: item }));
     setDragOver(null);
+    setChecked(false);
   };
 
   const removeFromZone = (zoneIdx: number) => {
+    if (checked) return;
     setPlaced((prev) => { const n = { ...prev }; delete n[zoneIdx]; return n; });
+  };
+
+  const allPlaced = Object.keys(placed).length === zoneList.length;
+
+  const zoneStyle = (i: number) => {
+    if (!placed[i]) return dragOver === i ? ZONE_HOVER : ZONE;
+    if (!checked) return ZONE_FILLED;
+    const correct = placed[i] === zoneList[i];
+    return correct ? ZONE_CORRECT : ZONE_WRONG;
   };
 
   return (
@@ -299,7 +313,7 @@ function DragDropPlacementPreview({ data }: { data: Record<string, unknown> }) {
         {items.map((w, i) => (
           <span
             key={i}
-            draggable={!usedItems.has(w)}
+            draggable={!usedItems.has(w) && !checked}
             onDragStart={(e) => onDragStart(e, w)}
             style={usedItems.has(w) ? TAG_USED : TAG}
           >
@@ -311,16 +325,36 @@ function DragDropPlacementPreview({ data }: { data: Record<string, unknown> }) {
         {zoneList.map((z, i) => (
           <div
             key={i}
-            onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
+            onDragOver={(e) => { if (!checked) { e.preventDefault(); setDragOver(i); } }}
             onDragLeave={() => setDragOver(null)}
-            onDrop={(e) => onDrop(e, i)}
+            onDrop={(e) => { if (!checked) onDrop(e, i); }}
             onClick={() => placed[i] && removeFromZone(i)}
-            style={placed[i] ? ZONE_FILLED : dragOver === i ? ZONE_HOVER : ZONE}
+            style={zoneStyle(i)}
           >
             {placed[i] || z}
           </div>
         ))}
       </div>
+      {allPlaced && !checked && (
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <button style={BTN} onClick={() => setChecked(true)}>Check Answer</button>
+        </div>
+      )}
+      {checked && (
+        <div style={{
+          marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 12,
+          background: zoneList.every((z, i) => placed[i] === z) ? "#F0FFF4" : "#FFF5F5",
+          color: zoneList.every((z, i) => placed[i] === z) ? "#276749" : "#C53030",
+          border: `1px solid ${zoneList.every((z, i) => placed[i] === z) ? "#C6F6D5" : "#FED7D7"}`,
+        }}>
+          {zoneList.every((z, i) => placed[i] === z) ? "Correct!" : "Not quite right. Click Reset to try again."}
+        </div>
+      )}
+      {checked && !zoneList.every((z, i) => placed[i] === z) && (
+        <div style={{ marginTop: 8, textAlign: "center" }}>
+          <button style={{ ...BTN, background: "#E2E8F0", color: "#4A5568" }} onClick={() => { setPlaced({}); setChecked(false); }}>Reset</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -333,11 +367,14 @@ function DragDropClassifierPreview({ data }: { data: Record<string, unknown> }) 
   if (!instruction) return EMPTY;
 
   const cats = categories.length > 0 ? categories : ["Category A", "Category B"];
-  const colors = ["#805AD5", "#E53E3E", "#3182CE", "#38A169"];
+  const catColors = ["#805AD5", "#D69E2E", "#3182CE", "#DD6B20"];
+  const catBgs = ["#FAF5FF", "#FFFFF0", "#EBF8FF", "#FFFAF0"];
   const [buckets, setBuckets] = useState<Record<number, string[]>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
 
   const placedItems = new Set(Object.values(buckets).flat());
+  const allPlaced = placedItems.size === items.length && items.length > 0;
 
   const onDrop = (e: DragEvent, catIdx: number) => {
     e.preventDefault();
@@ -346,9 +383,11 @@ function DragDropClassifierPreview({ data }: { data: Record<string, unknown> }) 
       setBuckets((prev) => ({ ...prev, [catIdx]: [...(prev[catIdx] || []), item] }));
     }
     setDragOver(null);
+    setChecked(false);
   };
 
   const removeItem = (catIdx: number, item: string) => {
+    if (checked) return;
     setBuckets((prev) => ({ ...prev, [catIdx]: (prev[catIdx] || []).filter((x) => x !== item) }));
   };
 
@@ -359,7 +398,7 @@ function DragDropClassifierPreview({ data }: { data: Record<string, unknown> }) 
         {items.map((w, i) => (
           <span
             key={i}
-            draggable={!placedItems.has(w)}
+            draggable={!placedItems.has(w) && !checked}
             onDragStart={(e) => { e.dataTransfer.setData("text/plain", w); }}
             style={placedItems.has(w) ? TAG_USED : TAG}
           >
@@ -370,23 +409,39 @@ function DragDropClassifierPreview({ data }: { data: Record<string, unknown> }) 
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${cats.length}, 1fr)`, gap: 10 }}>
         {cats.map((cat, i) => (
           <div key={i}>
-            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6, color: colors[i % 4] }}>{cat}</div>
+            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 6, color: catColors[i % 4] }}>{cat}</div>
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
+              onDragOver={(e) => { if (!checked) { e.preventDefault(); setDragOver(i); } }}
               onDragLeave={() => setDragOver(null)}
-              onDrop={(e) => onDrop(e, i)}
+              onDrop={(e) => { if (!checked) onDrop(e, i); }}
               style={{
                 ...(dragOver === i ? ZONE_HOVER : ZONE),
                 flexDirection: "column", gap: 4, minHeight: 60,
+                ...(buckets[i]?.length ? { border: `2px solid ${catColors[i % 4]}`, background: catBgs[i % 4] } : {}),
               }}
             >
               {(buckets[i] || []).length > 0 ? (buckets[i] || []).map((item) => (
-                <span key={item} onClick={() => removeItem(i, item)} style={{ ...TAG, cursor: "pointer", borderColor: colors[i % 4], background: "#fff" }}>{item}</span>
+                <span key={item} onClick={() => removeItem(i, item)} style={{ ...TAG, cursor: checked ? "default" : "pointer", borderColor: catColors[i % 4], borderStyle: "solid", background: "#fff" }}>{item}</span>
               )) : "Drop here"}
             </div>
           </div>
         ))}
       </div>
+      {allPlaced && !checked && (
+        <div style={{ marginTop: 12, textAlign: "center" }}>
+          <button style={BTN} onClick={() => setChecked(true)}>Check Answer</button>
+        </div>
+      )}
+      {checked && (
+        <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 12, background: "#EBF8FF", color: "#2B6CB0", border: "1px solid #BEE3F8" }}>
+          Submitted! In a real session the system would evaluate your classification.
+        </div>
+      )}
+      {checked && (
+        <div style={{ marginTop: 8, textAlign: "center" }}>
+          <button style={{ ...BTN, background: "#E2E8F0", color: "#4A5568" }} onClick={() => { setBuckets({}); setChecked(false); }}>Reset</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -408,7 +463,7 @@ function LabelElementsPreview({ data }: { data: Record<string, unknown> }) {
       {labels.length > 0 && (
         <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "center", flexWrap: "wrap" }}>
           {labels.map((l, i) => (
-            <span key={i} onClick={() => !usedLabels.has(l) ? setPlaced([...placed, l]) : setPlaced(placed.filter((p) => p !== l))} style={{ ...TAG, fontSize: 11, cursor: "pointer", borderColor: usedLabels.has(l) ? "#38A169" : "#a0aec0", background: usedLabels.has(l) ? "#F0FFF4" : "#fff" }}>{l}</span>
+            <span key={i} onClick={() => !usedLabels.has(l) ? setPlaced([...placed, l]) : setPlaced(placed.filter((p) => p !== l))} style={{ ...TAG, fontSize: 11, cursor: "pointer", borderColor: usedLabels.has(l) ? "#805AD5" : "#a0aec0", borderStyle: usedLabels.has(l) ? "solid" : "dashed", background: usedLabels.has(l) ? "#FAF5FF" : "#fff", color: usedLabels.has(l) ? "#553C9A" : undefined }}>{l}</span>
           ))}
         </div>
       )}
@@ -430,7 +485,7 @@ function ImageResponsePreview({ data }: { data: Record<string, unknown> }) {
         </div>
         <div>
           <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your response..." style={{ width: "100%", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, padding: 10, minHeight: 80, fontSize: 12, fontFamily: "inherit", resize: "none", outline: "none" }} />
-          <button style={{ ...BTN, marginTop: 8, width: "100%" }}>Submit</button>
+          <button style={{ ...BTN, marginTop: 8, width: "100%" }}>Check Answer</button>
         </div>
       </div>
     </div>
