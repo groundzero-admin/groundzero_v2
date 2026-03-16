@@ -1,0 +1,28 @@
+import { useState } from "react";
+import type { QuestionProps } from "./shared";
+import { CARD, HEADING, BTN, TEXT_INPUT, str, num } from "./shared";
+
+export default function ShortAnswer({ data, onAnswer }: QuestionProps) {
+  const prompt = str(data.prompt);
+  const maxWords = num(data.max_words, 50);
+  if (!prompt) return null;
+
+  const [text, setText] = useState("");
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+
+  return (
+    <div style={CARD}>
+      <div style={HEADING}>{prompt}</div>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Type your answer here..."
+        style={{ ...TEXT_INPUT, minHeight: 70, resize: "vertical" }}
+      />
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: wordCount > maxWords ? "#E53E3E" : "#a0aec0" }}>
+        <span>{wordCount} / {maxWords} words</span>
+        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Check Answer</button>
+      </div>
+    </div>
+  );
+}

@@ -64,7 +64,7 @@ TEMPLATES = [
             "fields": [
                 {"key": "instruction", "type": "text", "label": "Instruction text", "required": True},
                 {"key": "categories", "type": "list", "label": "Category names", "required": True},
-                {"key": "items", "type": "list", "label": "Items with correct category", "required": True},
+                {"key": "items", "type": "categorized_list", "label": "Items to classify", "required": True, "category_source": "categories"},
             ]
         },
         "llm_prompt_template": "Create a classification question for grade {{grade}} on: {{topic}}. Student sorts items into categories. Return JSON with keys: instruction, categories (array of strings), items (array of {label, correct_category}).",

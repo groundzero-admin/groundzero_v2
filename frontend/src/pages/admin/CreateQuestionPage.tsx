@@ -142,6 +142,7 @@ export default function CreateQuestionPage() {
                     field={field}
                     value={formData[field.key]}
                     onChange={(v) => setField(field.key, v)}
+                    allData={formData}
                   />
                 ))}
               </div>
@@ -257,10 +258,12 @@ function FieldInput({
   field,
   value,
   onChange,
+  allData,
 }: {
   field: InputField;
   value: unknown;
   onChange: (v: unknown) => void;
+  allData?: Record<string, unknown>;
 }) {
   const strVal = typeof value === "string" ? value : "";
 
@@ -326,6 +329,12 @@ function FieldInput({
         />
       </div>
     );
+  }
+
+  if (field.type === "categorized_list") {
+    const categorySourceKey = field.category_source || "";
+    const categories: string[] = Array.isArray(allData?.[categorySourceKey]) ? (allData![categorySourceKey] as string[]).filter(Boolean) : [];
+    return <CategorizedListInput field={field} value={value} onChange={onChange} categories={categories} />;
   }
 
   if (field.type === "list") {
@@ -395,6 +404,95 @@ function ListFieldInput({
             display: "flex", alignItems: "center", gap: 4, padding: "6px 12px",
             borderRadius: 8, border: "1px dashed #CBD5E0", background: "none",
             cursor: "pointer", fontSize: 12, color: "var(--color-text-secondary, #666)",
+          }}
+        >
+          <Plus size={12} /> Add item
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface CategorizedItem {
+  label: string;
+  correct_category: string;
+}
+
+function CategorizedListInput({
+  field,
+  value,
+  onChange,
+  categories,
+}: {
+  field: InputField;
+  value: unknown;
+  onChange: (v: unknown) => void;
+  categories: string[];
+}) {
+  const items: CategorizedItem[] = Array.isArray(value)
+    ? value.map((v) =>
+        typeof v === "object" && v && "label" in v
+          ? (v as CategorizedItem)
+          : { label: typeof v === "string" ? v : "", correct_category: "" },
+      )
+    : [];
+
+  const addItem = () => onChange([...items, { label: "", correct_category: categories[0] || "" }]);
+  const removeItem = (idx: number) => onChange(items.filter((_, i) => i !== idx));
+  const updateItem = (idx: number, patch: Partial<CategorizedItem>) => {
+    const next = [...items];
+    next[idx] = { ...next[idx], ...patch };
+    onChange(next);
+  };
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label className={s.label}>
+        {field.label} {field.required && <span style={{ color: "#E53E3E" }}>*</span>}
+      </label>
+      {categories.length === 0 && (
+        <div style={{ fontSize: 11, color: "#D69E2E", marginBottom: 6 }}>
+          Add categories above first, then add items here.
+        </div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <input
+              className={s.input}
+              value={item.label}
+              onChange={(e) => updateItem(i, { label: e.target.value })}
+              placeholder="Item name"
+              style={{ flex: 1 }}
+            />
+            <select
+              className={s.select}
+              value={item.correct_category}
+              onChange={(e) => updateItem(i, { correct_category: e.target.value })}
+              style={{ width: 140, flexShrink: 0 }}
+            >
+              <option value="">Category...</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => removeItem(i)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#E53E3E", padding: 4 }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+        <button
+          onClick={addItem}
+          disabled={categories.length === 0}
+          style={{
+            display: "flex", alignItems: "center", gap: 4, padding: "6px 12px",
+            borderRadius: 8, border: "1px dashed #CBD5E0", background: "none",
+            cursor: categories.length === 0 ? "not-allowed" : "pointer", fontSize: 12,
+            color: "var(--color-text-secondary, #666)",
+            opacity: categories.length === 0 ? 0.5 : 1,
           }}
         >
           <Plus size={12} /> Add item

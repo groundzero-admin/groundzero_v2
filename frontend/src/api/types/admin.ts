@@ -16,6 +16,8 @@ export interface InputField {
     label: string;
     required: boolean;
     options?: string[];
+    /** For type "categorized_list": the key of the field that holds category names. */
+    category_source?: string;
 }
 
 export interface QuestionTemplate {
