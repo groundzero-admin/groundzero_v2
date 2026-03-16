@@ -1,17 +1,24 @@
 """Admin CRUD for question templates (activity interaction patterns)."""
 from __future__ import annotations
 
+import json
+import logging
+import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from openai import AsyncOpenAI
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
+from app.config import settings
 from app.database import get_db
 from app.models.question_template import QuestionTemplate
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/question-templates", tags=["admin-question-templates"])
 
@@ -157,3 +164,56 @@ async def delete_template(
         raise HTTPException(status_code=404, detail="Template not found")
     await db.delete(t)
     await db.commit()
+
+
+class GenerateRequest(BaseModel):
+    description: str
+    grade_band: str = ""
+
+
+class GenerateResponse(BaseModel):
+    data: dict
+
+
+@router.post("/{template_id}/generate", response_model=GenerateResponse)
+async def generate_question(
+    template_id: uuid.UUID,
+    body: GenerateRequest,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("admin", "teacher")),
+):
+    """Use LLM to generate question data from a plain-text description."""
+    result = await db.execute(
+        select(QuestionTemplate).where(QuestionTemplate.id == template_id)
+    )
+    t = result.scalar_one_or_none()
+    if not t:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    if not t.llm_prompt_template:
+        raise HTTPException(status_code=400, detail="Template has no LLM prompt")
+
+    prompt = (
+        t.llm_prompt_template
+        .replace("{{description}}", body.description)
+        .replace("{{grade_band}}", body.grade_band or "middle school")
+    )
+
+    try:
+        client = AsyncOpenAI(api_key=settings.SPARK_API_KEY, base_url=settings.SPARK_BASE_URL)
+        resp = await client.chat.completions.create(
+            model=settings.SPARK_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.4,
+        )
+        content = resp.choices[0].message.content or ""
+        # Extract first JSON object from the response
+        match = re.search(r"\{[\s\S]*\}", content)
+        if not match:
+            raise ValueError("No JSON found in LLM response")
+        data = json.loads(match.group())
+    except Exception as exc:
+        logger.exception("LLM generation failed")
+        raise HTTPException(status_code=502, detail=f"Generation failed: {exc}") from exc
+
+    return GenerateResponse(data=data)

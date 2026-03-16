@@ -366,6 +366,63 @@ export default function TemplatePreview({ slug }: { slug: string }) {
         </div>
       );
 
+    case "geometry_animated":
+      return (
+        <div style={P}>
+          <style>{`
+            @keyframes gz-sweep {
+              from { stroke-dashoffset: 100; }
+              to   { stroke-dashoffset: 0; }
+            }
+            @keyframes gz-pulse-angle {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50%       { opacity: 0.6; transform: scale(1.08); }
+            }
+            @keyframes gz-draw-side {
+              from { stroke-dashoffset: 200; }
+              to   { stroke-dashoffset: 0; }
+            }
+            .gz-angle-arc { animation: gz-sweep 1.6s ease-out forwards; stroke-dasharray: 100; }
+            .gz-label     { animation: gz-pulse-angle 1.8s ease-in-out infinite; transform-origin: center; }
+            .gz-side      { stroke-dasharray: 200; animation: gz-draw-side 1.2s ease-out forwards; }
+            .gz-side-2    { animation-delay: 0.4s; }
+            .gz-side-3    { animation-delay: 0.8s; }
+          `}</style>
+          <div style={Q}>What type of angle is marked x?</div>
+          <div style={{ display: "flex", justifyContent: "center", margin: "8px 0 14px" }}>
+            <svg width="200" height="160" viewBox="0 0 200 160">
+              {/* Triangle sides drawn in sequence */}
+              <line className="gz-side" x1="20" y1="130" x2="180" y2="130" stroke="#3182CE" strokeWidth="2.5" strokeLinecap="round" />
+              <line className="gz-side gz-side-2" x1="20" y1="130" x2="100" y2="30" stroke="#3182CE" strokeWidth="2.5" strokeLinecap="round" />
+              <line className="gz-side gz-side-3" x1="100" y1="30" x2="180" y2="130" stroke="#3182CE" strokeWidth="2.5" strokeLinecap="round" />
+              {/* Animated angle arc at bottom-left vertex */}
+              <path
+                className="gz-angle-arc"
+                d="M 50,130 A 30,30 0 0,1 29,107"
+                fill="none" stroke="#805AD5" strokeWidth="2.5" strokeLinecap="round"
+              />
+              {/* Angle label */}
+              <text className="gz-label" x="46" y="118" fontSize="13" fontWeight="700" fill="#805AD5">x</text>
+              {/* Vertex dots */}
+              {[[20,130],[180,130],[100,30]].map(([cx,cy],i) => (
+                <circle key={i} cx={cx} cy={cy} r="3.5" fill="#3182CE" />
+              ))}
+              {/* Right-angle box at bottom-right */}
+              <polyline points="168,130 168,118 180,118" fill="none" stroke="#718096" strokeWidth="1.5" />
+            </svg>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <div style={OPT}><span style={RADIO} /> Acute</div>
+            <div style={OPT_CORRECT}><span style={RADIO_FILL} /> Obtuse</div>
+            <div style={OPT}><span style={RADIO} /> Right</div>
+            <div style={OPT}><span style={RADIO} /> Reflex</div>
+          </div>
+          <div style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, background: "#F0FFF4", fontSize: 12, color: "#276749", border: "1px solid #C6F6D5" }}>
+            Correct! x is an obtuse angle (greater than 90°).
+          </div>
+        </div>
+      );
+
     default:
       return (
         <div style={{ ...P, textAlign: "center" as const, color: "#a0aec0" }}>

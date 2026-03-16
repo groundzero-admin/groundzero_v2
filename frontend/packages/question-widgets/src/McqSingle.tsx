@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { QuestionProps } from "./shared";
-import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, FEEDBACK_OK, str, arr, num } from "./shared";
+import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, FEEDBACK_OK, FEEDBACK_ERR, str, arr, num } from "./shared";
 
 interface McqProps extends QuestionProps {
   timed?: boolean;
@@ -14,6 +14,25 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
 
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!timed || timeLimit <= 0 || submitted) return;
+    timerRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timerRef.current!);
+          setSubmitted(true);
+          onAnswer?.({ selected, timedOut: true });
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current!);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timed, timeLimit]);
 
   const getOptionInfo = (opt: string) => {
     try { const p = JSON.parse(opt); return { label: p.text || opt, correct: !!p.is_correct }; } catch { return { label: opt, correct: false }; }
@@ -33,6 +52,7 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
   };
 
   const handleCheck = () => {
+    clearInterval(timerRef.current!);
     setSubmitted(true);
     onAnswer?.({ selected });
   };
@@ -41,8 +61,8 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
     <div style={CARD}>
       {timed && timeLimit > 0 && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-          <div style={{ background: "#FED7D7", color: "#C53030", padding: "4px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13 }}>
-            0:{String(timeLimit).padStart(2, "0")}
+          <div style={{ background: timeLeft <= 5 ? "#FED7D7" : "#EDF2F7", color: timeLeft <= 5 ? "#C53030" : "#4A5568", padding: "4px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13, transition: "all 0.3s" }}>
+            ⏱ {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
           </div>
         </div>
       )}
@@ -63,10 +83,17 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
           <button style={BTN} onClick={handleCheck}>Check Answer</button>
         </div>
       )}
-      {submitted && str(data.explanation) && (
-        <div style={FEEDBACK_OK}>
-          {str(data.explanation)}
-        </div>
+      {submitted && (
+        <>
+          {timeLeft === 0 && timed && !selected && (
+            <div style={FEEDBACK_ERR}>Time's up!</div>
+          )}
+          {str(data.explanation) && (
+            <div style={options.length > 0 && selected !== null && getOptionInfo(options[selected]).correct ? FEEDBACK_OK : FEEDBACK_ERR}>
+              {str(data.explanation)}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

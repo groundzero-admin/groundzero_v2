@@ -35,7 +35,6 @@ import CohortListPage from "@/pages/admin/LiveBatchListPage";
 import CohortDetailPage from "@/pages/admin/LiveBatchDetailPage";
 import AdminStudentsPage from "@/pages/admin/AdminStudentsPage";
 import LiveClassPage from "@/pages/admin/LiveClassPage";
-import QuestionTemplatesPage from "@/pages/admin/QuestionTemplatesPage";
 import CreateQuestionPage from "@/pages/admin/CreateQuestionPage";
 
 const queryClient = new QueryClient({
@@ -203,7 +202,6 @@ export default function App() {
                 <Route path="/admin/cohorts" element={<CohortListPage />} />
                 <Route path="/admin/cohorts/:id" element={<CohortDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
-                <Route path="/admin/question-templates" element={<QuestionTemplatesPage />} />
                 <Route path="/admin/create-question" element={<CreateQuestionPage />} />
               </Route>
 

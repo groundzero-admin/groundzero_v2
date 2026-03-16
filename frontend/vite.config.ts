@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@gz/question-widgets": path.resolve(__dirname, "./packages/question-widgets/src/index.ts"),
     },
   },
   server: {

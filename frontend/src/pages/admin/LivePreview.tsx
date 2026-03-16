@@ -1,5 +1,4 @@
-import { QuestionRenderer } from "@/components/questions";
-import { CARD } from "@/components/questions/shared";
+import { QuestionRenderer, CARD } from "@gz/question-widgets";
 
 interface Props {
   slug: string;

@@ -3,7 +3,6 @@ import { CARD } from "./shared";
 import FillBlanks from "./FillBlanks";
 import McqSingle from "./McqSingle";
 import ShortAnswer from "./ShortAnswer";
-import DragDropPlacement from "./DragDropPlacement";
 import DragDropClassifier from "./DragDropClassifier";
 import LabelElements from "./LabelElements";
 import ImageResponse from "./ImageResponse";
@@ -14,6 +13,8 @@ import DebateOpinion from "./DebateOpinion";
 import AiConversation from "./AiConversation";
 import DrawScribble from "./DrawScribble";
 import ReflectionRating from "./ReflectionRating";
+import GeometryExplorer from "./GeometryExplorer";
+import FlowchartQuestion from "./FlowchartQuestion";
 
 interface Props extends QuestionProps {
   slug: string;
@@ -25,7 +26,7 @@ const SLUG_MAP: Record<string, React.ComponentType<any>> = {
   mcq_single: McqSingle,
   mcq_timed: McqSingle,
   short_answer: ShortAnswer,
-  drag_drop_placement: DragDropPlacement,
+  drag_drop_placement: FlowchartQuestion,
   drag_drop_classifier: DragDropClassifier,
   label_elements: LabelElements,
   image_response: ImageResponse,
@@ -36,6 +37,9 @@ const SLUG_MAP: Record<string, React.ComponentType<any>> = {
   ai_conversation: AiConversation,
   draw_scribble: DrawScribble,
   reflection_rating: ReflectionRating,
+  geometry_explorer: GeometryExplorer,
+  geometry_animated: GeometryExplorer,
+  flowchart: FlowchartQuestion,
 };
 
 export default function QuestionRenderer({ slug, data, onAnswer }: Props) {

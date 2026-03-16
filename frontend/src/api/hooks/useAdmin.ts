@@ -170,6 +170,16 @@ export function useUpdateQuestionTemplate() {
     });
 }
 
+export function useGenerateQuestion() {
+    return useMutation({
+        mutationFn: ({ templateId, description, gradeBand }: { templateId: string; description: string; gradeBand: string }) =>
+            api.post<{ data: Record<string, unknown> }>(`/admin/question-templates/${templateId}/generate`, {
+                description,
+                grade_band: gradeBand,
+            }).then((r) => r.data.data),
+    });
+}
+
 // ──────────────── Activity Question hooks ────────────────
 
 export function useActivityQuestions(templateId?: string) {

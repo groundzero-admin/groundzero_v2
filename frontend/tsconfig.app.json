@@ -25,8 +25,9 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@gz/question-widgets": ["./packages/question-widgets/src/index.ts"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "packages"]
 }
