@@ -3,11 +3,12 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
 from app.database import get_db
+from app.models.session import Session, SessionActivity
 from app.models.template_cohort import Template
 from app.models.user import User
 
@@ -98,8 +99,37 @@ async def update_template(
     t = await db.get(Template, template_id)
     if not t:
         raise HTTPException(404, "Template not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
+
+    updated_fields = data.model_dump(exclude_unset=True)
+    for field, value in updated_fields.items():
         setattr(t, field, value)
+
+    # ── Cascade changes to un-started sessions linked to this template ──
+    linked_result = await db.execute(
+        select(Session).where(
+            Session.template_id == template_id,
+            Session.started_at.is_(None),  # only un-started sessions
+        )
+    )
+    linked_sessions = linked_result.scalars().all()
+
+    for session in linked_sessions:
+        # Always sync title and description
+        session.title = t.title
+        session.description = t.description
+
+        # If activities changed, rebuild session_activities
+        if "activities" in updated_fields:
+            await db.execute(
+                delete(SessionActivity).where(SessionActivity.session_id == session.id)
+            )
+            for idx, activity_id in enumerate(t.activities or [], start=1):
+                db.add(SessionActivity(
+                    session_id=session.id,
+                    activity_id=activity_id,
+                    order=idx,
+                ))
+
     await db.commit()
     await db.refresh(t)
     return _out(t)

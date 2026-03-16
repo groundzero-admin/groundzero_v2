@@ -1,5 +1,13 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style, styleVariants, keyframes } from "@vanilla-extract/css";
 import { vars } from "@/styles/theme.css";
+
+/* ── Press/bounce animation ── */
+const press = keyframes({
+  "0%": { transform: "scale(1)" },
+  "35%": { transform: "scale(0.87)" },
+  "65%": { transform: "scale(1.07)" },
+  "100%": { transform: "scale(1)" },
+});
 
 export const root = style({
   display: "flex",
@@ -7,33 +15,32 @@ export const root = style({
   gap: vars.space[2],
 });
 
-/* ── Dark variant (VideoArea overlay) ── */
-
-const darkBase = {
-  privacyNote: {
-    fontSize: vars.font.size.xs,
-    color: "rgba(255,255,255,0.6)",
+export const privacyNote = styleVariants({
+  dark: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.35)",
     fontFamily: vars.font.family.display,
     fontWeight: vars.font.weight.medium,
+    letterSpacing: "0.3px",
   },
-  label: {
-    fontSize: vars.font.size.sm,
-    fontFamily: vars.font.family.display,
-    fontWeight: vars.font.weight.extrabold,
-    color: "#fff",
-    letterSpacing: "1px",
-    textTransform: "uppercase" as const,
-  },
-} as const;
-
-const lightBase = {
-  privacyNote: {
+  light: {
     fontSize: vars.font.size.xs,
     color: vars.color.text.tertiary,
     fontFamily: vars.font.family.display,
     fontWeight: vars.font.weight.medium,
   },
-  label: {
+});
+
+export const label = styleVariants({
+  dark: {
+    fontSize: 11,
+    fontFamily: vars.font.family.display,
+    fontWeight: vars.font.weight.bold,
+    color: "rgba(255,255,255,0.88)",
+    letterSpacing: "0.7px",
+    textTransform: "uppercase" as const,
+  },
+  light: {
     fontSize: vars.font.size.xs,
     fontFamily: vars.font.family.display,
     fontWeight: vars.font.weight.bold,
@@ -41,63 +48,74 @@ const lightBase = {
     letterSpacing: "0.5px",
     textTransform: "uppercase" as const,
   },
-} as const;
-
-export const privacyNote = styleVariants({
-  dark: darkBase.privacyNote,
-  light: lightBase.privacyNote,
-});
-
-export const label = styleVariants({
-  dark: darkBase.label,
-  light: lightBase.label,
 });
 
 export const chips = style({
   display: "flex",
-  gap: vars.space[2],
-  flexWrap: "wrap",
+  gap: 8,
+  flexWrap: "nowrap",
 });
 
-/* ── Chip: dark variant ── */
-
+/* ─── Dark base chip ─── */
 export const chipDark = style({
-  display: "inline-flex",
+  flex: 1,
+  display: "flex",
   alignItems: "center",
-  gap: vars.space[1],
-  padding: `${vars.space[1]} ${vars.space[3]}`,
-  borderRadius: vars.radius.full,
-  border: "2px solid rgba(255,255,255,0.25)",
-  backgroundColor: "rgba(255,255,255,0.08)",
-  color: "rgba(255,255,255,0.85)",
-  fontSize: vars.font.size.sm,
+  justifyContent: "center",
+  gap: 5,
+  padding: "9px 6px",
+  borderRadius: 12,
+  border: "1.5px solid rgba(255,255,255,0.11)",
+  backgroundColor: "rgba(255,255,255,0.05)",
+  color: "rgba(255,255,255,0.58)",
+  fontSize: 12,
   fontFamily: vars.font.family.display,
   fontWeight: vars.font.weight.semibold,
   cursor: "pointer",
-  transition: `all ${vars.transition.base}`,
+  transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease",
   userSelect: "none",
   ":hover": {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderColor: "rgba(255,255,255,0.4)",
+    backgroundColor: "rgba(255,255,255,0.09)",
+    borderColor: "rgba(255,255,255,0.24)",
+    color: "#fff",
+  },
+  ":active": {
+    animation: `${press} 0.3s ease`,
   },
   selectors: {
     "&:disabled": {
-      opacity: 0.4,
+      opacity: 0.35,
       pointerEvents: "none",
     },
   },
 });
 
+/* plays the bounce on selection too */
 export const chipDarkSelected = style({
-  borderColor: "#fff",
-  backgroundColor: "rgba(255,255,255,0.2)",
-  color: "#fff",
-  transform: "scale(1.05)",
-  boxShadow: "0 2px 12px rgba(255,255,255,0.15)",
+  animation: `${press} 0.3s ease`,
 });
 
-/* ── Chip: light variant ── */
+/* ─── Per-mood selected colours ─── */
+export const chipGotIt = style({
+  borderColor: "rgba(34,197,94,0.65) !important",
+  backgroundColor: "rgba(34,197,94,0.16) !important",
+  color: "#4ade80 !important",
+  boxShadow: "0 0 14px rgba(34,197,94,0.22)",
+});
+export const chipKinda = style({
+  borderColor: "rgba(245,158,11,0.65) !important",
+  backgroundColor: "rgba(245,158,11,0.16) !important",
+  color: "#fbbf24 !important",
+  boxShadow: "0 0 14px rgba(245,158,11,0.22)",
+});
+export const chipLost = style({
+  borderColor: "rgba(239,68,68,0.65) !important",
+  backgroundColor: "rgba(239,68,68,0.16) !important",
+  color: "#f87171 !important",
+  boxShadow: "0 0 14px rgba(239,68,68,0.22)",
+});
 
+/* ─── Light base chip ─── */
 export const chipLight = style({
   display: "inline-flex",
   alignItems: "center",
@@ -116,6 +134,9 @@ export const chipLight = style({
   ":hover": {
     backgroundColor: vars.color.surface.hover,
     borderColor: vars.color.border.default,
+  },
+  ":active": {
+    animation: `${press} 0.3s ease`,
   },
   selectors: {
     "&:disabled": {

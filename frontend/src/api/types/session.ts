@@ -13,7 +13,7 @@ export interface SessionActivity {
   session_id: string;
   activity_id: string;
   order: number;
-  status: "pending" | "active" | "completed";
+  status: "pending" | "active" | "completed" | "paused";
   launched_at: string | null;
   activity_name: string | null;
   activity_type: string | null;

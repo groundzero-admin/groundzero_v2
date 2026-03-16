@@ -20,6 +20,9 @@ export interface UpcomingSession {
   scheduled_at: string | null;
   started_at: string | null;
   ended_at: string | null;
+  activity_count: number;
+  total_questions: number;
+  is_done: boolean;
 }
 
 export function useUpcomingSessions(cohortId: string | null | undefined) {
@@ -72,7 +75,8 @@ export function useSessionActivities(sessionId: string | null | undefined) {
     queryFn: async () =>
       (await api.get(`/sessions/${sessionId}/activities`)).data,
     enabled: !!sessionId,
-    staleTime: 10_000,
+    staleTime: 5_000,
+    refetchInterval: 5_000,
   });
 }
 
@@ -167,3 +171,49 @@ export function useEndSession() {
     },
   });
 }
+
+export function useRestartSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const { data } = await api.post<Session>(`/sessions/${sessionId}/restart`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["active-session"] });
+      qc.invalidateQueries({ queryKey: ["cohort-sessions"] });
+      qc.invalidateQueries({ queryKey: ["upcoming-sessions"] });
+    },
+  });
+}
+
+export function useMarkSessionDone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const { data } = await api.post<Session>(`/sessions/${sessionId}/mark-done`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["active-session"] });
+      qc.invalidateQueries({ queryKey: ["cohort-sessions"] });
+      qc.invalidateQueries({ queryKey: ["upcoming-sessions"] });
+      qc.invalidateQueries({ queryKey: ["cohorts"] });
+    },
+  });
+}
+
+export function usePauseActivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (sessionId: string) => {
+      const { data } = await api.put<Session>(`/sessions/${sessionId}/pause-activity`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["active-session"] });
+      qc.invalidateQueries({ queryKey: ["session-activities"] });
+    },
+  });
+}
+

@@ -8,22 +8,21 @@ const pulse = keyframes({
 
 export const root = style({
   position: "relative",
-  borderRadius: vars.radius["2xl"],
+  borderRadius: 0,
   overflow: "hidden",
   background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-  minHeight: "420px",
+  height: "100%",
   display: "flex",
   flexDirection: "column",
 });
 
 export const main = style({
   flex: 1,
+  minHeight: 0,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  padding: vars.space[8],
-  gap: vars.space[4],
 });
 
 export const facilitatorAvatar = style({
@@ -129,7 +128,8 @@ export const thumbnail = style({
 });
 
 export const bottomArea = style({
-  padding: `${vars.space[3]} ${vars.space[6]} ${vars.space[4]}`,
-  background: "rgba(0,0,0,0.25)",
-  backdropFilter: "blur(4px)",
+  padding: `${vars.space[3]} ${vars.space[5]} ${vars.space[5]}`,
+  background: "rgba(0,0,0,0.35)",
+  backdropFilter: "blur(6px)",
+  borderTop: "1px solid rgba(255,255,255,0.06)",
 });

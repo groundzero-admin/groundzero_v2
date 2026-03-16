@@ -7,13 +7,14 @@ import {
   selectIsConnectedToRoom,
   selectIsLocalAudioEnabled,
   selectIsLocalVideoEnabled,
+  selectIsLocalScreenShared,
 } from "@100mslive/react-sdk";
-import { Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, Monitor, MonitorOff } from "lucide-react";
 import { ConfidenceChips } from "../ConfidenceChips";
 import * as s from "./VideoArea.css";
 
-/* ── Small video tile ── */
-function Tile({ trackId, label, isLarge, style: extraStyle }: {
+/* ── Single video tile ── */
+function VideoTile({ trackId, label, isLarge, style: extra }: {
   trackId: string | undefined;
   label: string;
   isLarge?: boolean;
@@ -21,36 +22,29 @@ function Tile({ trackId, label, isLarge, style: extraStyle }: {
 }) {
   const { videoRef } = useVideo({ trackId: trackId ?? "" });
   return (
-    <div
-      style={{
-        position: "relative",
-        background: "#1a1a2e",
-        borderRadius: isLarge ? 12 : 8,
-        overflow: "hidden",
-        ...extraStyle,
-      }}
-    >
+    <div style={{ position: "relative", background: "#0d0d1a", borderRadius: isLarge ? 12 : 8, overflow: "hidden", ...extra }}>
       {trackId ? (
         <video
           ref={videoRef}
-          style={{ width: "100%", height: "100%", objectFit: isLarge ? "contain" : "cover", background: "#000" }}
+          style={{ width: "100%", height: "100%", objectFit: isLarge ? "contain" : "cover" }}
           autoPlay muted playsInline
         />
       ) : (
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          width: "100%", height: "100%", fontSize: isLarge ? 48 : 20,
-          background: "linear-gradient(135deg,#1e1e2e,#252540)", color: "#555",
+          width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "linear-gradient(135deg,#1a1a2e,#1e1e40)",
+          color: isLarge ? "#4a4a7a" : "#444",
+          fontSize: isLarge ? 56 : 18, fontWeight: 700,
         }}>
           {label.charAt(0)?.toUpperCase() ?? "?"}
         </div>
       )}
       <div style={{
         position: "absolute", bottom: 0, left: 0, right: 0,
-        padding: isLarge ? "6px 10px" : "3px 6px",
-        background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+        padding: isLarge ? "10px 14px" : "3px 6px",
+        background: "linear-gradient(transparent, rgba(0,0,0,0.78))",
       }}>
-        <span style={{ fontSize: isLarge ? 11 : 9, fontWeight: 500, color: "#fff" }}>{label}</span>
+        <span style={{ fontSize: isLarge ? 12 : 9, fontWeight: 600, color: "#fff" }}>{label}</span>
       </div>
     </div>
   );
@@ -58,30 +52,25 @@ function Tile({ trackId, label, isLarge, style: extraStyle }: {
 
 /* ── Props ── */
 interface VideoAreaProps {
-  facilitatorName?: string;
   confidence: "got_it" | "kinda" | "lost" | null;
-  onConfidenceChange: (value: "got_it" | "kinda" | "lost" | null) => void;
+  onConfidenceChange: (v: "got_it" | "kinda" | "lost" | null) => void;
   questionActive: boolean;
   roomCode?: string | null;
   userName?: string;
 }
 
-export function VideoArea({
-  confidence,
-  onConfidenceChange,
-  questionActive,
-  roomCode,
-  userName = "Student",
-}: VideoAreaProps) {
+export function VideoArea({ confidence, onConfidenceChange, questionActive: _qa, roomCode, userName = "Student" }: VideoAreaProps) {
   const hmsActions = useHMSActions();
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const peers: any[] = (useHMSStore(selectPeers) as any[]) || [];
   const isAudioOn = useHMSStore(selectIsLocalAudioEnabled);
   const isVideoOn = useHMSStore(selectIsLocalVideoEnabled);
+  const isScreenShared = useHMSStore(selectIsLocalScreenShared);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [pinnedPeerId, setPinnedPeerId] = useState<string | null>(null);
   const joinedRef = useRef(false);
 
-  // Join room when roomCode is available
+  // Join HMS room
   useEffect(() => {
     if (!roomCode || joinedRef.current) return;
     joinedRef.current = true;
@@ -91,133 +80,166 @@ export function VideoArea({
         await hmsActions.join({ userName, authToken });
       } catch (err: any) {
         const msg = err?.message || err?.description || String(err);
-        if (msg.includes("not active") || msg.includes("403")) {
-          setJoinError("Class not started yet");
-        } else {
-          setJoinError(`Failed to join: ${msg}`);
-        }
+        setJoinError(msg.includes("not active") || msg.includes("403") ? "Class not started yet" : `Failed: ${msg}`);
       }
     })();
     return () => { hmsActions.leave(); joinedRef.current = false; };
   }, [roomCode]);
 
-  // Leave on tab close
   useEffect(() => {
     const h = () => hmsActions.leave();
     window.addEventListener("beforeunload", h);
     return () => window.removeEventListener("beforeunload", h);
   }, [hmsActions]);
 
-  // Build tiles: screen shares first, then cameras
-  const tiles: { id: string; trackId: string | undefined; label: string; isScreen: boolean }[] = [];
-  for (const p of peers) {
-    if (p.auxiliaryTracks?.length) {
-      tiles.push({ id: `screen-${p.id}`, trackId: p.auxiliaryTracks[0], label: `🖥️ ${p.name || "?"}`, isScreen: true });
+  // Broadcast confidence to teacher
+  const handleConfidenceChange = (val: "got_it" | "kinda" | "lost" | null) => {
+    onConfidenceChange(val);
+    if (val && isConnected) {
+      hmsActions.sendBroadcastMessage(JSON.stringify({ type: "confidence_pulse", value: val, studentName: userName }));
     }
-  }
-  for (const p of peers) {
-    tiles.push({ id: p.id, trackId: p.videoTrack, label: `${p.name || "?"}${p.isLocal ? " (You)" : ""}`, isScreen: false });
-  }
+  };
 
-  const screenTile = tiles.find(t => t.isScreen);
-  const cameraTiles = tiles.filter(t => !t.isScreen);
+  /* ── Build peer list ── */
+  // spotlightPeer = pinned one, default to first non-local (teacher) else first
+  const effectivePinnedId = pinnedPeerId ?? peers.find(p => !p.isLocal)?.id ?? peers[0]?.id ?? null;
+  const spotlightPeer = peers.find(p => p.id === effectivePinnedId) ?? null;
 
-  // No room code — show placeholder
-  if (!roomCode) {
-    return (
-      <div className={s.root}>
-        <div className={s.main}>
-          <div style={{ color: "#666", fontSize: 14 }}>No live class right now</div>
-        </div>
-        <div className={s.bottomArea}>
-          <ConfidenceChips value={confidence} onChange={onConfidenceChange} disabled={!questionActive} />
-        </div>
-      </div>
-    );
-  }
+  // Screen share from the spotlit peer (or any peer if none pinned)
+  const spotlightScreen = spotlightPeer?.auxiliaryTracks?.[0] ?? null;
 
-  // Error state
-  if (joinError) {
-    return (
-      <div className={s.root}>
-        <div className={s.main}>
-          <div style={{ color: "#f87171", fontSize: 14, textAlign: "center" }}>{joinError}</div>
-        </div>
-        <div className={s.bottomArea}>
-          <ConfidenceChips value={confidence} onChange={onConfidenceChange} disabled={!questionActive} />
-        </div>
-      </div>
-    );
-  }
+  // Participant strip = all peers
+  const participantStrip = peers;
 
-  // Connecting state
-  if (!isConnected) {
-    return (
-      <div className={s.root}>
-        <div className={s.main}>
-          <div style={{ color: "#999", fontSize: 14 }}>Joining class…</div>
-        </div>
-      </div>
-    );
-  }
+  /* ── Simple states ── */
+  const loadingView = (msg: string) => (
+    <div className={s.root}>
+      <div className={s.main}><div style={{ color: "#666", fontSize: 14, textAlign: "center" }}>{msg}</div></div>
+      <div className={s.bottomArea}><ConfidenceChips value={confidence} onChange={handleConfidenceChange} disabled={false} /></div>
+    </div>
+  );
+
+  if (!roomCode) return loadingView("No live class right now");
+  if (joinError) return (
+    <div className={s.root}>
+      <div className={s.main}><div style={{ color: "#f87171", fontSize: 14, textAlign: "center" }}>{joinError}</div></div>
+      <div className={s.bottomArea}><ConfidenceChips value={confidence} onChange={handleConfidenceChange} disabled={false} /></div>
+    </div>
+  );
+  if (!isConnected) return loadingView("Joining class…");
 
   return (
     <div className={s.root}>
+
       {/* Live badge */}
       <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}>
-        <div className={s.liveBadge}>
-          <span className={s.liveDot} />
-          LIVE · {peers.length}
-        </div>
+        <div className={s.liveBadge}><span className={s.liveDot} />LIVE · {peers.length}</div>
       </div>
 
-      {/* Main video area */}
-      <div className={s.main} style={{ padding: 6, gap: 4 }}>
-        {screenTile ? (
-          /* Screen share mode: big screen + camera strip */
-          <div style={{ display: "flex", width: "100%", height: "100%", gap: 4 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Tile trackId={screenTile.trackId} label={screenTile.label} isLarge style={{ width: "100%", height: "100%" }} />
-            </div>
-            <div style={{ width: 100, display: "flex", flexDirection: "column", gap: 4, overflowY: "auto" }}>
-              {cameraTiles.map(t => (
-                <Tile key={t.id} trackId={t.trackId} label={t.label} style={{ width: "100%", aspectRatio: "4/3", flexShrink: 0 }} />
-              ))}
+      {/* ━━ SPOTLIGHT ━━ */}
+      <div className={s.main} style={{ padding: 6, paddingBottom: 4, position: "relative" }}>
+        {spotlightScreen ? (
+          /* ── Screen share active: screen fills area, camera as PiP ── */
+          <div style={{ width: "100%", height: "100%", position: "relative" }}>
+            {/* Big: screen share */}
+            <VideoTile
+              trackId={spotlightScreen}
+              label={`🖥️ ${spotlightPeer?.name ?? "?"}'s screen`}
+              isLarge
+              style={{ width: "100%", height: "100%", borderRadius: 12 }}
+            />
+            {/* PiP: spotlit person's camera (bottom-right corner inside spotlight) */}
+            <div style={{
+              position: "absolute", bottom: 10, right: 10,
+              width: 130, height: 90,
+              borderRadius: 10,
+              border: "2px solid rgba(99,102,241,0.7)",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              zIndex: 5,
+            }}>
+              <VideoTile
+                trackId={spotlightPeer?.videoTrack}
+                label={spotlightPeer?.name ?? "?"}
+                style={{ width: "100%", height: "100%", borderRadius: 0 }}
+              />
             </div>
           </div>
         ) : (
-          /* Grid mode */
-          <div style={{
-            display: "grid", width: "100%", height: "100%", gap: 4,
-            gridTemplateColumns: tiles.length <= 1 ? "1fr" : tiles.length <= 4 ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(160px, 1fr))",
-            alignContent: "start",
-          }}>
-            {tiles.map(t => (
-              <Tile key={t.id} trackId={t.trackId} label={t.label} style={{ width: "100%", aspectRatio: "16/9" }} />
-            ))}
-          </div>
+          /* ── No screen share: spotlit person's camera fills area ── */
+          <VideoTile
+            trackId={spotlightPeer?.videoTrack}
+            label={spotlightPeer ? `${spotlightPeer.name}${spotlightPeer.isLocal ? " (You)" : ""}` : "Waiting…"}
+            isLarge
+            style={{ width: "100%", height: "100%", borderRadius: 12 }}
+          />
         )}
       </div>
 
-      {/* Controls */}
+      {/* ━━ PARTICIPANT STRIP ━━ */}
+      {participantStrip.length > 0 && (
+        <div style={{
+          display: "flex", gap: 6, padding: "5px 8px",
+          overflowX: "auto", flexShrink: 0,
+          background: "rgba(0,0,0,0.25)",
+          scrollbarWidth: "none",
+        }}>
+          {participantStrip.map(p => {
+            const isSelected = p.id === effectivePinnedId;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setPinnedPeerId(p.id)}
+                style={{
+                  position: "relative",
+                  width: 72, height: 52,
+                  flexShrink: 0, flexGrow: 0,
+                  border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)",
+                  borderRadius: 9,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  padding: 0,
+                  background: "transparent",
+                  outline: "none",
+                  boxShadow: isSelected ? "0 0 10px rgba(34,197,94,0.35)" : "none",
+                  transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s",
+                  transform: isSelected ? "scale(1.06)" : "scale(1)",
+                }}
+              >
+                <VideoTile trackId={p.videoTrack} label={p.name ?? "?"} style={{ width: "100%", height: "100%", borderRadius: 0 }} />
+                {/* Green dot indicator for selected */}
+                {isSelected && (
+                  <div style={{
+                    position: "absolute", top: 3, right: 3,
+                    width: 7, height: 7, borderRadius: "50%",
+                    background: "#22c55e", boxShadow: "0 0 5px #22c55e",
+                  }} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ━━ CONTROLS ━━ */}
       <div className={s.controls}>
-        <button
-          className={`${s.controlBtn} ${!isAudioOn ? s.controlBtnActive : ""}`}
-          onClick={() => hmsActions.setLocalAudioEnabled(!isAudioOn)}
-        >
+        <button className={`${s.controlBtn} ${!isAudioOn ? s.controlBtnActive : ""}`}
+          onClick={() => hmsActions.setLocalAudioEnabled(!isAudioOn)} title={isAudioOn ? "Mute" : "Unmute"}>
           {isAudioOn ? <Mic size={18} /> : <MicOff size={18} />}
         </button>
-        <button
-          className={`${s.controlBtn} ${!isVideoOn ? s.controlBtnActive : ""}`}
-          onClick={() => hmsActions.setLocalVideoEnabled(!isVideoOn)}
-        >
+        <button className={`${s.controlBtn} ${!isVideoOn ? s.controlBtnActive : ""}`}
+          onClick={() => hmsActions.setLocalVideoEnabled(!isVideoOn)} title={isVideoOn ? "Camera off" : "Camera on"}>
           {isVideoOn ? <Video size={18} /> : <VideoOff size={18} />}
+        </button>
+        <button className={`${s.controlBtn} ${isScreenShared ? s.controlBtnActive : ""}`}
+          onClick={() => hmsActions.setScreenShareEnabled(!isScreenShared)} title={isScreenShared ? "Stop sharing" : "Share screen"}>
+          {isScreenShared ? <MonitorOff size={18} /> : <Monitor size={18} />}
         </button>
       </div>
 
-      {/* Confidence chips */}
+      {/* ━━ CONFIDENCE CHIPS ━━ */}
       <div className={s.bottomArea}>
-        <ConfidenceChips value={confidence} onChange={onConfidenceChange} disabled={!questionActive} />
+        <ConfidenceChips value={confidence} onChange={handleConfidenceChange} disabled={false} />
       </div>
     </div>
   );

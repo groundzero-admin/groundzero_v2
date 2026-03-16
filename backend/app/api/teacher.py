@@ -15,8 +15,9 @@ from app.auth import require_role
 from app.database import get_db
 from app.models.batch_enrollment import CohortEnrollment
 from app.models.competency import Competency
+from app.models.curriculum import Activity
 from app.models.evidence import EvidenceEvent
-from app.models.session import Cohort, Session
+from app.models.session import Cohort, Session, SessionActivity
 from app.models.student import Student, StudentCompetencyState
 from app.models.user import User
 from app.schemas.student import StudentOut
@@ -33,6 +34,9 @@ class UpcomingSessionOut(BaseModel):
     scheduled_at: str | None
     started_at: str | None
     ended_at: str | None
+    activity_count: int = 0
+    total_questions: int = 0
+    is_done: bool = False
 
 
 @router.get(
@@ -43,21 +47,10 @@ async def get_my_cohorts(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_role("teacher", "admin")),
 ):
-    """Return cohorts for teaching. Admin sees all cohorts; teacher sees only assigned ones."""
-    if user.role == "admin":
-        result = await db.execute(
-            select(Cohort).order_by(Cohort.created_at.desc())
-        )
-    else:
-        result = await db.execute(
-            select(Cohort)
-            .where(
-                Cohort.id.in_(
-                    select(Session.cohort_id).where(Session.teacher_id == user.id).distinct()
-                )
-            )
-            .order_by(Cohort.created_at.desc())
-        )
+    """Return all cohorts. Any teacher or admin sees all cohorts."""
+    result = await db.execute(
+        select(Cohort).order_by(Cohort.created_at.desc())
+    )
     cohorts = result.scalars().all()
     return [
         {
@@ -92,8 +85,40 @@ async def get_upcoming_sessions(
     )
     sessions = result.scalars().all()
 
-    return [
-        UpcomingSessionOut(
+    # Gather activity counts and question totals
+    out = []
+    for s in sessions:
+        # Count session activities
+        sa_result = await db.execute(
+            select(func.count()).select_from(SessionActivity).where(SessionActivity.session_id == s.id)
+        )
+        activity_count = sa_result.scalar() or 0
+
+        # Get activity IDs for this session to count questions
+        sa_ids_result = await db.execute(
+            select(SessionActivity.activity_id).where(SessionActivity.session_id == s.id)
+        )
+        act_ids = [r[0] for r in sa_ids_result.all()]
+        total_questions = 0
+        if act_ids:
+            q_result = await db.execute(
+                select(Activity.question_ids).where(Activity.id.in_(act_ids))
+            )
+            for (qids,) in q_result.all():
+                if qids:
+                    total_questions += len(qids)
+
+        # Determine if session is truly "done" (ended + all activities completed)
+        is_done = False
+        if s.ended_at:
+            sa_status_result = await db.execute(
+                select(SessionActivity.status).where(SessionActivity.session_id == s.id)
+            )
+            statuses = [r[0] for r in sa_status_result.all()]
+            # Done = ended AND (no activities OR all activities completed)
+            is_done = len(statuses) == 0 or all(st == "completed" for st in statuses)
+
+        out.append(UpcomingSessionOut(
             id=str(s.id),
             title=s.title,
             description=s.description,
@@ -102,9 +127,12 @@ async def get_upcoming_sessions(
             scheduled_at=s.scheduled_at.isoformat() if s.scheduled_at else None,
             started_at=s.started_at.isoformat() if s.started_at else None,
             ended_at=s.ended_at.isoformat() if s.ended_at else None,
-        )
-        for s in sessions
-    ]
+            activity_count=activity_count,
+            total_questions=total_questions,
+            is_done=is_done,
+        ))
+
+    return out
 
 
 @router.get(

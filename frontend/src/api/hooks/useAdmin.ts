@@ -44,6 +44,7 @@ export function useUpdateTemplate() {
         onSuccess: (_data, vars) => {
             qc.invalidateQueries({ queryKey: ["templates"] });
             qc.invalidateQueries({ queryKey: ["templates", vars.id] });
+            qc.invalidateQueries({ queryKey: ["cohorts"] });  // sync template changes to sessions
         },
     });
 }
@@ -102,12 +103,18 @@ export function useDeleteCohort() {
     });
 }
 
+export interface ImportTemplateItem {
+    template_id: string;
+    scheduled_at?: string;
+    teacher_id?: string;
+}
+
 export function useImportTemplates() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ cohortId, templateIds }: { cohortId: string; templateIds: string[] }) =>
+        mutationFn: ({ cohortId, items }: { cohortId: string; items: ImportTemplateItem[] }) =>
             api
-                .post<CohortSession[]>(`/cohorts/${cohortId}/import-templates`, templateIds)
+                .post<CohortSession[]>(`/cohorts/${cohortId}/import-templates`, items)
                 .then((r) => r.data),
         onSuccess: (_data, vars) =>
             qc.invalidateQueries({ queryKey: ["cohorts", vars.cohortId] }),
@@ -180,6 +187,59 @@ export function useGenerateQuestion() {
     });
 }
 
+// ──────────────── Activity hooks ────────────────
+
+export function useActivities(moduleId?: string) {
+    const params = moduleId ? `?module_id=${moduleId}` : "";
+    return useQuery({
+        queryKey: ["activities", moduleId ?? "all"],
+        queryFn: () => api.get(`/activities${params}`).then((r) => r.data),
+    });
+}
+
+export function useCreateActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: Record<string, unknown>) => api.post("/activities", data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useUpdateActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: { id: string } & Record<string, unknown>) =>
+            api.put(`/activities/${id}`, data).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useDeleteActivity() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete(`/activities/${id}`),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useLinkActivityQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ activityId, questionId }: { activityId: string; questionId: string }) =>
+            api.post(`/activities/${activityId}/questions/${questionId}`).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
+export function useUnlinkActivityQuestion() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ activityId, questionId }: { activityId: string; questionId: string }) =>
+            api.delete(`/activities/${activityId}/questions/${questionId}`).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
 // ──────────────── Activity Question hooks ────────────────
 
 export function useActivityQuestions(templateId?: string) {
@@ -193,7 +253,7 @@ export function useActivityQuestions(templateId?: string) {
 export function useCreateActivityQuestion() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: { template_id: string; title: string; data: Record<string, unknown>; grade_band?: string; is_published?: boolean }) =>
+        mutationFn: (data: { template_id: string; title: string; data: Record<string, unknown>; grade_band?: string; competency_id: string; difficulty?: number; is_published?: boolean }) =>
             api.post<ActivityQuestion>("/admin/activity-questions", data).then((r) => r.data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
     });
@@ -202,7 +262,7 @@ export function useCreateActivityQuestion() {
 export function useUpdateActivityQuestion() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, ...data }: { id: string; title?: string; data?: Record<string, unknown>; grade_band?: string; is_published?: boolean }) =>
+        mutationFn: ({ id, ...data }: { id: string; title?: string; data?: Record<string, unknown>; grade_band?: string; competency_id?: string; difficulty?: number; is_published?: boolean }) =>
             api.put<ActivityQuestion>(`/admin/activity-questions/${id}`, data).then((r) => r.data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
     });

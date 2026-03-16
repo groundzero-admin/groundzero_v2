@@ -207,7 +207,6 @@ async def generate_question(
             temperature=0.4,
         )
         content = resp.choices[0].message.content or ""
-        # Extract first JSON object from the response
         match = re.search(r"\{[\s\S]*\}", content)
         if not match:
             raise ValueError("No JSON found in LLM response")

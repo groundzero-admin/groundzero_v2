@@ -5,13 +5,14 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
 from app.database import get_db
 from app.models.activity_question import ActivityQuestion
+from app.models.competency import Competency
 from app.models.question_template import QuestionTemplate
 from app.models.user import User
 
@@ -26,6 +27,8 @@ class AQOut(BaseModel):
     title: str
     data: dict
     grade_band: str
+    competency_id: str
+    difficulty: float
     created_by: uuid.UUID | None
     is_published: bool
     created_at: datetime
@@ -38,8 +41,10 @@ class AQOut(BaseModel):
 class AQCreate(BaseModel):
     template_id: uuid.UUID
     title: str
-    data: dict = {}
+    data: dict = Field(default_factory=dict)
     grade_band: str = ""
+    competency_id: str = Field(min_length=1)
+    difficulty: float = 0.5
     is_published: bool = False
 
 
@@ -47,6 +52,8 @@ class AQUpdate(BaseModel):
     title: str | None = None
     data: dict | None = None
     grade_band: str | None = None
+    competency_id: str | None = None
+    difficulty: float | None = None
     is_published: bool | None = None
 
 
@@ -111,11 +118,16 @@ async def create_question(
     tmpl = await db.get(QuestionTemplate, body.template_id)
     if not tmpl:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Template not found")
+    comp = await db.get(Competency, body.competency_id)
+    if not comp:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Competency not found")
     aq = ActivityQuestion(
         template_id=body.template_id,
         title=body.title,
         data=body.data,
         grade_band=body.grade_band,
+        competency_id=body.competency_id,
+        difficulty=body.difficulty,
         is_published=body.is_published,
         created_by=user.id,
     )
@@ -138,7 +150,12 @@ async def update_question(
     aq = await db.get(ActivityQuestion, question_id)
     if not aq:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Question not found")
-    for k, v in body.model_dump(exclude_none=True).items():
+    updates = body.model_dump(exclude_none=True)
+    if "competency_id" in updates:
+        comp = await db.get(Competency, updates["competency_id"])
+        if not comp:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Competency not found")
+    for k, v in updates.items():
         setattr(aq, k, v)
     await db.commit()
     await db.refresh(aq)
@@ -147,6 +164,7 @@ async def update_question(
     d.template_slug = tmpl.slug if tmpl else None
     d.template_name = tmpl.name if tmpl else None
     return d
+
 
 
 @router.delete("/{question_id}", status_code=status.HTTP_204_NO_CONTENT)

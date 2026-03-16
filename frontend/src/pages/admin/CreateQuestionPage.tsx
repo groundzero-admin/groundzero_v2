@@ -7,6 +7,7 @@ import {
   useDeleteActivityQuestion,
   useGenerateQuestion,
 } from "@/api/hooks/useAdmin";
+import { useSkillGraph } from "@/api/hooks/useCompetencies";
 import type { QuestionTemplate, InputField, ActivityQuestion } from "@/api/types/admin";
 import {
   ArrowLeft, ChevronRight, Eye, Trash2, Plus, Pencil,
@@ -19,6 +20,7 @@ type Step = "pick" | "fill";
 export default function CreateQuestionPage() {
   const { data: templates, isLoading: loadingT } = useQuestionTemplates();
   const { data: questions, isLoading: loadingQ } = useActivityQuestions();
+  const { data: graph } = useSkillGraph();
   const createMut = useCreateActivityQuestion();
   const updateMut = useUpdateActivityQuestion();
   const deleteMut = useDeleteActivityQuestion();
@@ -30,7 +32,21 @@ export default function CreateQuestionPage() {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [title, setTitle] = useState("");
   const [gradeBand, setGradeBand] = useState("");
+  const [competencyId, setCompetencyId] = useState("");
+  const [difficulty, setDifficulty] = useState(0.5);
+  const [pillarFilter, setPillarFilter] = useState("");
+  const [compSearch, setCompSearch] = useState("");
+  const [compOpen, setCompOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+
+  // Competency tree: pillar → capabilities → competencies
+  const pillars = graph?.pillars ?? [];
+  const capabilities = graph?.capabilities ?? [];
+  const competencies = graph?.competencies ?? [];
+  const filteredCapIds = pillarFilter
+    ? capabilities.filter((c) => c.pillar_id === pillarFilter).map((c) => c.id)
+    : capabilities.map((c) => c.id);
+  const filteredComps = competencies.filter((c) => filteredCapIds.includes(c.capability_id));
 
   const pickTemplate = useCallback((t: QuestionTemplate) => {
     setSelected(t);
@@ -39,6 +55,11 @@ export default function CreateQuestionPage() {
     setFormData({});
     setTitle("");
     setGradeBand("");
+    setCompetencyId("");
+    setDifficulty(0.5);
+    setPillarFilter("");
+    setCompSearch("");
+    setCompOpen(false);
   }, []);
 
   const openQuestion = useCallback((q: ActivityQuestion) => {
@@ -48,6 +69,8 @@ export default function CreateQuestionPage() {
     setEditingId(q.id);
     setTitle(q.title);
     setGradeBand(q.grade_band);
+    setCompetencyId(q.competency_id ?? "");
+    setDifficulty(q.difficulty ?? 0.5);
     setFormData(q.data as Record<string, unknown>);
     setStep("fill");
   }, [templates]);
@@ -64,23 +87,19 @@ export default function CreateQuestionPage() {
   }, []);
 
   const isSaving = createMut.isPending || updateMut.isPending;
+  const canSave = !!title.trim() && !!competencyId;
 
   const handleSave = useCallback(
     (publish: boolean) => {
-      if (!selected || !title.trim()) return;
+      if (!selected || !title.trim() || !competencyId) return;
+      const payload = { title: title.trim(), data: formData, grade_band: gradeBand, competency_id: competencyId, difficulty, is_published: publish };
       if (editingId) {
-        updateMut.mutate(
-          { id: editingId, title: title.trim(), data: formData, grade_band: gradeBand, is_published: publish },
-          { onSuccess: () => goBack() },
-        );
+        updateMut.mutate({ id: editingId, ...payload }, { onSuccess: () => goBack() });
       } else {
-        createMut.mutate(
-          { template_id: selected.id, title: title.trim(), data: formData, grade_band: gradeBand, is_published: publish },
-          { onSuccess: () => goBack() },
-        );
+        createMut.mutate({ template_id: selected.id, ...payload }, { onSuccess: () => goBack() });
       }
     },
-    [selected, editingId, title, formData, gradeBand, createMut, updateMut, goBack],
+    [selected, editingId, title, formData, gradeBand, competencyId, difficulty, createMut, updateMut, goBack],
   );
 
   if (loadingT || loadingQ) {
@@ -134,6 +153,44 @@ export default function CreateQuestionPage() {
                 </select>
               </div>
 
+              <div>
+                <label className={s.label}>Pillar <span style={{ color: "#a0aec0", fontWeight: 400 }}>(filter)</span></label>
+                <select className={s.select} value={pillarFilter} onChange={(e) => { setPillarFilter(e.target.value); setCompetencyId(""); }}>
+                  <option value="">All pillars</option>
+                  {pillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+
+              <CompetencyPicker
+                label="Competency"
+                required
+                options={filteredComps}
+                value={competencyId}
+                onSelect={(id) => { setCompetencyId(id); setCompOpen(false); setCompSearch(""); }}
+                search={compSearch}
+                onSearchChange={setCompSearch}
+                open={compOpen}
+                onToggle={() => setCompOpen((o) => !o)}
+                onBlur={() => setTimeout(() => setCompOpen(false), 150)}
+              />
+
+              <div>
+                <label className={s.label} style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>Difficulty</span>
+                  <span style={{ fontWeight: 700, color: "#6366f1" }}>{difficulty.toFixed(2)}</span>
+                </label>
+                <input
+                  type="range"
+                  min={0} max={1} step={0.05}
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(parseFloat(e.target.value))}
+                  style={{ width: "100%", accentColor: "#6366f1" }}
+                />
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#a0aec0", marginTop: 2 }}>
+                  <span>Easy (0.0)</span><span>Hard (1.0)</span>
+                </div>
+              </div>
+
               {selected.llm_prompt_template && (
                 <GeneratePanel
                   templateId={selected.id}
@@ -177,14 +234,14 @@ export default function CreateQuestionPage() {
                 <button
                   className={s.cancelBtn}
                   onClick={() => handleSave(false)}
-                  disabled={!title.trim() || isSaving}
+                  disabled={!canSave || isSaving}
                 >
                   Save Draft
                 </button>
                 <button
                   className={s.submitBtn}
                   onClick={() => handleSave(true)}
-                  disabled={!title.trim() || isSaving}
+                  disabled={!canSave || isSaving}
                 >
                   {isSaving ? "Saving..." : "Publish"}
                 </button>
@@ -278,6 +335,101 @@ export default function CreateQuestionPage() {
     </div>
   );
 }
+
+// ─── Searchable Competency Picker ────────────────────────────────────────────
+
+interface CompetencyOption { id: string; name: string }
+
+function CompetencyPicker({
+  label,
+  required,
+  options,
+  value,
+  onSelect,
+  search,
+  onSearchChange,
+  open,
+  onToggle,
+  onBlur,
+}: {
+  label: string;
+  required?: boolean;
+  options: CompetencyOption[];
+  value: string;
+  onSelect: (id: string) => void;
+  search: string;
+  onSearchChange: (v: string) => void;
+  open: boolean;
+  onToggle: () => void;
+  onBlur: () => void;
+}) {
+  const selected = options.find((o) => o.id === value);
+  const visibleOptions = options.filter((o) =>
+    !search || `${o.id} ${o.name}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ marginBottom: 14, position: "relative" }}>
+      <label className={s.label}>
+        {label} {required && <span style={{ color: "#E53E3E" }}>*</span>}
+      </label>
+      <div
+        className={s.input}
+        onClick={onToggle}
+        style={{ cursor: "pointer", userSelect: "none", display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 38 }}
+      >
+        {selected ? (
+          <span style={{ fontSize: 13 }}><span style={{ fontWeight: 600, color: "#6366f1" }}>{selected.id}</span> — {selected.name}</span>
+        ) : (
+          <span style={{ color: "#a0aec0", fontSize: 13 }}>Select competency…</span>
+        )}
+        <span style={{ fontSize: 10, color: "#a0aec0" }}>{open ? "▲" : "▼"}</span>
+      </div>
+      {open && (
+        <div style={{
+          position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0,
+          background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 10,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.12)", overflow: "hidden",
+        }}>
+          <div style={{ padding: "8px 10px", borderBottom: "1px solid #f0f0f0" }}>
+            <input
+              className={s.input}
+              autoFocus
+              placeholder="Search by id or name…"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onBlur={onBlur}
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto" }}>
+            {visibleOptions.length === 0 && (
+              <div style={{ padding: "10px 14px", fontSize: 12, color: "#a0aec0" }}>No results</div>
+            )}
+            {visibleOptions.map((o) => (
+              <div
+                key={o.id}
+                onMouseDown={() => onSelect(o.id)}
+                style={{
+                  padding: "8px 14px", fontSize: 13, cursor: "pointer",
+                  background: o.id === value ? "#f0f4ff" : "transparent",
+                  borderLeft: o.id === value ? "3px solid #6366f1" : "3px solid transparent",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = o.id === value ? "#f0f4ff" : "transparent")}
+              >
+                <span style={{ fontWeight: 600, color: "#6366f1", marginRight: 6 }}>{o.id}</span>
+                {o.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Field input ──────────────────────────────────────────────────────────────
 
 function FieldInput({
   field,

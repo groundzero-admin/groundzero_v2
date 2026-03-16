@@ -76,6 +76,8 @@ export interface ActivityQuestion {
     title: string;
     data: Record<string, unknown>;
     grade_band: string;
+    competency_id: string;
+    difficulty: number;
     created_by: string | null;
     is_published: boolean;
     created_at: string;
