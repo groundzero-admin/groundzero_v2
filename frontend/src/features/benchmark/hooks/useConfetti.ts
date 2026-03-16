@@ -99,6 +99,22 @@ export default function useConfetti(colors: string[]) {
   );
 
   const smallBurst = useCallback(() => burst(30, 0.4), [burst]);
+  const doubleBurst = useCallback(() => {
+    burst(50, 0.35);
+    setTimeout(() => burst(50, 0.45), 200);
+  }, [burst]);
+  const tripleBurst = useCallback(() => {
+    burst(60, 0.25);
+    setTimeout(() => burst(60, 0.4), 200);
+    setTimeout(() => burst(60, 0.55), 400);
+  }, [burst]);
+  const screenWideBurst = useCallback(() => {
+    burst(100, 0.2);
+    burst(100, 0.5);
+    burst(100, 0.8);
+    setTimeout(() => { burst(80, 0.3); burst(80, 0.7); }, 300);
+    setTimeout(() => { burst(60, 0.1); burst(60, 0.5); burst(60, 0.9); }, 600);
+  }, [burst]);
   const milestoneBurst = useCallback(() => burst(80, 0.3), [burst]);
   const celebrationBurst = useCallback(() => {
     burst(120, 0.3);
@@ -106,5 +122,5 @@ export default function useConfetti(colors: string[]) {
     setTimeout(() => burst(60, 0.2), 600);
   }, [burst]);
 
-  return { smallBurst, milestoneBurst, celebrationBurst };
+  return { smallBurst, doubleBurst, tripleBurst, screenWideBurst, milestoneBurst, celebrationBurst };
 }
