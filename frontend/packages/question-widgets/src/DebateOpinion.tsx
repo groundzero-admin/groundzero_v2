@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BUBBLE, BUBBLE_USER, str, arr } from "./shared";
 
-export default function DebateOpinion({ data, onAnswer }: QuestionProps) {
+export default function DebateOpinion({ data, onAnswer, resetKey }: QuestionProps) {
   const topic = str(data.topic);
   const stances = arr(data.stances);
   if (!topic) return null;
@@ -14,6 +14,13 @@ export default function DebateOpinion({ data, onAnswer }: QuestionProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const [msgs, setMsgs] = useState<string[]>([]);
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setPicked(null);
+    setMsgs([]);
+    setInput("");
+  }, [resetKey]);
 
   const send = () => {
     if (!input.trim()) return;

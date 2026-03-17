@@ -1,0 +1,44 @@
+Session,Topic / Activity,Description,Activity Type,,Lovable Link if any ,Screenshots 
+Session 1,Warm Up – If/Then Chain,Students explore simple logical thinking using if–then chains to understand cause and effect decisions.,Interactive warm-up,Fill In The Blanks - already there ,,
+,Flowchart Symbols (AI Lab),"Introduction to flowcharts and logic using shapes like start, process, decision. Students map simple decisions.",Drag & Drop / Draw.io / Scribble Board,Drag Drop / Select an item for placement + Label elements ,https://diagram-decide-ai.lovable.app,
+,Decision Trees (If–Else Thinking),Students learn how decisions branch into different outcomes using decision trees.,Lovable Interactive + MCQ,"Drag Drop / Select an item for placement + Label elements 
+
+Extra - If we can add interactiveness on the Nodes ",,
+,Training Data (ML Intro),Simple explanation of how AI learns from examples (training data).,Discussion + examples,-,,
+,,,,,,
+Session 2,My Creativity Map,"Students reflect on moments they have been creative in different areas like school, home, nature.",Image + Short Answer,Already there ,,
+,Story of Username / Identity,Students explain why they chose their username or identity online.,Short Answer,Already there ,,
+,Critique & Feedback,Students review examples and give constructive feedback.,Drag & Drop,MCQ / Classifier or drag and drop / Same Q having multi step responses (this one is already there in V1),https://feedback-finder-lab.lovable.app,
+,Feedback Understanding,Understanding what makes good feedback vs bad feedback.,MCQ,Already there ,,
+,Fast Math,Quick math warm-up to activate thinking.,10 MCQ + Timer,Already there in V2 - This will have the Q customisation as someone answers correct ,,
+,What is AI?,Introduction to AI types and capabilities.,Discussion,-,,
+,Gemini Capabilities,Demonstrate AI generating image / video / music / text.,Demo,-,,
+,AI Lab – Talk to Spark,Students interact with AI assistant to explore ideas.,AI Conversation,"The activity is Talk to Spark - data for this not just store as Spark conv but also in activity. 
+So Teacher can see in her view specificaly these chats in real time during class? ",,
+,Emotional Responses,Understanding emotions and how humans vs AI respond.,Reflection,-,,
+,,,,,,
+Session 3, What Could This Be?,Students observe ambiguous shapes/images and describe possible interpretations.,Image + Short Answer,Already there ,,
+,Visual Description and Descriptive wriitng ,Students describe an imaginative product and Gemini makes it,AI Demo,-,,
+,Basic Geometry – Angles,Introduction to basic types of angles and number of corners in a shape ,MCQ,"Angle slider game - MCQ to answer Q like - Make 3 pm, Open the door halfway, half a pizza etc ",,
+,,,MCQ,Already there in V2 - This will have the Q customisation as someone answers correct ,,
+,How AI Recognizes Shapes (Computer Vision),Explain how computers detect shapes and edges in images.,MCQ,Already there ,,
+,Should AI Make Decisions?,Debate ethical question about AI making decisions.,Debate with Spark,"Already there / but spark prompt for this debate needs work 
+
+Currently activity level Spark prompt functionality is not there ",https://gzactivities.lovable.app/aimakedecisions2 ,
+,,,,,,
+Session 4,Audio Memory Warm-up,Students listen to a short audio clip once and recall key details.,Audio is played + Short answer ,Already there ,,
+,Parrot,Write exactly what they remember.,Text,Already there ,,
+,Paraphrase,Rewrite the idea in their own words.,Text,Already there ,,
+,Power-Up,Suggest one improvement or idea.,Text,Already there ,,
+,Word Problems,Solve math word problems related to the key concept.,MCQ / Text,"Already there in V2 - This will have the Q customisation as someone answers correct  
+
+Word problems may need animations or illustrations embedded for explanation ",,
+,Prompt Engineering Intro,Students learn what prompts are and how AI understands instructions.,AI demo and tools ,-,,
+,,,,,,
+Session 5,"Tone, Audience & Expression",Students learn how communication changes depending on the audience and tone.,Discussion + Examples,,,
+,Identifying Main Idea & Details,Students read or hear a piece of content and identify the main idea and supporting details.,Short Answer,,,
+,Key Topic – User Research,Introduction to understanding users before building ideas.,Concept introduction,,,
+,App Language × User Base,Explore how apps change language based on user type and audience.,Case discussion,,,
+,Brainstorming & Idea Generation,Students generate ideas for a product/problem using structured brainstorming.,Guided activity,,,
+,AI Lab – Spark to Refine Your Idea,Students interact with Spark AI to refine their product idea and make it clearer.,AI Conversation,,,
+,Homework – Conduct User Research,Students talk to 2–3 people to understand needs related to their idea.,HW assignment,,,

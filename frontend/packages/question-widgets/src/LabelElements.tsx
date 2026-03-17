@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TAG, BTN, FEEDBACK_OK, str, arr } from "./shared";
 
-export default function LabelElements({ data, onAnswer }: QuestionProps) {
+export default function LabelElements({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.instruction);
   const labels = arr(data.label_options);
   if (!instruction) return null;
 
   const [placed, setPlaced] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setPlaced([]);
+    setSubmitted(false);
+  }, [resetKey]);
   const usedLabels = new Set(placed);
 
   const toggle = (l: string) => {
@@ -50,7 +56,7 @@ export default function LabelElements({ data, onAnswer }: QuestionProps) {
       )}
       {!submitted && placed.length > 0 && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleSubmit}>Submit Labels</button>
+          <button style={BTN} onClick={handleSubmit}>Submit</button>
         </div>
       )}
       {submitted && (

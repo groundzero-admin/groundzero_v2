@@ -20,7 +20,7 @@ router = APIRouter(prefix="/evidence", tags=["evidence"])
     description="Record a learning event (MCQ answer, facilitator observation, etc.) and trigger a BKT mastery update. Returns the created event plus before/after mastery state changes.",
 )
 async def submit_evidence(data: EvidenceCreate, db: AsyncSession = Depends(get_db)):
-    event, update_results = await evidence_service.process_evidence(db, data)
+    event, update_results, feedback = await evidence_service.process_evidence(db, data)
     updates = [
         BKTUpdateOut(
             competency_id=r.competency_id,
@@ -33,7 +33,7 @@ async def submit_evidence(data: EvidenceCreate, db: AsyncSession = Depends(get_d
         )
         for r in update_results
     ]
-    return EvidenceResultOut(event=EvidenceOut.model_validate(event), updates=updates)
+    return EvidenceResultOut(event=EvidenceOut.model_validate(event), updates=updates, feedback=feedback)
 
 
 @router.get(

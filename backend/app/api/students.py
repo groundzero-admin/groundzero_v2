@@ -207,6 +207,48 @@ async def get_next_question(
     )
 
 
+class NextActivityQuestionOut(BaseModel):
+    activity_question_id: uuid.UUID
+    template_slug: str
+    title: str
+    data: dict
+    competency_id: str
+    competency_name: str
+    difficulty: float
+    p_learned: float
+    stage: int
+
+
+@router.get(
+    "/{student_id}/next-activity-question",
+    response_model=NextActivityQuestionOut | None,
+    summary="Get Next Rich Activity Question",
+    description="ZPD-based selection from activity_questions table for a given activity.",
+)
+async def get_next_activity_question(
+    student_id: uuid.UUID,
+    activity_id: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await student_service.get_student(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    result = await predictor_service.get_next_activity_question(db, student_id, activity_id)
+    if not result:
+        return None
+    return NextActivityQuestionOut(
+        activity_question_id=result.activity_question_id,
+        template_slug=result.template_slug,
+        title=result.title,
+        data=result.data,
+        competency_id=result.competency_id,
+        competency_name=result.competency_name,
+        difficulty=result.difficulty,
+        p_learned=result.p_learned,
+        stage=result.stage,
+    )
+
+
 @router.get(
     "/{student_id}/recommended-topics",
     response_model=list[RecommendedTopicOut],

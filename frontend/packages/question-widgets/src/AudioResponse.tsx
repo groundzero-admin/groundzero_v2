@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TEXT_INPUT, BTN, str } from "./shared";
 
-export default function AudioResponse({ data, onAnswer }: QuestionProps) {
+export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const audioUrl = str(data.audio_url);
   const allowReplay = data.allow_replay !== false;
@@ -13,6 +13,15 @@ export default function AudioResponse({ data, onAnswer }: QuestionProps) {
   const [played, setPlayed] = useState(false);
   const [text, setText] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    audioRef.current?.pause();
+    setPlaying(false);
+    setPlayed(false);
+    setText("");
+    setSubmitted(false);
+  }, [resetKey]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -82,7 +91,7 @@ export default function AudioResponse({ data, onAnswer }: QuestionProps) {
       {!submitted && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
           <button style={BTN} onClick={handleSubmit} disabled={!text.trim()}>
-            Submit Answer
+            Submit
           </button>
         </div>
       )}

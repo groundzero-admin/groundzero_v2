@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, TEXT_INPUT, str } from "./shared";
 
-export default function ImageResponse({ data, onAnswer }: QuestionProps) {
+export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   if (!prompt) return null;
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setText("");
+  }, [resetKey]);
   return (
     <div style={CARD}>
       <div style={HEADING}>{prompt}</div>
@@ -15,7 +20,7 @@ export default function ImageResponse({ data, onAnswer }: QuestionProps) {
         </div>
         <div>
           <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your response..." style={{ ...TEXT_INPUT, minHeight: 80, resize: "none" as const }} />
-          <button style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Check Answer</button>
+          <button style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Submit</button>
         </div>
       </div>
     </div>

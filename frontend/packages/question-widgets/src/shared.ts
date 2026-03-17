@@ -5,6 +5,8 @@ export interface QuestionProps {
   data: Record<string, unknown>;
   /** Called when the student submits an answer. Omit for display-only mode. */
   onAnswer?: (answer: unknown) => void;
+  /** Increment to reset the widget to its initial state without unmounting. */
+  resetKey?: number;
 }
 
 /* ─── Style tokens ─── */

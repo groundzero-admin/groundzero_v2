@@ -1,5 +1,5 @@
 import type { CSSProperties, DragEvent } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
@@ -20,7 +20,7 @@ const PALETTES = [
   { bg: "#D1FAE5", border: "#059669", text: "#065F46", light: "#ECFDF5", tag: "#059669" },
 ];
 
-export default function DragDropClassifier({ data, onAnswer }: QuestionProps) {
+export default function DragDropClassifier({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.instruction);
   const categories = arr(data.categories);
   const classifierItems = parseClassifierItems(data.items);
@@ -34,6 +34,14 @@ export default function DragDropClassifier({ data, onAnswer }: QuestionProps) {
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setBuckets({});
+    setDragOver(null);
+    setDragging(null);
+    setChecked(false);
+  }, [resetKey]);
 
   const placedItems = new Set(Object.values(buckets).flat());
   const allPlaced = itemLabels.length > 0 && placedItems.size === itemLabels.length;
@@ -55,9 +63,10 @@ export default function DragDropClassifier({ data, onAnswer }: QuestionProps) {
   };
 
   const isCorrect = (item: string, catIdx: number) => correctMap.get(item) === cats[catIdx];
-  const allCorrect = checked && Object.entries(buckets).every(([i, items]) =>
+  const computeAllCorrect = () => Object.entries(buckets).every(([i, items]) =>
     items.every((item) => isCorrect(item, Number(i))),
   );
+  const allCorrect = checked && computeAllCorrect();
 
   const tagStyle = (item: string, catIdx: number): CSSProperties => {
     const p = PALETTES[catIdx % 4];
@@ -169,8 +178,8 @@ export default function DragDropClassifier({ data, onAnswer }: QuestionProps) {
 
       {allPlaced && !checked && (
         <div style={{ marginTop: 16, textAlign: "center" }}>
-          <button style={BTN} onClick={() => { setChecked(true); onAnswer?.({ buckets, correct: allCorrect }); }}>
-            Check Answer
+          <button style={BTN} onClick={() => { const correct = computeAllCorrect(); setChecked(true); onAnswer?.({ buckets, correct }); }}>
+            Submit
           </button>
         </div>
       )}

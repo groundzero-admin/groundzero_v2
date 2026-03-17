@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 class EvidenceCreate(BaseModel):
     student_id: uuid.UUID
     competency_id: str
-    outcome: float = Field(ge=0.0, le=1.0)
-    source: str  # mcq, llm_transcript, llm_spark, facilitator, artifact, diagnostic
+    outcome: float = Field(ge=0.0, le=1.0, default=0.0)
+    source: str = "mcq"  # mcq, llm_transcript, llm_spark, facilitator, artifact, diagnostic
     module_id: str | None = None
     session_id: uuid.UUID | None = None
     weight: float | None = None  # if None, derived from source
@@ -19,6 +19,10 @@ class EvidenceCreate(BaseModel):
     response_time_ms: int | None = None
     confidence_report: Literal["got_it", "kinda", "lost"] | None = None
     ai_interaction: Literal["none", "hint", "conversation"] = "none"
+
+    # Rich activity question evaluation (if set, backend derives outcome + source)
+    activity_question_id: uuid.UUID | None = None
+    response: dict | None = None
 
 
 class EvidenceOut(BaseModel):
@@ -51,3 +55,4 @@ class BKTUpdateOut(BaseModel):
 class EvidenceResultOut(BaseModel):
     event: EvidenceOut
     updates: list[BKTUpdateOut]
+    feedback: str | None = None

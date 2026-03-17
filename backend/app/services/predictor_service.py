@@ -15,9 +15,11 @@ from sqlalchemy import select
 from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.activity_question import ActivityQuestion
 from app.models.competency import Competency
 from app.models.curriculum import Activity, Question
 from app.models.curriculum_topic import CurriculumTopic, TopicCompetencyMap
+from app.models.question_template import QuestionTemplate
 from app.models.skill_graph import PrerequisiteEdge
 from app.models.student import Student, StudentCompetencyState
 
@@ -482,6 +484,19 @@ class NextQuestionResult:
     stage: int
 
 
+@dataclass
+class NextActivityQuestionResult:
+    activity_question_id: uuid.UUID
+    template_slug: str
+    title: str
+    data: dict
+    competency_id: str
+    competency_name: str
+    difficulty: float
+    p_learned: float
+    stage: int
+
+
 async def _auto_promote(
     db: AsyncSession,
     student_id: uuid.UUID,
@@ -624,6 +639,147 @@ async def get_next_question_for_activity(
         competency_id=best_cid,
         competency_name=comp_names.get(best_cid, best_cid),
         p_learned=round(state.p_learned, 4) if state else 0.10,
+        stage=state.stage if state else 1,
+    )
+
+
+async def get_next_activity_question(
+    db: AsyncSession,
+    student_id: uuid.UUID,
+    activity_id: str,
+) -> "NextActivityQuestionResult | None":
+    """
+    ZPD-based selection from activity_questions table for a given activity.
+
+    Same competency selection logic as get_next_question_for_activity,
+    but queries activity_questions instead of questions.
+    """
+    from app.models.evidence import EvidenceEvent
+
+    # Load activity + target competencies
+    result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = result.scalar_one_or_none()
+    if not activity:
+        return None
+
+    comp_ids = []
+    for comp in (activity.primary_competencies or []):
+        cid = comp.get("competency_id") or comp.get("competencyId")
+        if cid:
+            comp_ids.append(cid)
+    if not comp_ids:
+        return None
+
+    # Load student states
+    states_result = await db.execute(
+        select(StudentCompetencyState).where(
+            StudentCompetencyState.student_id == student_id,
+            StudentCompetencyState.competency_id.in_(comp_ids),
+        )
+    )
+    states = {s.competency_id: s for s in states_result.scalars().all()}
+
+    # Auto-promote mastered competencies
+    promoted = await _auto_promote(db, student_id, comp_ids, states)
+    comp_ids = comp_ids + promoted
+
+    # Load competency names
+    comp_result = await db.execute(select(Competency).where(Competency.id.in_(comp_ids)))
+    comp_names = {c.id: c.name for c in comp_result.scalars().all()}
+
+    # Pick best competency (lowest P(L), not mastered)
+    best_cid = None
+    best_score = float("inf")
+    for cid in comp_ids:
+        state = states.get(cid)
+        if state and state.stage >= 5:
+            continue
+        p_l = state.p_learned if state else 0.10
+        evidence_count = state.total_evidence if state else 0
+        score = p_l + (evidence_count * 0.001)
+        if score < best_score:
+            best_score = score
+            best_cid = cid
+
+    if not best_cid:
+        best_cid = min(comp_ids, key=lambda c: (states[c].p_learned if c in states else 0.10))
+
+    # ZPD difficulty range from P(L)
+    state = states.get(best_cid)
+    p_l = state.p_learned if state else 0.10
+    if p_l > 0.85:
+        diff_min, diff_max = 0.6, 1.0
+    elif p_l > 0.65:
+        diff_min, diff_max = 0.5, 0.8
+    elif p_l > 0.40:
+        diff_min, diff_max = 0.3, 0.6
+    elif p_l > 0.20:
+        diff_min, diff_max = 0.2, 0.5
+    else:
+        diff_min, diff_max = 0.1, 0.4
+
+    # Already-answered activity question IDs
+    answered_result = await db.execute(
+        select(EvidenceEvent.meta["activityQuestionId"].astext)
+        .where(
+            EvidenceEvent.student_id == student_id,
+            EvidenceEvent.competency_id == best_cid,
+            EvidenceEvent.meta["activityQuestionId"].astext.isnot(None),
+        )
+    )
+    answered_ids = []
+    for row in answered_result.scalars().all():
+        if row:
+            try:
+                answered_ids.append(uuid.UUID(row))
+            except ValueError:
+                pass
+
+    # Query activity_questions with ZPD difficulty, excluding answered
+    query = (
+        select(ActivityQuestion, QuestionTemplate.slug.label("slug"))
+        .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+        .where(
+            ActivityQuestion.competency_id == best_cid,
+            ActivityQuestion.is_published == True,
+            ActivityQuestion.difficulty >= diff_min,
+            ActivityQuestion.difficulty <= diff_max,
+        )
+        .order_by(func.random())
+        .limit(1)
+    )
+    if answered_ids:
+        query = query.where(ActivityQuestion.id.notin_(answered_ids))
+
+    row = (await db.execute(query)).first()
+
+    # Fallback: any published question for this competency
+    if not row:
+        fallback = (
+            select(ActivityQuestion, QuestionTemplate.slug.label("slug"))
+            .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+            .where(
+                ActivityQuestion.competency_id == best_cid,
+                ActivityQuestion.is_published == True,
+            )
+            .order_by(func.random())
+            .limit(1)
+        )
+        row = (await db.execute(fallback)).first()
+
+    if not row:
+        return None
+
+    aq, slug = row
+    return NextActivityQuestionResult(
+        activity_question_id=aq.id,
+        template_slug=slug or "mcq_single",
+        title=aq.title,
+        data=aq.data,
+        competency_id=best_cid,
+        competency_name=comp_names.get(best_cid, best_cid),
+        difficulty=aq.difficulty,
+        p_learned=round(p_l, 4),
         stage=state.stage if state else 1,
     )
 

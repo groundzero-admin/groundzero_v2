@@ -10,15 +10,16 @@ Run:
   python -m seed.import_questions_to_activity_questions
 """
 import asyncio
-import uuid
+import os
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "postgresql+asyncpg://gz_user:gz_local_password@localhost:5432/groundzero"
+from app.config import Settings
 
-MCQ_SINGLE_TEMPLATE_ID = uuid.UUID("2e1280a4-a6ba-4268-9cee-b20e50c1247f")
+settings = Settings()
+DATABASE_URL = settings.DATABASE_URL
 
 
 async def run():
@@ -26,32 +27,38 @@ async def run():
     Session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with Session() as db:
-        # Load all old questions
         from app.models.curriculum import Question
         from app.models.activity_question import ActivityQuestion
+        from app.models.question_template import QuestionTemplate
 
-        result = await db.execute(select(Question).order_by(Question.competency_id, Question.difficulty))
+        # Look up mcq_single template by slug (no hardcoded IDs)
+        tmpl_result = await db.execute(
+            select(QuestionTemplate).where(QuestionTemplate.slug == "mcq_single")
+        )
+        tmpl = tmpl_result.scalar_one_or_none()
+        if not tmpl:
+            print("ERROR: mcq_single template not found — run seed_question_templates first")
+            return
+        print(f"mcq_single template: {tmpl.id}")
+
+        result = await db.execute(
+            select(Question).order_by(Question.competency_id, Question.difficulty)
+        )
         questions = result.scalars().all()
         print(f"Found {len(questions)} questions to import")
 
         imported = 0
-        skipped = 0
-
         for q in questions:
-            # Build mcq_single data
-            options = []
-            for opt in (q.options or []):
-                options.append({
-                    "text": opt.get("text", ""),
-                    "is_correct": opt.get("isCorrect", False),
-                })
-
+            options = [
+                {"text": opt.get("text", ""), "is_correct": opt.get("isCorrect", False)}
+                for opt in (q.options or [])
+            ]
             data: dict = {"question": q.text, "options": options}
             if q.explanation:
                 data["explanation"] = q.explanation
 
             aq = ActivityQuestion(
-                template_id=MCQ_SINGLE_TEMPLATE_ID,
+                template_id=tmpl.id,
                 title=q.text[:200],
                 data=data,
                 grade_band=q.grade_band or "",
@@ -63,7 +70,7 @@ async def run():
             imported += 1
 
         await db.commit()
-        print(f"Done — imported: {imported}, skipped: {skipped}")
+        print(f"Done — imported: {imported}")
 
     await engine.dispose()
 

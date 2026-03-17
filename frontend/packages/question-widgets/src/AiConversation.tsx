@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BUBBLE, BUBBLE_USER, str } from "./shared";
 
-export default function AiConversation({ data, onAnswer }: QuestionProps) {
+export default function AiConversation({ data, onAnswer, resetKey }: QuestionProps) {
   const opening = str(data.opening_message);
   if (!opening && !str(data.system_prompt)) return null;
 
@@ -10,6 +10,13 @@ export default function AiConversation({ data, onAnswer }: QuestionProps) {
     { role: "ai", text: opening || "Hi! Let's explore this topic together." },
   ]);
   const [input, setInput] = useState("");
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setMsgs([{ role: "ai", text: opening || "Hi! Let's explore this topic together." }]);
+    setInput("");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   const send = () => {
     if (!input.trim()) return;

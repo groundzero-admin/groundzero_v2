@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TEXT_INPUT, BTN, str, arr } from "./shared";
 
-export default function ReflectionRating({ data, onAnswer }: QuestionProps) {
+export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const scaleType = str(data.scale_type) || "emoji";
   const followUpPrompt = str(data.follow_up_prompt);
@@ -16,6 +16,13 @@ export default function ReflectionRating({ data, onAnswer }: QuestionProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [followUp, setFollowUp] = useState("");
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setSelected(null);
+    setFollowUp("");
+    setSubmitted(false);
+  }, [resetKey]);
 
   const handleSubmit = () => {
     setSubmitted(true);

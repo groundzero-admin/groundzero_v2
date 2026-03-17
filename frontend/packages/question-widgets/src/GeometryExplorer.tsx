@@ -210,9 +210,15 @@ function ShapeExplorerMode() {
   );
 }
 
-function McqSection({ question, options, correctAnswer, hint, onAnswer }: { question: string; options: string[]; correctAnswer: string; hint: string; onAnswer?: ((a: unknown) => void) | null }) {
+function McqSection({ question, options, correctAnswer, hint, onAnswer, resetKey }: { question: string; options: string[]; correctAnswer: string; hint: string; onAnswer?: ((a: unknown) => void) | null; resetKey?: number }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setSelected(null);
+    setSubmitted(false);
+  }, [resetKey]);
   const correct = (opt: string) => opt.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
   const optStyle = (i: number, opt: string) => {
     if (!submitted) return selected === i ? OPT_SEL : OPT;
@@ -234,7 +240,7 @@ function McqSection({ question, options, correctAnswer, hint, onAnswer }: { ques
       ))}
       {selected !== null && !submitted && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={() => { setSubmitted(true); onAnswer?.({ selected: options[selected!], correct: correct(options[selected!] ?? "") }); }}>Check Answer</button>
+          <button style={BTN} onClick={() => { setSubmitted(true); onAnswer?.({ selected: options[selected!], correct: correct(options[selected!] ?? "") }); }}>Submit</button>
         </div>
       )}
       {submitted && (
@@ -246,7 +252,7 @@ function McqSection({ question, options, correctAnswer, hint, onAnswer }: { ques
   );
 }
 
-export default function GeometryExplorer({ data, onAnswer }: QuestionProps) {
+export default function GeometryExplorer({ data, onAnswer, resetKey }: QuestionProps) {
   const mode = (str(data.mode) || "angle_drag") as Mode;
   const question = str(data.question);
   const options = arr(data.options);
@@ -259,7 +265,7 @@ export default function GeometryExplorer({ data, onAnswer }: QuestionProps) {
       {mode === "angle_slider"   && <AngleSliderMode />}
       {mode === "shape_explorer" && <ShapeExplorerMode />}
       {question && options.length > 0 && (
-        <McqSection question={question} options={options} correctAnswer={correctAnswer} hint={hint} onAnswer={onAnswer} />
+        <McqSection question={question} options={options} correctAnswer={correctAnswer} hint={hint} onAnswer={onAnswer} resetKey={resetKey} />
       )}
     </div>
   );

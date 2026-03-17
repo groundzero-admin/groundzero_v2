@@ -8,7 +8,7 @@ import { useActiveSession } from "@/api/hooks/useActiveSession";
 import { useActivity } from "@/api/hooks/useActivities";
 import { useSessionActivities } from "@/api/hooks/useTeacher";
 import { useSessionScore } from "@/api/hooks/useSessionScore";
-import { useNextQuestion } from "@/api/hooks/useNextQuestion";
+import { useNextActivityQuestion } from "@/api/hooks/useNextActivityQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
 import { api } from "@/api/client";
 import type { BKTUpdate, EvidenceCreate } from "@/api/types";
@@ -65,19 +65,17 @@ export default function LivePage() {
     [sessionActivities, session?.current_activity_id],
   );
 
-  // Backend picks the best competency + question for this activity
+  // Backend picks the best activity question for this activity
   const {
-    data: nextQ,
+    data: activityQuestion,
     isLoading: questionLoading,
     refetch: refetchQuestion,
-  } = useNextQuestion(studentId, activity?.id ?? null);
-
-  const question = nextQ?.question ?? null;
+  } = useNextActivityQuestion(studentId, activity?.id ?? null);
 
   // Answer state
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [confidence, setConfidence] = useState<"got_it" | "kinda" | "lost" | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [resetKey, setAttemptKey] = useState(0);
   const questionShownAt = useRef<number>(Date.now());
 
   // BKT toast
@@ -142,59 +140,60 @@ export default function LivePage() {
 
   // Reset question state when question changes
   useEffect(() => {
-    setSelectedOption(null);
-    setConfidence(null);
     setSubmitted(false);
+    setIsCorrect(null);
+    setAttemptKey(0);
     setSparkTrigger(null);
     setAiInteraction("none");
     setWantHint(false);
     questionShownAt.current = Date.now();
-  }, [nextQ?.question?.id]);
+  }, [activityQuestion?.activity_question_id]);
 
-  const handleSubmit = useCallback(async () => {
-    if (!studentId || !selectedOption || !question || !nextQ) return;
+  // Called by QuestionRenderer's onAnswer — auto-submits evidence
+  const handleAnswer = useCallback(async (answer: unknown) => {
+    if (!studentId || !activityQuestion || submitted) return;
 
-    const correctLabel =
-      question.options?.find((o) => o.is_correct)?.label ?? null;
-    const isCorrect = selectedOption === correctLabel;
     const responseTimeMs = Date.now() - questionShownAt.current;
 
     const evidence: EvidenceCreate = {
       student_id: studentId,
-      competency_id: nextQ.competency_id,
-      outcome: isCorrect ? 1.0 : 0.0,
-      source: "mcq",
-      question_id: question.id,
-      module_id: question.module_id,
+      competency_id: activityQuestion.competency_id,
       session_id: session?.id,
       response_time_ms: responseTimeMs,
-      confidence_report: confidence ?? undefined,
-      ai_interaction: aiInteraction,
+      activity_question_id: activityQuestion.activity_question_id,
+      response: answer as Record<string, unknown>,
     };
 
     try {
       const result = await submitEvidence(evidence);
+      const correct = result.event.outcome >= 0.5;
       setSubmitted(true);
+      setIsCorrect(correct);
       setLocalScoreDelta((prev) => ({
         total: prev.total + 1,
-        correct: prev.correct + (isCorrect ? 1 : 0),
+        correct: prev.correct + (correct ? 1 : 0),
       }));
       if (result.updates.length > 0) {
         setToastUpdates(result.updates);
       }
-
-      // Show hint button on wrong answer (don't auto-open Spark)
-      if (!isCorrect || confidence === "lost") {
+      if (!correct) {
         setWantHint(true);
       }
     } catch {
-      // Mutation error handled by TanStack Query
+      // handled by TanStack Query
     }
-  }, [studentId, selectedOption, question, nextQ, confidence, session?.id, submitEvidence, aiInteraction]);
+  }, [studentId, activityQuestion, submitted, session?.id, submitEvidence]);
 
   const handleNext = useCallback(() => {
     refetchQuestion();
   }, [refetchQuestion]);
+
+  const handleTryAgain = useCallback(() => {
+    setSubmitted(false);
+    setIsCorrect(null);
+    setWantHint(false);
+    setAttemptKey((k) => k + 1);
+  }, []);
 
   const dismissToast = useCallback(() => setToastUpdates(null), []);
 
@@ -214,9 +213,9 @@ export default function LivePage() {
         {/* ── Left: Video (full height) ── */}
         <div className={s.leftCol}>
           <VideoArea
-            confidence={confidence}
-            onConfidenceChange={setConfidence}
-            questionActive={!!question && !submitted}
+            confidence={null}
+            onConfidenceChange={() => {}}
+            questionActive={!!activityQuestion && !submitted}
             roomCode={activeLiveSession?.room_code_guest}
             userName={activeLiveSession?.student_name ?? student?.name ?? "Student"}
           />
@@ -273,12 +272,13 @@ export default function LivePage() {
                   session={session ?? null}
                   activity={activity ?? null}
                   activityLoading={loadingActivity}
-                  question={question}
+                  activityQuestion={activityQuestion ?? null}
                   questionsLoading={questionLoading}
-                  selectedOption={selectedOption}
-                  onSelectOption={setSelectedOption}
                   submitted={submitted}
-                  onSubmit={handleSubmit}
+                  isCorrect={isCorrect}
+                  resetKey={resetKey}
+                  onAnswer={handleAnswer}
+                  onTryAgain={handleTryAgain}
                   onNext={handleNext}
                   submitting={submitting}
                   timeLeft={isTimedMcq ? timeLeft : undefined}
@@ -288,17 +288,15 @@ export default function LivePage() {
               </div>
 
               {/* ── Hint button — always at bottom, no scroll needed ── */}
-              {wantHint && !sparkTrigger && question && nextQ && studentId && (
+              {wantHint && !sparkTrigger && activityQuestion && studentId && (
                 <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                   <button
                     onClick={() => {
                       setSparkTrigger({
                         studentId,
-                        questionId: question.id,
+                        questionId: activityQuestion.activity_question_id,
                         trigger: "wrong_answer",
-                        competencyId: nextQ.competency_id,
-                        selectedOption: selectedOption ?? undefined,
-                        confidenceReport: confidence ?? undefined,
+                        competencyId: activityQuestion.competency_id,
                       });
                       setAiInteraction("hint");
                       setWantHint(false);

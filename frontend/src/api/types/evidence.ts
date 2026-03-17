@@ -1,8 +1,8 @@
 export interface EvidenceCreate {
   student_id: string;
   competency_id: string;
-  outcome: number;
-  source: string;
+  outcome?: number;
+  source?: string;
   question_id?: string;
   module_id?: string;
   session_id?: string;
@@ -10,6 +10,9 @@ export interface EvidenceCreate {
   response_time_ms?: number;
   confidence_report?: "got_it" | "kinda" | "lost";
   ai_interaction?: "none" | "hint" | "conversation";
+  // Rich activity question — backend derives outcome + source
+  activity_question_id?: string;
+  response?: Record<string, unknown>;
 }
 
 export interface EvidenceOut {
@@ -39,4 +42,5 @@ export interface BKTUpdate {
 export interface EvidenceResult {
   event: EvidenceOut;
   updates: BKTUpdate[];
+  feedback: string | null;
 }

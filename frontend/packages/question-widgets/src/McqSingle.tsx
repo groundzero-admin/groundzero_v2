@@ -4,9 +4,10 @@ import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, 
 
 interface McqProps extends QuestionProps {
   timed?: boolean;
+  resetKey?: number;
 }
 
-export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
+export default function McqSingle({ data, onAnswer, timed = false, resetKey }: McqProps) {
   const question = str(data.question);
   const options = arr(data.options);
   const timeLimit = num(data.time_limit_seconds, 0);
@@ -16,6 +17,14 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setSelected(null);
+    setSubmitted(false);
+    setTimeLeft(timeLimit);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   useEffect(() => {
     if (!timed || timeLimit <= 0 || submitted) return;
@@ -80,7 +89,7 @@ export default function McqSingle({ data, onAnswer, timed = false }: McqProps) {
       </div>
       {selected !== null && !submitted && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={handleCheck}>Check Answer</button>
+          <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {submitted && (

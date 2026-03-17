@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TAG, TAG_USED, BTN, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
-export default function FillBlanks({ data, onAnswer }: QuestionProps) {
+export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) {
   const sentence = str(data.sentence);
   const answers = arr(data.answers);
   const distractors = arr(data.distractors);
@@ -14,6 +14,13 @@ export default function FillBlanks({ data, onAnswer }: QuestionProps) {
 
   const [filled, setFilled] = useState<(string | null)[]>(Array(blankCount).fill(null));
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setFilled(Array(blankCount).fill(null));
+    setChecked(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   const usedWords = new Set(filled.filter(Boolean));
 
@@ -80,7 +87,7 @@ export default function FillBlanks({ data, onAnswer }: QuestionProps) {
       </div>
       {allFilled && !checked && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleCheck}>Check Answer</button>
+          <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {checked && (

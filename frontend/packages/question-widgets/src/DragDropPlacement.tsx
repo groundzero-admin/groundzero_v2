@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { DragEvent } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TAG, TAG_USED, ZONE, ZONE_HOVER, ZONE_FILLED, ZONE_CORRECT, ZONE_WRONG, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
-export default function DragDropPlacement({ data, onAnswer }: QuestionProps) {
+export default function DragDropPlacement({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.instruction);
   const items = arr(data.items);
   const zones = arr(data.zones);
@@ -13,6 +13,13 @@ export default function DragDropPlacement({ data, onAnswer }: QuestionProps) {
   const [placed, setPlaced] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setPlaced({});
+    setDragOver(null);
+    setChecked(false);
+  }, [resetKey]);
 
   const usedItems = new Set(Object.values(placed));
 
@@ -72,7 +79,7 @@ export default function DragDropPlacement({ data, onAnswer }: QuestionProps) {
       </div>
       {allPlaced && !checked && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleCheck}>Check Answer</button>
+          <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {checked && (

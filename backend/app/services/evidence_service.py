@@ -1,6 +1,7 @@
 """Process evidence events → run BKT engine → persist updated state."""
 
 import uuid
+import logging
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,10 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.engine.bkt import BKTEngine, SOURCE_WEIGHTS
 from app.engine.propagation import build_prerequisite_ancestor_map
 from app.engine.types import BKTUpdateResult, CompetencyState, EvidenceInput
+from app.models.activity_question import ActivityQuestion
 from app.models.evidence import EvidenceEvent
+from app.models.question_template import QuestionTemplate
 from app.models.skill_graph import PrerequisiteEdge
 from app.models.student import StudentCompetencyState
 from app.schemas.evidence import EvidenceCreate
+from app.services import question_evaluator
+
+logger = logging.getLogger(__name__)
 
 engine = BKTEngine()
 
@@ -54,14 +60,42 @@ def _apply_engine_state_to_db(db_state: StudentCompetencyState, engine_state: Co
 
 async def process_evidence(
     db: AsyncSession, data: EvidenceCreate
-) -> tuple[EvidenceEvent, list[BKTUpdateResult]]:
+) -> tuple[EvidenceEvent, list[BKTUpdateResult], str | None]:
     """
     Process an evidence event:
-    1. Persist the event
-    2. Load student state + prerequisite edges
-    3. Run BKT engine (includes FIRe decay clock reset)
-    4. Persist updated state(s)
+    1. If activity_question_id provided, evaluate response → derive outcome + source
+    2. Persist the event
+    3. Load student state + prerequisite edges
+    4. Run BKT engine (includes FIRe decay clock reset)
+    5. Persist updated state(s)
     """
+    feedback: str | None = None
+
+    # ── Evaluate activity question response if provided ──
+    if data.activity_question_id and data.response is not None:
+        aq = await db.get(ActivityQuestion, data.activity_question_id)
+        if aq:
+            tmpl = await db.get(QuestionTemplate, aq.template_id)
+            slug = tmpl.slug if tmpl else "mcq_single"
+            try:
+                from app.config import Settings
+                from openai import AsyncOpenAI
+                settings = Settings()
+                spark_client = AsyncOpenAI(
+                    api_key=settings.SPARK_API_KEY,
+                    base_url=settings.SPARK_BASE_URL,
+                )
+                outcome, source, feedback = await question_evaluator.evaluate(
+                    slug, aq.data, data.response,
+                    spark_client=spark_client,
+                    spark_model=settings.SPARK_MODEL,
+                )
+            except Exception:
+                logger.exception("Evaluator failed for aq=%s", data.activity_question_id)
+                outcome, source, feedback = 0.5, "mcq", "Answer recorded."
+            # Override outcome + source from evaluation
+            data = data.model_copy(update={"outcome": outcome, "source": source})
+
     # Determine weight
     weight = data.weight if data.weight is not None else SOURCE_WEIGHTS.get(data.source, 0.7)
 
@@ -69,6 +103,8 @@ async def process_evidence(
     meta = {}
     if data.question_id is not None:
         meta["questionId"] = str(data.question_id)
+    if data.activity_question_id is not None:
+        meta["activityQuestionId"] = str(data.activity_question_id)
     if data.response_time_ms is not None:
         meta["responseTimeMs"] = data.response_time_ms
     if data.confidence_report is not None:
@@ -169,7 +205,7 @@ async def process_evidence(
 
     await db.commit()
     await db.refresh(event)
-    return event, update_results
+    return event, update_results, feedback
 
 
 async def get_evidence_history(

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
@@ -163,12 +163,19 @@ function parseData(data: Record<string, unknown>): { nodes: FlowNode[]; edges: F
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function FlowchartQuestion({ data, onAnswer }: QuestionProps) {
+export default function FlowchartQuestion({ data, onAnswer, resetKey }: QuestionProps) {
   const flow = useMemo(() => parseData(data), [data]);
 
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [placed, setPlaced]             = useState<Record<string, string>>({});
   const [checked, setChecked]           = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setSelectedItem(null);
+    setPlaced({});
+    setChecked(false);
+  }, [resetKey]);
 
   const nodes = flow?.nodes ?? [];
   const edges = flow?.edges ?? [];
@@ -303,7 +310,7 @@ export default function FlowchartQuestion({ data, onAnswer }: QuestionProps) {
             setChecked(true);
             onAnswer?.({ placed, correct: blankNodes.every(n => placed[n.id] === n.correct) });
           }}>
-            Check Answer
+            Submit
           </button>
         </div>
       )}

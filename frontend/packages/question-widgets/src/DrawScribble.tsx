@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, str } from "./shared";
 
-export default function DrawScribble({ data, onAnswer }: QuestionProps) {
+export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   if (!prompt) return null;
 
@@ -12,6 +12,18 @@ export default function DrawScribble({ data, onAnswer }: QuestionProps) {
   const [color, setColor] = useState("#805AD5");
   const [submitted, setSubmitted] = useState(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setSubmitted(false);
+    setTool("Pen");
+    setColor("#805AD5");
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    }
+  }, [resetKey]);
 
   const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const r = canvasRef.current!.getBoundingClientRect();
@@ -82,7 +94,7 @@ export default function DrawScribble({ data, onAnswer }: QuestionProps) {
       </div>
       {!submitted ? (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={handleSubmit}>Submit Drawing</button>
+          <button style={BTN} onClick={handleSubmit}>Submit</button>
         </div>
       ) : (
         <div style={{ marginTop: 10, padding: "10px 14px", background: "#F0FFF4", border: "1px solid #9AE6B4", borderRadius: 8, fontSize: 13, color: "#276749" }}>

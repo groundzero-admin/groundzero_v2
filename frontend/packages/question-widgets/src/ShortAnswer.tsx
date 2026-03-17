@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, TEXT_INPUT, str, num } from "./shared";
 
-export default function ShortAnswer({ data, onAnswer }: QuestionProps) {
+export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const maxWords = num(data.max_words, 50);
   if (!prompt) return null;
 
   const [text, setText] = useState("");
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setText("");
+  }, [resetKey]);
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
@@ -21,7 +26,7 @@ export default function ShortAnswer({ data, onAnswer }: QuestionProps) {
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: wordCount > maxWords ? "#E53E3E" : "#a0aec0" }}>
         <span>{wordCount} / {maxWords} words</span>
-        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Check Answer</button>
+        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Submit</button>
       </div>
     </div>
   );

@@ -8,13 +8,7 @@ export function useSubmitEvidence(studentId: string | null) {
   return useMutation<EvidenceResult, Error, EvidenceCreate>({
     mutationFn: async (data) => (await api.post("/evidence", data)).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["student-state", studentId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["next-questions"] });
-      queryClient.invalidateQueries({
-        queryKey: ["next-activity", studentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["student-state", studentId] });
       queryClient.invalidateQueries({ queryKey: ["evidence", studentId] });
     },
   });

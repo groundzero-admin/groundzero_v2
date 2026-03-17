@@ -16,6 +16,101 @@ import LivePreview from "./LivePreview";
 import * as s from "./admin.css";
 
 type Step = "pick" | "fill";
+type D = Record<string, unknown>;
+type Rule = (d: D) => string | null;
+
+const req = (key: string, label: string): Rule =>
+  (d) => !d[key] || !(d[key] as string).trim() ? `${label} is required.` : null;
+
+const mcqRules: Rule[] = [
+  req("question", "Question text"),
+  (d) => {
+    const opts = Array.isArray(d.options) ? d.options as { text: string; is_correct: boolean }[] : [];
+    if (opts.length < 2) return "Add at least 2 options.";
+    if (opts.some((o) => !o.text?.trim())) return "All options must have text.";
+    const n = opts.filter((o) => o.is_correct).length;
+    if (n === 0) return "Mark one option as correct (click the circle).";
+    if (n > 1) return "Only one option can be correct.";
+    return null;
+  },
+  req("explanation", "Explanation"),
+];
+
+const SLUG_RULES: Record<string, Rule[]> = {
+  mcq_single: mcqRules,
+  mcq_timed:  mcqRules,
+
+  fill_blanks: [
+    (d) => {
+      const s = typeof d.sentence === "string" ? d.sentence : "";
+      if (!s.trim()) return "Sentence is required.";
+      if (!s.toLowerCase().includes("{{blank}}")) return "Sentence must contain at least one {{blank}}.";
+      const a = Array.isArray(d.answers) ? d.answers as string[] : [];
+      if (!a.length || a.some((x) => !x.trim())) return "All correct answers must have text.";
+      return null;
+    },
+  ],
+
+  slider_input: [
+    req("prompt", "Prompt"),
+    (d) => {
+      if (d.correct_value === undefined || d.correct_value === "") return "Correct value is required.";
+      const min = Number(d.min_value ?? 0), max = Number(d.max_value ?? 100), cv = Number(d.correct_value);
+      if (max <= min) return "Max must be greater than min.";
+      if (cv < min || cv > max) return "Correct value must be between min and max.";
+      return null;
+    },
+  ],
+
+  drag_drop_classifier: [
+    req("instruction", "Instruction"),
+    (d) => {
+      const cats = Array.isArray(d.categories) ? d.categories as string[] : [];
+      if (cats.length < 2) return "Add at least 2 categories.";
+      const items = Array.isArray(d.items) ? d.items as { label: string; correct_category: string }[] : [];
+      if (!items.length) return "Add at least one item.";
+      if (items.some((it) => !it.correct_category)) return "All items must have a correct category assigned.";
+      return null;
+    },
+  ],
+
+  drag_drop_placement: [req("instruction", "Instruction")],
+  flowchart:           [req("instruction", "Instruction")],
+
+  label_elements: [
+    req("instruction", "Instruction"),
+    (d) => {
+      const l = Array.isArray(d.label_options) ? d.label_options as string[] : [];
+      return l.length ? null : "Add at least one label option.";
+    },
+  ],
+
+  short_answer:   [req("prompt", "Prompt")],
+  image_response: [req("prompt", "Prompt")],
+  audio_response: [req("prompt", "Prompt")],
+  reflection_rating: [req("prompt", "Prompt")],
+  draw_scribble:  [req("prompt", "Prompt")],
+
+  debate_opinion: [
+    req("topic", "Topic"),
+    (d) => {
+      const s = Array.isArray(d.stances) ? d.stances as string[] : [];
+      return s.length >= 2 ? null : "Add at least 2 stances.";
+    },
+  ],
+
+  ai_conversation: [
+    (d) => (!d.opening_message && !d.system_prompt) ? "Opening message or system prompt is required." : null,
+  ],
+
+  multi_step: [
+    req("overall_instruction", "Overall instruction"),
+    (d) => {
+      const steps = Array.isArray(d.steps) ? d.steps : [];
+      return steps.length ? null : "Add at least one step.";
+    },
+  ],
+};
 
 export default function CreateQuestionPage() {
   const { data: templates, isLoading: loadingT } = useQuestionTemplates();
@@ -87,11 +182,28 @@ export default function CreateQuestionPage() {
   }, []);
 
   const isSaving = createMut.isPending || updateMut.isPending;
-  const canSave = !!title.trim() && !!competencyId;
+
+  const validationError = useCallback((): string | null => {
+    if (!title.trim()) return "Question title is required.";
+    if (!gradeBand) return "Grade band is required.";
+    if (!pillarFilter) return "Pillar is required.";
+    if (!competencyId) return "Competency is required.";
+    if (!formData.hint || !(formData.hint as string).trim()) return "Hint is required.";
+    const rules = SLUG_RULES[selected?.slug ?? ""] ?? [];
+    for (const rule of rules) {
+      const err = rule(formData);
+      if (err) return err;
+    }
+    return null;
+  }, [selected, title, gradeBand, pillarFilter, competencyId, formData]);
+
+  const canSave = !validationError();
 
   const handleSave = useCallback(
     (publish: boolean) => {
-      if (!selected || !title.trim() || !competencyId) return;
+      const err = validationError();
+      if (err) { alert(err); return; }
+      if (!selected) return;
       const payload = { title: title.trim(), data: formData, grade_band: gradeBand, competency_id: competencyId, difficulty, is_published: publish };
       if (editingId) {
         updateMut.mutate({ id: editingId, ...payload }, { onSuccess: () => goBack() });
@@ -99,7 +211,7 @@ export default function CreateQuestionPage() {
         createMut.mutate({ template_id: selected.id, ...payload }, { onSuccess: () => goBack() });
       }
     },
-    [selected, editingId, title, formData, gradeBand, competencyId, difficulty, createMut, updateMut, goBack],
+    [selected, editingId, title, formData, gradeBand, competencyId, difficulty, createMut, updateMut, goBack, validationError],
   );
 
   if (loadingT || loadingQ) {
@@ -191,6 +303,18 @@ export default function CreateQuestionPage() {
                 </div>
               </div>
 
+              <div>
+                <label className={s.label}>Hint <span style={{ fontWeight: 400, color: "#a0aec0" }}>(shown to student on wrong answer)</span></label>
+                <textarea
+                  className={s.input}
+                  rows={2}
+                  placeholder="e.g. Think about what the question is really asking..."
+                  value={typeof formData.hint === "string" ? formData.hint : ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, hint: e.target.value }))}
+                  style={{ resize: "vertical" as const, minHeight: 56 }}
+                />
+              </div>
+
               {selected.llm_prompt_template && (
                 <GeneratePanel
                   templateId={selected.id}
@@ -228,6 +352,12 @@ export default function CreateQuestionPage() {
                   />
                 ))}
               </div>
+
+              {validationError() && (
+                <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", fontSize: 13, fontWeight: 500, border: "1px solid #FECACA" }}>
+                  {validationError()}
+                </div>
+              )}
 
               <div className={s.formActions}>
                 <button className={s.cancelBtn} onClick={goBack}>Cancel</button>

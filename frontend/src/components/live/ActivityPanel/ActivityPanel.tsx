@@ -1,19 +1,21 @@
 import { BookOpen, Loader2, Radio, Clock } from "lucide-react";
-import type { Question, Session, Activity } from "@/api/types";
+import type { Session, Activity } from "@/api/types";
+import type { NextActivityQuestion } from "@/api/hooks/useNextActivityQuestion";
 import { Button, Card } from "@/components/ui";
-import { MCQQuestion } from "../MCQQuestion";
+import { QuestionRenderer } from "@gz/question-widgets";
 import * as s from "./ActivityPanel.css";
 
 interface ActivityPanelProps {
   session: Session | null;
   activity: Activity | null;
   activityLoading: boolean;
-  question: Question | null;
+  activityQuestion: NextActivityQuestion | null;
   questionsLoading: boolean;
-  selectedOption: string | null;
-  onSelectOption: (label: string) => void;
   submitted: boolean;
-  onSubmit: () => void;
+  isCorrect: boolean | null;
+  resetKey?: number;
+  onAnswer: (answer: unknown) => void;
+  onTryAgain: () => void;
   onNext: () => void;
   submitting: boolean;
   timeLeft?: number | null;
@@ -25,12 +27,13 @@ export function ActivityPanel({
   session,
   activity,
   activityLoading,
-  question,
+  activityQuestion,
   questionsLoading,
-  selectedOption,
-  onSelectOption,
   submitted,
-  onSubmit,
+  isCorrect,
+  resetKey,
+  onAnswer,
+  onTryAgain,
   onNext,
   submitting,
   timeLeft,
@@ -126,14 +129,13 @@ export function ActivityPanel({
             </div>
           </div>
         ) : (
-          /* Question area */
           <div className={s.questionArea}>
             {questionsLoading ? (
               <div className={s.emptyState}>
                 <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
                 <div className={s.emptyText}>Loading questions...</div>
               </div>
-            ) : !question ? (
+            ) : !activityQuestion ? (
               <div className={s.emptyState}>
                 <div className={s.emptyIcon}>
                   <BookOpen size={24} />
@@ -144,44 +146,63 @@ export function ActivityPanel({
                 </div>
               </div>
             ) : (
-              <MCQQuestion
-                question={question}
-                questionIndex={0}
-                totalQuestions={1}
-                selectedOption={selectedOption}
-                onSelectOption={onSelectOption}
-                submitted={submitted}
+              <QuestionRenderer
+                key={activityQuestion.activity_question_id}
+                slug={activityQuestion.template_slug}
+                data={activityQuestion.data}
+                onAnswer={submitted ? undefined : onAnswer}
+                resetKey={resetKey}
               />
             )}
+
+            {/* Hint on wrong answer */}
+            {submitted && isCorrect === false && (() => {
+              const hint = typeof activityQuestion?.data?.hint === "string" ? activityQuestion.data.hint : null;
+              if (!hint) return null;
+              return (
+                <div style={{
+                  marginTop: 12,
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  background: "rgba(251,191,36,0.1)",
+                  color: "#fbbf24",
+                  border: "1px solid rgba(251,191,36,0.2)",
+                  lineHeight: 1.5,
+                }}>
+                  💡 {hint}
+                </div>
+              );
+            })()}
           </div>
         )}
 
-        {question && !timerExpired && (
+        {activityQuestion && !timerExpired && submitted && (
           <div className={s.actions}>
-            {!submitted ? (
+            {isCorrect === false && (
               <Button
-                variant="primary"
+                variant="secondary"
                 size="md"
-                onClick={onSubmit}
-                disabled={!selectedOption || submitting}
+                onClick={onTryAgain}
                 style={{ flex: 1 }}
+                disabled={submitting}
               >
-                {submitting ? (
-                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                ) : (
-                  "Submit Answer"
-                )}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="md"
-                onClick={onNext}
-                style={{ flex: 1 }}
-              >
-                Next Question
+                Try Again
               </Button>
             )}
+            <Button
+              variant="primary"
+              size="md"
+              onClick={onNext}
+              style={{ flex: 1 }}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+              ) : (
+                "Next Question"
+              )}
+            </Button>
           </div>
         )}
       </div>

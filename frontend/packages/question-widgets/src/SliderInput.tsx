@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, FEEDBACK_OK, FEEDBACK_ERR, str, num } from "./shared";
 
-export default function SliderInput({ data, onAnswer }: QuestionProps) {
+export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const min = num(data.min_value, 0);
   const max = num(data.max_value, 100);
@@ -16,9 +16,16 @@ export default function SliderInput({ data, onAnswer }: QuestionProps) {
 
   const [val, setVal] = useState(Math.round((min + max) / 2));
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setVal(Math.round((min + max) / 2));
+    setChecked(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
   const isCorrect = Math.abs(val - correct) <= tolerance;
 
-  const pct = ((val - min) / (max - min)) * 100;
+  const _pct = ((val - min) / (max - min)) * 100; void _pct;
 
   return (
     <div style={CARD}>
@@ -73,7 +80,7 @@ export default function SliderInput({ data, onAnswer }: QuestionProps) {
       {!checked && (
         <div style={{ textAlign: "center" }}>
           <button style={BTN} onClick={() => { setChecked(true); onAnswer?.({ value: val, correct: isCorrect }); }}>
-            Check Answer
+            Submit
           </button>
         </div>
       )}

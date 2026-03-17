@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BTN_SECONDARY, str } from "./shared";
 import QuestionRenderer from "./QuestionRenderer";
@@ -20,11 +20,17 @@ function parseSteps(raw: unknown): StepDef[] {
   } catch { return []; }
 }
 
-export default function MultiStep({ data, onAnswer }: QuestionProps) {
+export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.overall_instruction);
   const steps = parseSteps(data.steps);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<number, unknown>>({});
+
+  useEffect(() => {
+    if (resetKey === undefined) return;
+    setCurrent(0);
+    setAnswers({});
+  }, [resetKey]);
 
   if (steps.length === 0) {
     return (
