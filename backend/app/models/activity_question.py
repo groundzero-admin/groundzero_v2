@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, Float, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -25,6 +25,11 @@ class ActivityQuestion(Base):
     )
     competency_id: Mapped[str] = mapped_column(
         String(10), ForeignKey("competencies.id", ondelete="RESTRICT"), index=True
+    )
+    competency_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
+        server_default="{}",
+        nullable=False,
     )
     difficulty: Mapped[float] = mapped_column(Float, default=0.5, server_default="0.5")
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)

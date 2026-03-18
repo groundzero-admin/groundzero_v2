@@ -8,7 +8,7 @@ import {
 } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
 import type { Template } from "@/api/types/admin";
-import { Plus, Trash2, Pencil, ChevronDown, ChevronRight, X } from "lucide-react";
+import { Plus, Trash2, Pencil, X, LayoutTemplate, Clock, Layers, ArrowLeft, ArrowRight } from "lucide-react";
 import * as s from "./admin.css";
 
 interface Activity {
@@ -18,7 +18,16 @@ interface Activity {
     mode: string;
     module_id: string;
     duration_minutes: number | null;
+    description: string | null;
 }
+
+const ACTIVITY_TYPE_COLOR: Record<string, string> = {
+    warmup: "#f59e0b",
+    key_topic: "#6366f1",
+    diy: "#10b981",
+    ai_lab: "#ec4899",
+    artifact: "#8b5cf6",
+};
 
 export default function TemplateCohortListPage() {
     const { data: templates, isLoading } = useTemplates();
@@ -31,21 +40,21 @@ export default function TemplateCohortListPage() {
         queryFn: () => api.get("/activities").then((r) => r.data),
     });
 
-    const [showModal, setShowModal] = useState(false);
+    const [showCreateEditModal, setShowCreateEditModal] = useState(false);
     const [editing, setEditing] = useState<Template | null>(null);
-    const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [activitySearch, setActivitySearch] = useState("");
-
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [order, setOrder] = useState<number | "">("");
 
-    function openCreate() {
+    const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+    const [activitySearch, setActivitySearch] = useState("");
+    const [showLinkActivityPicker, setShowLinkActivityPicker] = useState(false);
+
+    function openCreate(e?: React.MouseEvent) {
+        e?.stopPropagation();
         setEditing(null);
         setTitle("");
         setDescription("");
-        setOrder("");
-        setShowModal(true);
+        setShowCreateEditModal(true);
     }
 
     function openEdit(t: Template, e: React.MouseEvent) {
@@ -53,55 +62,59 @@ export default function TemplateCohortListPage() {
         setEditing(t);
         setTitle(t.title);
         setDescription(t.description ?? "");
-        setOrder(t.order ?? "");
-        setShowModal(true);
+        setShowCreateEditModal(true);
     }
 
     async function handleSubmit(e: FormEvent) {
         e.preventDefault();
-        const payload = {
-            title,
-            description: description || undefined,
-            order: order !== "" ? Number(order) : undefined,
-        };
+        const payload = { title, description: description || undefined };
         if (editing) {
             await update.mutateAsync({ id: editing.id, ...payload });
         } else {
             await create.mutateAsync(payload);
         }
-        setShowModal(false);
+        setShowCreateEditModal(false);
         setEditing(null);
     }
 
-    async function handleDelete(id: string, e: React.MouseEvent) {
+    function handleDelete(id: string, e: React.MouseEvent) {
         e.stopPropagation();
         if (!confirm("Delete this template?")) return;
-        await remove.mutateAsync(id);
+        remove.mutate(id);
+        if (selectedTemplate?.id === id) setSelectedTemplate(null);
     }
 
-    async function addActivity(templateId: string, activityId: string) {
-        const template = templates?.find((t) => t.id === templateId);
+    function addActivity(templateId: string, activityId: string) {
+        const template = templates?.find((t) => t.id === templateId) ?? selectedTemplate;
         if (!template || template.activities.includes(activityId)) return;
-        await update.mutateAsync({
-            id: templateId,
-            activities: [...template.activities, activityId],
-        });
+        update.mutate(
+            { id: templateId, activities: [...template.activities, activityId] },
+            {
+                onSuccess: (updated) => {
+                    if (selectedTemplate?.id === templateId) setSelectedTemplate(updated);
+                },
+            }
+        );
     }
 
-    async function removeActivity(templateId: string, activityId: string) {
-        const template = templates?.find((t) => t.id === templateId);
+    function removeActivity(templateId: string, activityId: string) {
+        const template = templates?.find((t) => t.id === templateId) ?? selectedTemplate;
         if (!template) return;
-        await update.mutateAsync({
-            id: templateId,
-            activities: template.activities.filter((a) => a !== activityId),
-        });
+        update.mutate(
+            { id: templateId, activities: template.activities.filter((a) => a !== activityId) },
+            {
+                onSuccess: (updated) => {
+                    if (selectedTemplate?.id === templateId) setSelectedTemplate(updated);
+                },
+            }
+        );
     }
 
     const isPending = editing ? update.isPending : create.isPending;
-
-    // Build activity lookup
     const activityMap = new Map<string, Activity>();
     allActivities?.forEach((a) => activityMap.set(a.id, a));
+
+    const modalTemplate = selectedTemplate;
 
     return (
         <div className={s.page}>
@@ -110,47 +123,45 @@ export default function TemplateCohortListPage() {
                     <h1 className={s.title}>Templates</h1>
                     <p className={s.subtitle}>Lesson plan blueprints — each becomes a session when imported into a cohort</p>
                 </div>
-                <button className={s.addBtn} onClick={openCreate}>
+                <button className={s.addBtn} onClick={() => openCreate()}>
                     <Plus size={18} /> New Template
                 </button>
             </div>
 
             {isLoading && <p className={s.emptyState}>Loading...</p>}
-
             {!isLoading && !templates?.length && (
                 <p className={s.emptyState}>No templates yet. Create one to get started.</p>
             )}
 
-            <div className={s.sessionList}>
-                {templates?.map((t) => {
-                    const isExpanded = expandedId === t.id;
-                    const assignedActivities = t.activities
-                        .map((id) => activityMap.get(id))
-                        .filter(Boolean) as Activity[];
-                    const availableActivities = (allActivities ?? []).filter(
-                        (a) => !t.activities.includes(a.id) && (
-                            !activitySearch ||
-                            a.name.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                            a.id.toLowerCase().includes(activitySearch.toLowerCase()) ||
-                            a.type.toLowerCase().includes(activitySearch.toLowerCase())
-                        )
-                    );
-
-                    return (
-                        <div key={t.id}>
-                            <div className={s.sessionCard} onClick={() => setExpandedId(isExpanded ? null : t.id)} style={{ cursor: "pointer" }}>
-                                <div className={s.sessionOrder} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                </div>
-                                <div className={s.sessionInfo}>
-                                    <div className={s.sessionTitle}>{t.title}</div>
-                                    <div className={s.sessionMeta}>
-                                        {t.activities.length > 0 && `${t.activities.length} activities`}
-                                        {t.activities.length === 0 && " · No activities"}
-                                        {t.description && ` — ${t.description}`}
+            {!isLoading && (templates?.length ?? 0) > 0 && (
+                <div className={s.grid}>
+                    {templates!.map((t) => (
+                            <div
+                                key={t.id}
+                                className={s.card}
+                                onClick={() => setSelectedTemplate(t)}
+                            >
+                                <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                                    <div className={s.templateCardIcon}>
+                                        <LayoutTemplate size={20} />
+                                    </div>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div className={s.cardTitle}>{t.title}</div>
+                                        <div className={s.cardMeta}>
+                                            <span>ID: {t.id}</span>
+                                            <span>{t.activities.length} activities</span>
+                                        </div>
+                                        {t.description && (
+                                            <div className={s.cardDesc}>
+                                                {t.description.length > 100 ? `${t.description.slice(0, 100)}…` : t.description}
+                                            </div>
+                                        )}
+                                        <div className={s.cardMeta} style={{ marginTop: 4 }}>
+                                            {t.created_at && <span><Clock size={11} style={{ verticalAlign: "middle" }} /> Created {new Date(t.created_at).toLocaleDateString()}</span>}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className={s.sessionActions}>
+                                <div className={s.cardActions}>
                                     <button className={s.editBtn} onClick={(e) => openEdit(t, e)}>
                                         <Pencil size={12} /> Edit
                                     </button>
@@ -159,79 +170,15 @@ export default function TemplateCohortListPage() {
                                     </button>
                                 </div>
                             </div>
+                    ))}
+                </div>
+            )}
 
-                            {isExpanded && (
-                                <div style={{ padding: "12px 16px 16px 52px", background: "var(--color-surface-2, #f8f9fa)", borderRadius: "0 0 8px 8px", marginTop: -4 }}>
-                                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Activities in this template:</div>
-
-                                    {assignedActivities.length === 0 && (
-                                        <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 12 }}>No activities assigned yet. Add some below.</p>
-                                    )}
-
-                                    {assignedActivities.map((a, idx) => (
-                                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
-                                            <span style={{ fontSize: 12, opacity: 0.5, width: 20 }}>{idx + 1}</span>
-                                            <span style={{ flex: 1, fontSize: 13 }}>
-                                                <strong>{a.name}</strong>
-                                                <span style={{ opacity: 0.6, marginLeft: 8 }}>{a.type} · {a.id}</span>
-                                            </span>
-                                            <button
-                                                className={s.dangerBtn}
-                                                style={{ padding: "2px 6px", fontSize: 11 }}
-                                                onClick={() => removeActivity(t.id, a.id)}
-                                                disabled={update.isPending}
-                                            >
-                                                <X size={10} /> Remove
-                                            </button>
-                                        </div>
-                                    ))}
-
-                                    <div style={{ marginTop: 16 }}>
-                                        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Add activity:</div>
-                                        <input
-                                            className={s.input}
-                                            style={{ marginBottom: 8, fontSize: 13 }}
-                                            placeholder="Search by name, id, or type..."
-                                            value={activitySearch}
-                                            onChange={(e) => setActivitySearch(e.target.value)}
-                                        />
-                                        <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-                                            {availableActivities.slice(0, 20).map((a) => (
-                                                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", borderRadius: 6, background: "var(--color-surface, #fff)" }}>
-                                                    <span style={{ flex: 1, fontSize: 13 }}>
-                                                        {a.name}
-                                                        <span style={{ opacity: 0.5, marginLeft: 8 }}>{a.type} · {a.id}</span>
-                                                    </span>
-                                                    <button
-                                                        className={s.addBtn}
-                                                        style={{ padding: "2px 10px", fontSize: 11 }}
-                                                        onClick={() => addActivity(t.id, a.id)}
-                                                        disabled={update.isPending}
-                                                    >
-                                                        <Plus size={10} /> Add
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            {availableActivities.length > 20 && (
-                                                <p style={{ fontSize: 12, opacity: 0.5, textAlign: "center" }}>
-                                                    Showing 20 of {availableActivities.length} — search to narrow down
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            {showModal && (
-                <div className={s.overlay} onClick={() => setShowModal(false)}>
+            {/* Create / Edit Template modal (no order field) */}
+            {showCreateEditModal && (
+                <div className={s.overlay} onClick={() => setShowCreateEditModal(false)}>
                     <div className={s.modal} onClick={(e) => e.stopPropagation()}>
-                        <h2 className={s.modalTitle}>
-                            {editing ? "Edit Template" : "New Template"}
-                        </h2>
+                        <h2 className={s.modalTitle}>{editing ? "Edit Template" : "New Template"}</h2>
                         <form onSubmit={handleSubmit} className={s.form}>
                             <div>
                                 <label className={s.label}>Title *</label>
@@ -252,18 +199,8 @@ export default function TemplateCohortListPage() {
                                     placeholder="Optional description"
                                 />
                             </div>
-                            <div>
-                                <label className={s.label}>Order</label>
-                                <input
-                                    className={s.input}
-                                    type="number"
-                                    min={0}
-                                    value={order}
-                                    onChange={(e) => setOrder(e.target.value ? Number(e.target.value) : "")}
-                                />
-                            </div>
                             <div className={s.formActions}>
-                                <button type="button" className={s.cancelBtn} onClick={() => setShowModal(false)}>
+                                <button type="button" className={s.cancelBtn} onClick={() => setShowCreateEditModal(false)}>
                                     Cancel
                                 </button>
                                 <button type="submit" className={s.submitBtn} disabled={isPending}>
@@ -271,6 +208,227 @@ export default function TemplateCohortListPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Template detail modal: linked activities, link new, remove */}
+            {modalTemplate && (
+                <div className={s.overlay} onClick={() => { setSelectedTemplate(null); setActivitySearch(""); setShowLinkActivityPicker(false); }}>
+                    <div
+                        className={s.modal}
+                        style={{ width: "92vw", maxWidth: 900, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className={s.modalTitle}>“{modalTemplate.title}” — Activities</h2>
+                        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginTop: -8, marginBottom: 16 }}>
+                            {modalTemplate.description || "No description."}
+                        </p>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: 1, minHeight: 0, overflow: "hidden" }}>
+                            {/* Linked activities */}
+                            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                        <Layers size={16} />
+                                        <span style={{ fontWeight: 600, fontSize: 14 }}>Linked activities ({modalTemplate.activities.length})</span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className={s.addBtn}
+                                        style={{ padding: "6px 12px", fontSize: 12 }}
+                                        onClick={() => { setActivitySearch(""); setShowLinkActivityPicker(true); }}
+                                    >
+                                        <Plus size={14} /> Link new activity
+                                    </button>
+                                </div>
+                                {modalTemplate.activities.length === 0 ? (
+                                    <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                                        No activities yet. Click “Link new activity” to add one.
+                                    </p>
+                                ) : (
+                                    <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                                        <div className={s.templateActivityGrid}>
+                                            {modalTemplate.activities.map((id, idx) => {
+                                                const a = activityMap.get(id);
+                                                if (!a)
+                                                    return (
+                                                        <div
+                                                            key={id}
+                                                            style={{ padding: 12, border: "1px solid var(--color-border-subtle)", borderRadius: 8, fontSize: 12, opacity: 0.7 }}
+                                                        >
+                                                            Activity {id}
+                                                        </div>
+                                                    );
+                                                return (
+                                                    <div key={a.id} className={s.templateActivityCard}>
+                                                        <div className={s.templateActivityCardHeader}>
+                                                            <span className={s.templateActivityCardOrder}>Order {idx + 1}</span>
+                                                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                                                <button
+                                                                    type="button"
+                                                                    className={s.iconBtn}
+                                                                    disabled={idx === 0 || update.isPending}
+                                                                    onClick={async () => {
+                                                                        const current = [...(modalTemplate.activities ?? [])];
+                                                                        const i = current.indexOf(a.id);
+                                                                        const j = i - 1;
+                                                                        if (j < 0) return;
+                                                                        const next = [...current];
+                                                                        [next[i], next[j]] = [next[j], next[i]];
+                                                                        const updated = await update.mutateAsync({ id: modalTemplate.id, activities: next });
+                                                                        setSelectedTemplate(updated as Template);
+                                                                    }}
+                                                                    title="Move earlier"
+                                                                >
+                                                                    <ArrowLeft size={14} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className={s.iconBtn}
+                                                                    disabled={idx === modalTemplate.activities.length - 1 || update.isPending}
+                                                                    onClick={async () => {
+                                                                        const current = [...(modalTemplate.activities ?? [])];
+                                                                        const i = current.indexOf(a.id);
+                                                                        const j = i + 1;
+                                                                        if (j >= current.length) return;
+                                                                        const next = [...current];
+                                                                        [next[i], next[j]] = [next[j], next[i]];
+                                                                        const updated = await update.mutateAsync({ id: modalTemplate.id, activities: next });
+                                                                        setSelectedTemplate(updated as Template);
+                                                                    }}
+                                                                    title="Move later"
+                                                                >
+                                                                    <ArrowRight size={14} />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className={s.dangerBtn}
+                                                                    style={{ padding: "2px 8px", fontSize: 11 }}
+                                                                    onClick={() => removeActivity(modalTemplate.id, a.id)}
+                                                                    disabled={update.isPending}
+                                                                >
+                                                                    <X size={10} /> Remove
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className={s.templateActivityCardTitle}>{a.name}</div>
+                                                        <div className={s.templateActivityCardMeta}>
+                                                            <span style={{ fontFamily: "monospace", fontSize: 11 }}>{a.id}</span>
+                                                            <span style={{ color: ACTIVITY_TYPE_COLOR[a.type] ?? undefined, fontWeight: 600 }}>{a.type}</span>
+                                                            {a.mode !== "default" && <span>{a.mode}</span>}
+                                                            {a.duration_minutes != null && (
+                                                                <span>
+                                                                    <Clock size={11} style={{ verticalAlign: "middle" }} /> {a.duration_minutes}m
+                                                                </span>
+                                                            )}
+                                                            <span>Module: {a.module_id}</span>
+                                                        </div>
+                                                        {a.description && (
+                                                            <div className={s.templateActivityCardDesc}>
+                                                                {a.description.length > 80 ? `${a.description.slice(0, 80)}…` : a.description}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Link new activity picker */}
+                        {showLinkActivityPicker && (
+                            <div
+                                className={s.overlay}
+                                onClick={() => { setShowLinkActivityPicker(false); setActivitySearch(""); }}
+                                style={{ zIndex: 1100 }}
+                            >
+                                <div
+                                    className={s.modal}
+                                    style={{ maxWidth: 820, width: "92vw" }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <h2 className={s.modalTitle}>Link activities</h2>
+                                    <p style={{ marginTop: -10, marginBottom: 12, fontSize: 13, color: "var(--color-text-secondary)" }}>
+                                        Pick activities one by one. They’ll be appended to the end, and you can reorder using arrows.
+                                    </p>
+
+                                    <div style={{ position: "relative", marginBottom: 12 }}>
+                                        <input
+                                            className={s.input}
+                                            style={{ paddingLeft: 36, fontSize: 13 }}
+                                            placeholder="Search by name, id, or type..."
+                                            value={activitySearch}
+                                            onChange={(e) => setActivitySearch(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className={s.addQuestionList}>
+                                        {(allActivities ?? [])
+                                            .filter((a) => !modalTemplate.activities.includes(a.id))
+                                            .filter(
+                                                (a) =>
+                                                    !activitySearch.trim() ||
+                                                    a.name.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                                                    a.id.toLowerCase().includes(activitySearch.toLowerCase()) ||
+                                                    a.type.toLowerCase().includes(activitySearch.toLowerCase())
+                                            )
+                                            .slice(0, 50)
+                                            .map((a) => (
+                                                <div key={a.id} className={s.addQuestionRow}>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontWeight: 500, fontSize: 13 }}>{a.name}</div>
+                                                        <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
+                                                            {a.type} · {a.id} · Module {a.module_id}
+                                                            {a.duration_minutes != null ? ` · ${a.duration_minutes}m` : ""}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className={s.addBtn}
+                                                        style={{ padding: "4px 12px", fontSize: 11, flexShrink: 0 }}
+                                                        onClick={() => addActivity(modalTemplate.id, a.id)}
+                                                        disabled={update.isPending}
+                                                    >
+                                                        <Plus size={10} /> Link
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {modalTemplate.activities.length > 0 &&
+                                            (allActivities ?? []).filter((a) => !modalTemplate.activities.includes(a.id)).length === 0 && (
+                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                                                    All activities are already linked.
+                                                </p>
+                                            )}
+                                    </div>
+
+                                    <div className={s.formActions} style={{ marginTop: 16 }}>
+                                        <button
+                                            type="button"
+                                            className={s.cancelBtn}
+                                            onClick={() => { setShowLinkActivityPicker(false); setActivitySearch(""); }}
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={s.formActions} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
+                            <button
+                                type="button"
+                                className={s.cancelBtn}
+                                onClick={() => { setSelectedTemplate(null); setActivitySearch(""); setShowLinkActivityPicker(false); }}
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

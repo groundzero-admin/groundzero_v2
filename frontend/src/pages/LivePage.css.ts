@@ -1,15 +1,13 @@
 import { style } from "@vanilla-extract/css";
 
 export const page = style({
-  display: "grid",
-  gridTemplateColumns: "1fr 380px",
+  display: "flex",
   height: "100dvh",
   overflow: "hidden",
-  background: "#0d0d1a",
+  background: "#f8fafc",
   "@media": {
     "screen and (max-width: 1024px)": {
-      gridTemplateColumns: "1fr",
-      gridTemplateRows: "55vh auto",
+      display: "block",
       height: "auto",
       overflow: "auto",
     },
@@ -21,6 +19,9 @@ export const leftCol = style({
   flexDirection: "column",
   height: "100%",
   overflow: "hidden",
+  flex: 1,
+  minWidth: 0,
+  background: "#0b0b1a",
 });
 
 export const rightCol = style({
@@ -28,14 +29,14 @@ export const rightCol = style({
   flexDirection: "column",
   height: "100%",
   overflow: "hidden",
-  borderLeft: "1px solid rgba(255,255,255,0.06)",
-  background: "#12121f",
+  borderLeft: "1px solid #e2e8f0",
+  background: "#ffffff",
   "@media": {
     "screen and (max-width: 1024px)": {
       height: "auto",
       maxHeight: "none",
       borderLeft: "none",
-      borderTop: "1px solid rgba(255,255,255,0.06)",
+      borderTop: "1px solid #e2e8f0",
     },
   },
 });
@@ -45,6 +46,16 @@ export const loading = style({
   alignItems: "center",
   justifyContent: "center",
   height: "100dvh",
-  background: "#0d0d1a",
+  background: "#f8fafc",
+});
+
+export const resizer = style({
+  width: 8,
+  cursor: "col-resize",
+  "@media": {
+    "screen and (max-width: 1024px)": {
+      display: "none",
+    },
+  },
 });
 

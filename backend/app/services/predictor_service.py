@@ -437,7 +437,7 @@ async def get_next_questions(
     query = (
         select(Question)
         .where(
-            Question.competency_id == competency_id,
+            Question.competency_ids.contains([competency_id]),
             Question.difficulty >= diff_min,
             Question.difficulty <= diff_max,
         )
@@ -459,7 +459,7 @@ async def get_next_questions(
         fallback = (
             select(Question)
             .where(
-                Question.competency_id == competency_id,
+                Question.competency_ids.contains([competency_id]),
                 Question.id.notin_(already) if already else True,
             )
             .order_by(func.abs(Question.difficulty - target_center))

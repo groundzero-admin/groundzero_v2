@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Float, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -35,6 +35,11 @@ class Question(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     module_id: Mapped[str] = mapped_column(String(50))  # level_1, math_v1
     competency_id: Mapped[str] = mapped_column(String(10), ForeignKey("competencies.id"), index=True)
+    competency_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
+        server_default="{}",
+        nullable=False,
+    )
     text: Mapped[str] = mapped_column(Text)
     type: Mapped[str] = mapped_column(String(20))  # mcq, short_answer
     options: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # [{label, text, isCorrect}]

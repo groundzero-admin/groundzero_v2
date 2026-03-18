@@ -18,8 +18,6 @@ export default function SliderInput({ data, onAnswer }: QuestionProps) {
   const [checked, setChecked] = useState(false);
   const isCorrect = Math.abs(val - correct) <= tolerance;
 
-  const pct = ((val - min) / (max - min)) * 100;
-
   return (
     <div style={CARD}>
       <div style={HEADING}>{prompt}</div>

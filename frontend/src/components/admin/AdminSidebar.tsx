@@ -3,7 +3,7 @@ import { LayoutTemplate, Rocket, Users, MonitorPlay, Blocks, BookOpen } from "lu
 import * as s from "./AdminSidebar.css";
 
 const NAV_ITEMS = [
-    { label: "Sessions", path: "/teacher", icon: MonitorPlay },
+    { label: "Teacher View", path: "/teacher", icon: MonitorPlay },
     { label: "Templates", path: "/admin/templates", icon: LayoutTemplate },
     { label: "Activities", path: "/admin/activities", icon: Blocks },
     { label: "Question Bank", path: "/admin/question-bank", icon: BookOpen },
@@ -14,6 +14,10 @@ const NAV_ITEMS = [
 export default function AdminSidebar() {
     const navigate = useNavigate();
     const location = useLocation();
+    const pathname = location.pathname;
+
+    const isQuestionBankActive =
+        pathname.startsWith("/admin/question-bank") || pathname.startsWith("/admin/create-question");
 
     return (
         <aside className={s.sidebar}>
@@ -21,7 +25,13 @@ export default function AdminSidebar() {
             {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
                 <button
                     key={path}
-                    className={`${s.navItem} ${location.pathname.startsWith(path) ? s.navItemActive : ""}`}
+                    className={`${s.navItem} ${
+                        label === "Question Bank"
+                            ? (isQuestionBankActive ? s.navItemActive : "")
+                            : label === "Teacher View"
+                                ? (pathname.startsWith("/teacher") ? s.navItemActive : "")
+                                : (pathname.startsWith(path) ? s.navItemActive : "")
+                    }`}
                     onClick={() => navigate(path)}
                 >
                     <Icon size={18} />

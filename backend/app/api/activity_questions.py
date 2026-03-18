@@ -28,6 +28,7 @@ class AQOut(BaseModel):
     data: dict
     grade_band: str
     competency_id: str
+    competency_ids: list[str] = Field(default_factory=list)
     difficulty: float
     created_by: uuid.UUID | None
     is_published: bool
@@ -43,7 +44,8 @@ class AQCreate(BaseModel):
     title: str
     data: dict = Field(default_factory=dict)
     grade_band: str = ""
-    competency_id: str = Field(min_length=1)
+    competency_id: str | None = None
+    competency_ids: list[str] | None = None
     difficulty: float = 0.5
     is_published: bool = False
 
@@ -53,6 +55,7 @@ class AQUpdate(BaseModel):
     data: dict | None = None
     grade_band: str | None = None
     competency_id: str | None = None
+    competency_ids: list[str] | None = None
     difficulty: float | None = None
     is_published: bool | None = None
 
@@ -118,15 +121,21 @@ async def create_question(
     tmpl = await db.get(QuestionTemplate, body.template_id)
     if not tmpl:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Template not found")
-    comp = await db.get(Competency, body.competency_id)
-    if not comp:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Competency not found")
+    comp_ids = body.competency_ids or ([body.competency_id] if body.competency_id else [])
+    comp_ids = [c for c in comp_ids if c]
+    if not comp_ids:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Provide competency_ids (at least one)")
+    for cid in comp_ids:
+        comp = await db.get(Competency, cid)
+        if not comp:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Competency '{cid}' not found")
     aq = ActivityQuestion(
         template_id=body.template_id,
         title=body.title,
         data=body.data,
         grade_band=body.grade_band,
-        competency_id=body.competency_id,
+        competency_id=comp_ids[0],
+        competency_ids=comp_ids,
         difficulty=body.difficulty,
         is_published=body.is_published,
         created_by=user.id,
@@ -151,10 +160,22 @@ async def update_question(
     if not aq:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Question not found")
     updates = body.model_dump(exclude_none=True)
-    if "competency_id" in updates:
+    # Normalize competency updates: competency_ids wins; competency_id becomes [competency_id]
+    if "competency_ids" in updates:
+        comp_ids = [c for c in (updates["competency_ids"] or []) if c]
+        if not comp_ids:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "competency_ids must include at least one id")
+        for cid in comp_ids:
+            comp = await db.get(Competency, cid)
+            if not comp:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Competency '{cid}' not found")
+        updates["competency_ids"] = comp_ids
+        updates["competency_id"] = comp_ids[0]
+    elif "competency_id" in updates:
         comp = await db.get(Competency, updates["competency_id"])
         if not comp:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Competency not found")
+        updates["competency_ids"] = [updates["competency_id"]]
     for k, v in updates.items():
         setattr(aq, k, v)
     await db.commit()

@@ -33,6 +33,7 @@ export interface Question {
   id: string;
   module_id: string;
   competency_id: string;
+  competency_ids?: string[];
   text: string;
   type: "mcq" | "short_answer";
   options: Array<{ label: string; text: string; is_correct: boolean }> | null;

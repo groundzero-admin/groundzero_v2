@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import type { CSSProperties } from "react";
 
 const P: CSSProperties = {
   borderRadius: 12,

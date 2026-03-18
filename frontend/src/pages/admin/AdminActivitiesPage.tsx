@@ -2,10 +2,11 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import {
     useActivities, useCreateActivity, useUpdateActivity, useDeleteActivity,
-    useLinkActivityQuestion, useUnlinkActivityQuestion, useActivityQuestions,
+    useLinkActivityQuestion, useUnlinkActivityQuestion, useReorderActivityQuestions, useActivityQuestions,
 } from "@/api/hooks/useAdmin";
 import type { ActivityQuestion } from "@/api/types/admin";
-import { Plus, Pencil, Trash2, Search, Clock, Layers, ChevronDown, ChevronRight, HelpCircle, Link2, Unlink, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Clock, Layers, HelpCircle, Link2, Unlink, ExternalLink, Eye, ArrowLeft, ArrowRight } from "lucide-react";
+import LivePreview from "./LivePreview";
 import * as s from "./admin.css";
 
 // ── Types ──
@@ -33,6 +34,16 @@ const typeColor: Record<string, string> = {
     warmup: "#f59e0b", key_topic: "#6366f1", diy: "#10b981", ai_lab: "#ec4899", artifact: "#8b5cf6",
 };
 
+function extractStatementSnippet(data: unknown): string | null {
+    if (!data || typeof data !== "object") return null;
+    const d = data as Record<string, unknown>;
+    const candidates = [d.instruction, d.prompt, d.question, d.text, d.sentence, d.stem];
+    for (const v of candidates) {
+        if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return null;
+}
+
 // ── Component ──
 
 export default function AdminActivitiesPage() {
@@ -44,11 +55,10 @@ export default function AdminActivitiesPage() {
     const deleteActivity = useDeleteActivity();
     const linkQuestion = useLinkActivityQuestion();
     const unlinkQuestion = useUnlinkActivityQuestion();
+    const reorderQuestions = useReorderActivityQuestions();
 
     const [search, setSearch] = useState("");
     const [typeFilter, setTypeFilter] = useState("");
-    const [expandedId, setExpandedId] = useState<string | null>(null);
-
     // Activity modal
     const [showActivityModal, setShowActivityModal] = useState(false);
     const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
@@ -60,10 +70,11 @@ export default function AdminActivitiesPage() {
     const [formDuration, setFormDuration] = useState<number | "">("");
     const [formDescription, setFormDescription] = useState("");
 
-    // Link question picker
-    const [showLinkPicker, setShowLinkPicker] = useState(false);
-    const [linkActivityId, setLinkActivityId] = useState<string | null>(null);
+    // Question management modal
+    const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
+    const [showQuestionModal, setShowQuestionModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
+    const [previewQuestion, setPreviewQuestion] = useState<ActivityQuestion | null>(null);
 
     function openCreateActivity() {
         setEditingActivity(null);
@@ -100,7 +111,7 @@ export default function AdminActivitiesPage() {
         return matchSearch && matchType;
     });
 
-    const questionMap = new Map((allQuestions ?? []).map((q: ActivityQuestion) => [q.id, q]));
+    const questionMap = new Map((allQuestions ?? []).map((q: ActivityQuestion) => [String(q.id), q]));
     const activityPending = editingActivity ? updateActivity.isPending : createActivity.isPending;
 
     return (
@@ -133,74 +144,52 @@ export default function AdminActivitiesPage() {
                 <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 12 }}>Showing {filtered.length} of {(activities as Activity[])?.length ?? 0} activities</p>
             )}
 
-            {/* Activity list */}
-            <div className={s.sessionList}>
+            {/* Activity cards grid */}
+            <div className={s.grid}>
                 {filtered.map((a) => {
-                    const isExpanded = expandedId === a.id;
                     const linkedQuestions = (a.question_ids ?? []).map((qid) => questionMap.get(qid)).filter(Boolean) as ActivityQuestion[];
                     return (
-                        <div key={a.id}>
-                            <div className={s.sessionCard} style={{ cursor: "pointer" }} onClick={() => setExpandedId(isExpanded ? null : a.id)}>
-                                <div className={s.sessionOrder} style={{ backgroundColor: typeColor[a.type] ? `${typeColor[a.type]}18` : undefined, color: typeColor[a.type] ?? undefined, fontSize: 10, fontWeight: 700, width: 44, height: 44, textTransform: "uppercase" }}>
-                                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                </div>
-                                <div className={s.sessionInfo}>
-                                    <div className={s.sessionTitle}>{a.name}</div>
-                                    <div className={s.sessionMeta}>
-                                        <span style={{ fontFamily: "monospace", opacity: 0.5 }}>{a.id}</span>
-                                        {" · "}
+                        <div
+                            key={a.id}
+                            className={s.card}
+                            onClick={() => { setActiveActivity(a); setShowQuestionModal(true); setPreviewQuestion(null); setLinkSearch(""); }}
+                        >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                                <div style={{ minWidth: 0 }}>
+                                    <div className={s.cardTitle}>{a.name}</div>
+                                    <div className={s.cardMeta}>
+                                        <span style={{ fontFamily: "monospace", opacity: 0.6 }}>{a.id}</span>
                                         <span style={{ color: typeColor[a.type], fontWeight: 600 }}>{a.type.replace("_", " ")}</span>
-                                        {a.mode !== "default" && <>{" · "}<Layers size={11} style={{ verticalAlign: "middle" }} /> {a.mode.replace("_", " ")}</>}
-                                        {a.duration_minutes && <>{" · "}<Clock size={11} style={{ verticalAlign: "middle" }} /> {a.duration_minutes}m</>}
-                                        {" · "}
-                                        <HelpCircle size={11} style={{ verticalAlign: "middle" }} /> {linkedQuestions.length} questions
+                                        {a.mode !== "default" && (
+                                            <span><Layers size={11} style={{ verticalAlign: "middle" }} /> {a.mode.replace("_", " ")}</span>
+                                        )}
                                     </div>
-                                    {a.description && <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>{a.description.length > 100 ? a.description.slice(0, 100) + "…" : a.description}</div>}
-                                </div>
-                                <div className={s.sessionActions}>
-                                    <button className={s.editBtn} onClick={(e) => { e.stopPropagation(); openEditActivity(a); }}><Pencil size={12} /> Edit</button>
-                                    <button className={s.dangerBtn} onClick={(e) => { e.stopPropagation(); if (confirm(`Delete activity "${a.id}"?`)) deleteActivity.mutate(a.id); }}><Trash2 size={12} /> Delete</button>
+                                    <div className={s.cardMeta}>
+                                        <span>Module: {a.module_id}</span>
+                                        {a.duration_minutes && <span><Clock size={11} style={{ verticalAlign: "middle" }} /> {a.duration_minutes}m</span>}
+                                        <span><HelpCircle size={11} style={{ verticalAlign: "middle" }} /> {linkedQuestions.length} questions</span>
+                                    </div>
+                                    {a.description && (
+                                        <div className={s.cardDesc}>
+                                            {a.description.length > 120 ? `${a.description.slice(0, 120)}…` : a.description}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-
-                            {/* Expanded: Question Panel */}
-                            {isExpanded && (
-                                <div style={{ padding: "12px 16px 16px 52px", background: "var(--color-surface-2, #f8f9fa)", borderRadius: "0 0 8px 8px", marginTop: -4 }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                                        <div style={{ fontWeight: 600, fontSize: 13 }}>
-                                            <HelpCircle size={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                                            Questions ({linkedQuestions.length})
-                                        </div>
-                                        <div style={{ display: "flex", gap: 6 }}>
-                                            <button className={s.importBtn} style={{ padding: "4px 12px", fontSize: 12 }} onClick={(e) => { e.stopPropagation(); setLinkActivityId(a.id); setLinkSearch(""); setShowLinkPicker(true); }}>
-                                                <Link2 size={12} /> Link Existing
-                                            </button>
-                                            <button className={s.addBtn} style={{ padding: "4px 12px", fontSize: 12 }} onClick={(e) => { e.stopPropagation(); navigate("/admin/create-question"); }}>
-                                                <ExternalLink size={12} /> Create New
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {linkedQuestions.length === 0 && (
-                                        <p style={{ fontSize: 12, opacity: 0.6, fontStyle: "italic" }}>No questions linked yet. Link existing ones or create new.</p>
-                                    )}
-
-                                    {linkedQuestions.map((q, idx) => (
-                                        <div key={q.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
-                                            <span style={{ fontSize: 11, opacity: 0.4, width: 20, paddingTop: 2 }}>{idx + 1}</span>
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{ fontSize: 13, fontWeight: 500 }}>{q.title}</div>
-                                                <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-                                                    {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"} · {q.is_published ? "Published" : "Draft"}
-                                                </div>
-                                            </div>
-                                            <button className={s.dangerBtn} style={{ padding: "2px 8px", fontSize: 11 }} onClick={() => unlinkQuestion.mutate({ activityId: a.id, questionId: q.id })}>
-                                                <Unlink size={10} /> Unlink
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            <div className={s.cardActions}>
+                                <button
+                                    className={s.editBtn}
+                                    onClick={(e) => { e.stopPropagation(); openEditActivity(a); }}
+                                >
+                                    <Pencil size={12} /> Edit
+                                </button>
+                                <button
+                                    className={s.dangerBtn}
+                                    onClick={(e) => { e.stopPropagation(); if (confirm(`Delete activity "${a.id}"?`)) deleteActivity.mutate(a.id); }}
+                                >
+                                    <Trash2 size={12} /> Delete
+                                </button>
+                            </div>
                         </div>
                     );
                 })}
@@ -262,52 +251,221 @@ export default function AdminActivitiesPage() {
                 </div>
             )}
 
-            {/* ── Link Existing Question Picker ── */}
-            {showLinkPicker && linkActivityId && (
-                <div className={s.overlay} onClick={() => setShowLinkPicker(false)}>
-                    <div className={s.modal} style={{ maxWidth: 650, maxHeight: "80vh", overflow: "auto" }} onClick={(e) => e.stopPropagation()}>
-                        <h2 className={s.modalTitle}>Link Question to Activity</h2>
-                        <div style={{ position: "relative", marginBottom: 12 }}>
-                            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.4 }} />
-                            <input className={s.input} style={{ paddingLeft: 36 }} placeholder="Search by title or template..." value={linkSearch} onChange={(e) => setLinkSearch(e.target.value)} />
-                        </div>
+            {/* ── Manage Questions Modal (large) ── */}
+            {showQuestionModal && activeActivity && (() => {
+                const linkedIds = new Set((activeActivity.question_ids ?? []).map((id) => String(id)));
+                const linked = (activeActivity.question_ids ?? [])
+                    .map((id) => questionMap.get(String(id)))
+                    .filter(Boolean) as ActivityQuestion[];
+                const unlinked = (allQuestions ?? []).filter((q: ActivityQuestion) => !linkedIds.has(String(q.id)));
+                const searchFiltered = linkSearch.trim()
+                    ? unlinked.filter((q: ActivityQuestion) => {
+                        const text = `${q.title} ${q.template_name ?? ""} ${q.template_slug ?? ""}`.toLowerCase();
+                        return text.includes(linkSearch.toLowerCase());
+                    })
+                    : unlinked;
+                const showAddList = linkSearch.length >= 0;
 
-                        {(() => {
-                            const activity = (activities as Activity[])?.find((a) => a.id === linkActivityId);
-                            const linkedIds = new Set(activity?.question_ids ?? []);
-                            const available = (allQuestions ?? []).filter((q: ActivityQuestion) => {
-                                if (linkedIds.has(q.id)) return false;
-                                if (!q.is_published) return false;
-                                if (!linkSearch) return true;
-                                return q.title.toLowerCase().includes(linkSearch.toLowerCase()) || (q.template_name ?? "").toLowerCase().includes(linkSearch.toLowerCase());
-                            });
-                            if (!available.length) return <p style={{ fontSize: 12, opacity: 0.6 }}>No published questions available. <button className={s.editBtn} style={{ fontSize: 12 }} onClick={() => { setShowLinkPicker(false); navigate("/admin/create-question"); }}>Create one →</button></p>;
-                            return available.slice(0, 30).map((q: ActivityQuestion) => (
-                                <div key={q.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: 13, fontWeight: 500 }}>{q.title}</div>
-                                        <div style={{ fontSize: 11, opacity: 0.6 }}>
-                                            {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"}
+                return (
+                    <div className={s.overlay} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>
+                        <div
+                            className={s.modal}
+                            style={{ width: "92vw", maxWidth: 1100, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h2 className={s.modalTitle}>Manage Questions — “{activeActivity.name}”</h2>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 24, flex: 1, minHeight: 0 }}>
+                                {/* Left: Linked cards + Add section */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0, overflow: "hidden" }}>
+                                    {/* Linked Questions — small cards */}
+                                    <div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                                            <HelpCircle size={16} style={{ flexShrink: 0 }} />
+                                            <span style={{ fontWeight: 600, fontSize: 14 }}>Linked Questions ({linked.length})</span>
+                                        </div>
+                                        {linked.length === 0 ? (
+                                            <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>No questions linked yet. Add some below.</p>
+                                        ) : (
+                                            <div className={s.questionsCardGrid}>
+                                                {linked.map((q) => {
+                                                    const pos = (activeActivity.question_ids ?? []).indexOf(String(q.id));
+                                                    const canMoveLeft = pos > 0;
+                                                    const canMoveRight = pos >= 0 && pos < (activeActivity.question_ids ?? []).length - 1;
+                                                    const statement = extractStatementSnippet(q.data);
+                                                    const move = (dir: "left" | "right") => {
+                                                        const arr = [...(activeActivity.question_ids ?? [])];
+                                                        const i = arr.indexOf(String(q.id));
+                                                        if (i === -1) return;
+                                                        const j = dir === "left" ? i - 1 : i + 1;
+                                                        if (j < 0 || j >= arr.length) return;
+                                                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                                                        reorderQuestions.mutate(
+                                                            { activityId: activeActivity.id, questionIds: arr },
+                                                            {
+                                                                onSuccess: () => {
+                                                                    setActiveActivity((prev) => (prev ? { ...prev, question_ids: arr } : null));
+                                                                },
+                                                            }
+                                                        );
+                                                    };
+                                                    return (
+                                                        <div
+                                                            key={q.id}
+                                                            className={s.questionMiniCard}
+                                                            onClick={() => setPreviewQuestion(q)}
+                                                        >
+                                                            <div className={s.questionMiniCardHeader}>
+                                                                <span className={s.questionMiniCardOrder}>Order {pos + 1}</span>
+                                                                <div style={{ display: "flex", gap: 4 }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        className={s.iconBtn}
+                                                                        disabled={!canMoveLeft || reorderQuestions.isPending}
+                                                                        onClick={(e) => { e.stopPropagation(); move("left"); }}
+                                                                        title="Move earlier"
+                                                                    >
+                                                                        <ArrowLeft size={12} />
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className={s.iconBtn}
+                                                                        disabled={!canMoveRight || reorderQuestions.isPending}
+                                                                        onClick={(e) => { e.stopPropagation(); move("right"); }}
+                                                                        title="Move later"
+                                                                    >
+                                                                        <ArrowRight size={12} />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                            <div className={s.questionMiniCardTitle}>{q.title}</div>
+                                                            {statement && (
+                                                                <div className={s.questionMiniCardStem}>{statement.slice(0, 120)}{statement.length > 120 ? "…" : ""}</div>
+                                                            )}
+                                                            <div className={s.questionMiniCardMeta}>
+                                                                {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"} · {q.is_published ? "Published" : "Draft"}
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                className={s.dangerBtn}
+                                                                style={{ marginTop: 8, padding: "4px 10px", fontSize: 11 }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    unlinkQuestion.mutate(
+                                                                        { activityId: activeActivity.id, questionId: q.id },
+                                                                        {
+                                                                            onSuccess: (updated: Activity) => {
+                                                                                setActiveActivity((prev) => (prev && prev.id === updated.id ? { ...prev, question_ids: updated.question_ids ?? [] } : prev));
+                                                                            },
+                                                                        }
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Unlink size={10} /> Unlink
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Add question: Link Existing (search) + Create New */}
+                                    <div style={{ borderTop: "1px solid var(--color-border-subtle)", paddingTop: 16 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                                            <span style={{ fontWeight: 600, fontSize: 14 }}>Add question</span>
+                                            <button
+                                                type="button"
+                                                className={s.addBtn}
+                                                style={{ padding: "6px 14px", fontSize: 12 }}
+                                                onClick={() => navigate("/admin/create-question")}
+                                            >
+                                                <ExternalLink size={12} /> Create New
+                                            </button>
+                                        </div>
+                                        <div style={{ position: "relative", marginBottom: 10 }}>
+                                            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }} />
+                                            <input
+                                                className={s.input}
+                                                style={{ paddingLeft: 36 }}
+                                                placeholder="Search question bank by title or template…"
+                                                value={linkSearch}
+                                                onChange={(e) => setLinkSearch(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className={s.addQuestionList}>
+                                            {showAddList && (linkSearch.trim() ? searchFiltered : unlinked).slice(0, 50).map((q: ActivityQuestion) => (
+                                                <div key={q.id} className={s.addQuestionRow}>
+                                                    <div style={{ flex: 1, minWidth: 0 }} onClick={() => setPreviewQuestion(q)}>
+                                                        <div style={{ fontWeight: 500, fontSize: 13 }}>{q.title}</div>
+                                                        {extractStatementSnippet(q.data) && (
+                                                            <div style={{ fontSize: 12, color: "#059669", marginTop: 2 }}>
+                                                                {extractStatementSnippet(q.data)!.slice(0, 80)}…
+                                                            </div>
+                                                        )}
+                                                        <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
+                                                            {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"}
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className={s.addBtn}
+                                                        style={{ padding: "4px 12px", fontSize: 11, flexShrink: 0 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            linkQuestion.mutate(
+                                                                { activityId: activeActivity.id, questionId: q.id },
+                                                                {
+                                                                    onSuccess: (updated: Activity) => {
+                                                                        setActiveActivity((prev) => (prev && prev.id === updated.id ? { ...prev, question_ids: updated.question_ids ?? [] } : prev));
+                                                                    },
+                                                                }
+                                                            );
+                                                        }}
+                                                        disabled={linkQuestion.isPending}
+                                                    >
+                                                        <Link2 size={10} /> Link
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {!linkSearch.trim() && unlinked.length === 0 && linked.length > 0 && (
+                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>All questions are already linked.</p>
+                                            )}
+                                            {linkSearch.trim() && searchFiltered.length === 0 && (
+                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
+                                                    No matches. <button type="button" className={s.editBtn} style={{ fontSize: 12 }} onClick={() => navigate("/admin/create-question")}>Create new question →</button>
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
-                                    <button
-                                        className={s.addBtn}
-                                        style={{ padding: "4px 12px", fontSize: 11 }}
-                                        onClick={() => linkQuestion.mutate({ activityId: linkActivityId, questionId: q.id })}
-                                        disabled={linkQuestion.isPending}
-                                    >
-                                        <Link2 size={10} /> Link
-                                    </button>
                                 </div>
-                            ));
-                        })()}
 
-                        <div className={s.formActions} style={{ marginTop: 12 }}>
-                            <button type="button" className={s.cancelBtn} onClick={() => setShowLinkPicker(false)}>Done</button>
+                                {/* Right: Preview */}
+                                <div style={{ display: "flex", flexDirection: "column", minHeight: 0, borderLeft: "1px solid var(--color-border-subtle)", paddingLeft: 20 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, color: "var(--color-text-secondary)", fontWeight: 600, fontSize: 13 }}>
+                                        <Eye size={16} /> Question preview
+                                    </div>
+                                    <div style={{ flex: 1, minHeight: 280, overflow: "auto" }}>
+                                        {previewQuestion ? (
+                                            previewQuestion.template_slug ? (
+                                                <LivePreview slug={previewQuestion.template_slug} data={previewQuestion.data ?? {}} />
+                                            ) : (
+                                                <div className={s.emptyState}>No preview (missing template).</div>
+                                            )
+                                        ) : (
+                                            <div className={s.emptyState}>Click a question to preview.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={s.formActions} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
+                                <button type="button" className={s.cancelBtn} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>Close</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
         </div>
     );
 }

@@ -6,10 +6,11 @@ All routes here require role="teacher" or "admin" (MVP: admin can also teach).
 import uuid
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.auth import require_role
 from app.database import get_db
@@ -21,6 +22,8 @@ from app.models.session import Cohort, Session, SessionActivity
 from app.models.student import Student, StudentCompetencyState
 from app.models.user import User
 from app.schemas.student import StudentOut
+
+from app.api.live_batches import build_session_view, SessionViewOut
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
 
@@ -47,15 +50,32 @@ async def get_my_cohorts(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_role("teacher", "admin")),
 ):
-    """Return all cohorts. Any teacher or admin sees all cohorts."""
-    result = await db.execute(
-        select(Cohort).order_by(Cohort.created_at.desc())
-    )
-    cohorts = result.scalars().all()
+    """Admin: all cohorts. Teacher: only cohorts where they are assigned to at least one session."""
+    if user.role == "admin":
+        result = await db.execute(
+            select(Cohort).order_by(Cohort.created_at.desc())
+        )
+        cohorts = result.scalars().all()
+    else:
+        # Teacher: cohorts that have at least one session with this teacher
+        cohort_ids_result = await db.execute(
+            select(Session.cohort_id)
+            .where(Session.teacher_id == user.id, Session.cohort_id.isnot(None))
+            .distinct()
+        )
+        cohort_ids = [r[0] for r in cohort_ids_result.all()]
+        if not cohort_ids:
+            cohorts = []
+        else:
+            result = await db.execute(
+                select(Cohort).where(Cohort.id.in_(cohort_ids)).order_by(Cohort.created_at.desc())
+            )
+            cohorts = result.scalars().all()
     return [
         {
             "id": str(c.id),
             "name": c.name,
+            "description": c.description,
             "grade_band": c.grade_band,
             "level": c.level,
             "schedule": c.schedule,
@@ -71,18 +91,21 @@ async def get_my_cohorts(
     "/cohorts/{cohort_id}/upcoming-sessions",
     response_model=list[UpcomingSessionOut],
     summary="List upcoming sessions for a cohort",
-    description="Returns all sessions (started and un-started) for the cohort, ordered by order/session_number. Used by teacher dashboard to pick which session to start.",
+    description="Admin: all sessions. Teacher: only sessions where they are assigned (teacher_id).",
 )
 async def get_upcoming_sessions(
     cohort_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_role("teacher", "admin")),
 ):
-    result = await db.execute(
+    q = (
         select(Session)
         .where(Session.cohort_id == cohort_id)
         .order_by(Session.order.asc().nulls_last(), Session.session_number.asc())
     )
+    if user.role == "teacher":
+        q = q.where(Session.teacher_id == user.id)
+    result = await db.execute(q)
     sessions = result.scalars().all()
 
     # Gather activity counts and question totals
@@ -133,6 +156,31 @@ async def get_upcoming_sessions(
         ))
 
     return out
+
+
+@router.get(
+    "/cohorts/{cohort_id}/sessions/{session_id}/view",
+    response_model=SessionViewOut,
+    summary="View session plan (activities + questions) for teacher preview",
+)
+async def get_teacher_session_view(
+    cohort_id: uuid.UUID,
+    session_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("teacher", "admin")),
+):
+    """Teacher: only sessions they are assigned to. Admin: any session."""
+    result = await db.execute(
+        select(Session)
+        .where(Session.id == session_id, Session.cohort_id == cohort_id)
+        .options(selectinload(Session.live_room))
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if user.role == "teacher" and str(session.teacher_id) != str(user.id):
+        raise HTTPException(status_code=403, detail="Not assigned to this session")
+    return await build_session_view(session, db)
 
 
 @router.get(

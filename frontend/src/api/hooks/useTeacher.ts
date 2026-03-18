@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import type { Cohort, Session, SessionActivity, LivePulseEvent, StudentScore } from "@/api/types";
 import type { Student } from "@/api/types";
+import type { SessionViewOut } from "@/api/types/admin";
 
 export function useCohorts() {
   return useQuery<Cohort[]>({
@@ -80,6 +81,15 @@ export function useSessionActivities(sessionId: string | null | undefined) {
   });
 }
 
+export function useTeacherSessionView(cohortId: string | undefined, sessionId: string | undefined) {
+  return useQuery<SessionViewOut>({
+    queryKey: ["teacher-session-view", cohortId, sessionId],
+    queryFn: () =>
+      api.get(`/teacher/cohorts/${cohortId}/sessions/${sessionId}/view`).then((r) => r.data),
+    enabled: !!cohortId && !!sessionId,
+  });
+}
+
 export function useStartSession() {
   const qc = useQueryClient();
   return useMutation({
@@ -113,6 +123,7 @@ export function useLaunchActivity() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["session-activities"] });
+      qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });
 }
@@ -213,6 +224,7 @@ export function usePauseActivity() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["session-activities"] });
+      qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });
 }

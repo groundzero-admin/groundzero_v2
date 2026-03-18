@@ -263,3 +263,108 @@ export const liveDot = style({
   backgroundColor: "#22c55e",
   animation: `${livePulseKf} 1.5s ease-in-out infinite`,
 });
+
+/* ── Teacher dashboard session cards (larger, with description + Activity Preview) ── */
+
+export const sessionGrid = style({
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+  gap: vars.space[4],
+  marginBottom: vars.space[8],
+});
+
+export const sessionTileTeacher = style({
+  borderRadius: vars.radius["2xl"],
+  padding: vars.space[5],
+  display: "flex",
+  flexDirection: "column",
+  gap: vars.space[3],
+  border: `1px solid ${vars.color.border.subtle}`,
+  boxShadow: vars.shadow.sm,
+  transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+  minHeight: "200px",
+});
+
+export const sessionTileTeacherLive = style({
+  border: "2px solid #22c55e",
+  boxShadow: "0 0 0 3px rgba(34,197,94,0.12)",
+});
+
+export const sessionTileTeacherEnded = style({
+  border: "2px solid #f59e0b",
+  boxShadow: "0 0 0 3px rgba(245,158,11,0.12)",
+});
+
+export const sessionTileTeacherDone = style({
+  opacity: 0.7,
+  borderColor: vars.color.border.subtle,
+});
+
+export const sessionTileTitle = style({
+  fontFamily: vars.font.family.display,
+  fontWeight: vars.font.weight.bold,
+  fontSize: vars.font.size.base,
+  color: vars.color.text.primary,
+  lineHeight: vars.font.lineHeight.tight,
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+});
+
+export const sessionTileDesc = style({
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.tertiary,
+  lineHeight: vars.font.lineHeight.tight,
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+  flex: 1,
+});
+
+export const sessionTileMeta = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: vars.space[2],
+  fontSize: vars.font.size.xs,
+  color: vars.color.text.tertiary,
+});
+
+export const sessionTileActions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: vars.space[2],
+  marginTop: "auto",
+});
+
+export const actionBtn = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: vars.space[2],
+  padding: `${vars.space[2]} ${vars.space[4]}`,
+  borderRadius: vars.radius.lg,
+  fontSize: vars.font.size.xs,
+  fontWeight: vars.font.weight.semibold,
+  fontFamily: vars.font.family.body,
+  border: "none",
+  cursor: "pointer",
+  transition: "opacity 0.15s, transform 0.1s",
+  ":hover": { opacity: 0.9 },
+  ":disabled": { opacity: 0.6, cursor: "not-allowed" },
+});
+
+export const actionBtnPrimary = style([actionBtn, { backgroundColor: "#22c55e", color: "#fff" }]);
+export const actionBtnWarning = style([actionBtn, { backgroundColor: "#f59e0b", color: "#fff" }]);
+export const actionBtnDanger = style([actionBtn, { backgroundColor: "#ef4444", color: "#fff" }]);
+export const actionBtnSecondary = style([actionBtn, { backgroundColor: "#6366f1", color: "#fff" }]);
+export const actionBtnOutline = style([actionBtn, { backgroundColor: "transparent", color: vars.color.text.secondary, border: `1px solid ${vars.color.border.default}` }]);
+export const actionBtnPreviewBlue = style([
+  actionBtn,
+  {
+    backgroundColor: "transparent",
+    color: "#2563eb",
+    border: "1px solid rgba(37,99,235,0.35)",
+    ":hover": { backgroundColor: "rgba(37,99,235,0.08)", opacity: 1 },
+  },
+]);

@@ -33,8 +33,29 @@ export default function LivePage() {
   const [chatText, setChatText] = useState("");
   const [sideTab, setSideTab] = useState<"activity" | "chat">("activity");
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(420);
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages.length]);
+
+  // ── Sidebar resizing ──
+  useEffect(() => {
+    if (!isResizing) return;
+    const onMove = (e: MouseEvent) => {
+      const rightPadding = 16;
+      const minW = 320;
+      const maxW = Math.min(560, window.innerWidth - rightPadding);
+      const next = Math.max(minW, Math.min(maxW, window.innerWidth - e.clientX));
+      setSidebarWidth(next);
+    };
+    const onUp = () => setIsResizing(false);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [isResizing]);
 
   const sendChat = useCallback(() => {
     const txt = chatText.trim();
@@ -222,13 +243,27 @@ export default function LivePage() {
           />
         </div>
 
+        {/* ── Drag resizer (desktop only) ── */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          onMouseDown={() => setIsResizing(true)}
+          className={s.resizer}
+          style={{
+            background: isResizing ? "rgba(99,102,241,0.20)" : "rgba(148,163,184,0.25)",
+            borderLeft: "1px solid rgba(148,163,184,0.35)",
+            borderRight: "1px solid rgba(148,163,184,0.35)",
+          }}
+          title="Drag to resize"
+        />
+
         {/* ── Right: Sidebar ── */}
-        <div className={s.rightCol}>
+        <div className={s.rightCol} style={{ width: sidebarWidth }}>
 
           {/* ── Tab bar ── */}
           <div style={{
             display: "flex",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid #e2e8f0",
             flexShrink: 0,
           }}>
             {(["activity", "chat"] as const).map((tab) => (
@@ -238,11 +273,11 @@ export default function LivePage() {
                 style={{
                   flex: 1,
                   padding: "11px 0",
-                  background: "transparent",
+                  background: sideTab === tab ? "#eef2ff" : "transparent",
                   border: "none",
                   borderBottom: sideTab === tab ? "2px solid #6366f1" : "2px solid transparent",
-                  color: sideTab === tab ? "#fff" : "rgba(255,255,255,0.35)",
-                  fontWeight: sideTab === tab ? 700 : 500,
+                  color: sideTab === tab ? "#0f172a" : "#64748b",
+                  fontWeight: sideTab === tab ? 800 : 700,
                   fontSize: 12,
                   cursor: "pointer",
                   letterSpacing: "0.5px",
@@ -253,7 +288,7 @@ export default function LivePage() {
                   gap: 6,
                 }}
               >
-                {tab === "activity" ? "📋 Activity" : "💬 Chat"}
+                {tab === "activity" ? "Activity" : "Chat"}
                 {tab === "chat" && chatMessages.length > 0 && sideTab !== "chat" && (
                   <span style={{
                     background: "#6366f1", borderRadius: "50%", width: 16, height: 16,
@@ -289,7 +324,7 @@ export default function LivePage() {
 
               {/* ── Hint button — always at bottom, no scroll needed ── */}
               {wantHint && !sparkTrigger && question && nextQ && studentId && (
-                <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid #e2e8f0", background: "#fff" }}>
                   <button
                     onClick={() => {
                       setSparkTrigger({
@@ -332,16 +367,16 @@ export default function LivePage() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
                 {chatMessages.length === 0 ? (
-                  <div style={{ color: "#555", fontSize: 11, textAlign: "center", padding: 24 }}>No messages yet — say hi! 👋</div>
+                  <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 24 }}>No messages yet — say hi!</div>
                 ) : chatMessages.map((m: any) => {
                   const isMe = m.senderName === (activeLiveSession?.student_name ?? student?.name ?? "Student");
                   return (
                     <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
-                      <div style={{ fontSize: 9, color: "#555", marginBottom: 2, paddingLeft: 4, paddingRight: 4 }}>{m.senderName}</div>
+                      <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2, paddingLeft: 4, paddingRight: 4, fontWeight: 800 }}>{m.senderName}</div>
                       <div style={{
                         maxWidth: "80%", padding: "7px 11px", borderRadius: isMe ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
-                        background: isMe ? "#4f46e5" : "rgba(255,255,255,0.08)",
-                        color: isMe ? "#fff" : "#ccc",
+                        background: isMe ? "#4f46e5" : "#f1f5f9",
+                        color: isMe ? "#fff" : "#0f172a",
                         fontSize: 12, lineHeight: 1.4,
                       }}>{m.message}</div>
                     </div>
@@ -349,22 +384,22 @@ export default function LivePage() {
                 })}
                 <div ref={chatEndRef} />
               </div>
-              <div style={{ display: "flex", gap: 6, padding: "8px 10px 12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ display: "flex", gap: 8, padding: "10px 10px 12px", borderTop: "1px solid #e2e8f0", background: "#fff" }}>
                 <input
                   value={chatText}
                   onChange={(e) => setChatText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendChat()}
                   placeholder="Type a message..."
                   style={{
-                    flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 10, padding: "8px 12px", color: "#fff", fontSize: 12, outline: "none",
+                    flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0",
+                    borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontSize: 12, outline: "none",
                   }}
                 />
                 <button
                   onClick={sendChat}
                   style={{
-                    background: "#4f46e5", border: "none", borderRadius: 10, padding: "8px 14px",
-                    color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer",
+                    background: "#4f46e5", border: "none", borderRadius: 12, padding: "10px 14px",
+                    color: "#fff", fontWeight: 900, fontSize: 12, cursor: "pointer",
                   }}
                 >
                   ↑

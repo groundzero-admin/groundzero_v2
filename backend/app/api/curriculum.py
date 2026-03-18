@@ -153,6 +153,34 @@ async def unlink_question(
 
 
 @activities_router.put(
+    "/{activity_id}/questions/reorder",
+    response_model=ActivityOut,
+    summary="Reorder Activity Questions",
+    description="Replace this activity's question_ids with the provided ordered list. Does not add or remove questions, only changes order.",
+)
+async def reorder_activity_questions(
+    activity_id: str,
+    question_ids: list[str],
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("admin")),
+):
+    result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = result.scalar_one_or_none()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    current = list(activity.question_ids or [])
+    if set(current) != set(question_ids):
+        raise HTTPException(
+            status_code=400,
+            detail="question_ids must contain exactly the same IDs as currently linked (only order can change)",
+        )
+    activity.question_ids = question_ids
+    await db.commit()
+    await db.refresh(activity)
+    return activity
+
+
+@activities_router.put(
     "/{activity_id}",
     response_model=ActivityOut,
     summary="Update Activity",
@@ -215,7 +243,8 @@ async def list_questions(
 ):
     query = select(Question).order_by(Question.competency_id, Question.difficulty).limit(limit)
     if competency_id:
-        query = query.where(Question.competency_id == competency_id)
+        # membership: return questions tagged with this competency
+        query = query.where(Question.competency_ids.contains([competency_id]))
     if module_id:
         query = query.where(Question.module_id == module_id)
     if topic_id:
@@ -242,10 +271,15 @@ async def create_question(
     db: AsyncSession = Depends(get_db),
     _admin: User = Depends(require_role("admin")),
 ):
-    # Verify competency exists
-    comp = await db.execute(select(Competency).where(Competency.id == data.competency_id))
-    if not comp.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail=f"Competency '{data.competency_id}' not found")
+    # Normalize competencies
+    comp_ids = (data.competency_ids or ([data.competency_id] if data.competency_id else [])) or []
+    comp_ids = [c for c in comp_ids if c]
+    if not comp_ids:
+        raise HTTPException(status_code=400, detail="Provide competency_ids (at least one)")
+    for cid in comp_ids:
+        comp = await db.execute(select(Competency).where(Competency.id == cid))
+        if not comp.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail=f"Competency '{cid}' not found")
     # Verify topic exists (if provided)
     if data.topic_id:
         from app.models.curriculum_topic import CurriculumTopic
@@ -255,7 +289,8 @@ async def create_question(
             raise HTTPException(status_code=404, detail=f"Topic '{data.topic_id}' not found")
     question = Question(
         module_id=data.module_id,
-        competency_id=data.competency_id,
+        competency_id=comp_ids[0],
+        competency_ids=comp_ids,
         text=data.text,
         type=data.type,
         options=data.options,
@@ -288,7 +323,25 @@ async def update_question(
     question = result.scalar_one_or_none()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    # Normalize competencies if provided
+    if "competency_ids" in updates:
+        comp_ids = [c for c in (updates.get("competency_ids") or []) if c]
+        if not comp_ids:
+            raise HTTPException(status_code=400, detail="competency_ids must include at least one id")
+        for cid in comp_ids:
+            comp = await db.execute(select(Competency).where(Competency.id == cid))
+            if not comp.scalar_one_or_none():
+                raise HTTPException(status_code=404, detail=f"Competency '{cid}' not found")
+        updates["competency_ids"] = comp_ids
+        updates["competency_id"] = comp_ids[0]
+    elif "competency_id" in updates and updates.get("competency_id"):
+        cid = updates["competency_id"]
+        comp = await db.execute(select(Competency).where(Competency.id == cid))
+        if not comp.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail=f"Competency '{cid}' not found")
+        updates["competency_ids"] = [cid]
+    for field, value in updates.items():
         setattr(question, field, value)
     await db.commit()
     await db.refresh(question)

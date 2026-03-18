@@ -9,7 +9,7 @@ import {
   useCohortStudents,
 } from "@/api/hooks/useTeacher";
 import { api } from "@/api/client";
-import { Users, Calendar, CheckCircle2, Video, Square, RotateCcw, Flag } from "lucide-react";
+import { Users, Calendar, CheckCircle2, Video, Square, RotateCcw, Flag, Eye } from "lucide-react";
 import * as s from "./TeacherDashboardPage.css";
 
 const AVATAR_COLORS = [
@@ -111,6 +111,9 @@ export default function TeacherDashboardPage() {
   const endedIds = new Set(allSessions.filter((s) => s.ended_at && !s.is_done).map((s) => s.id));
   const firstPendingId = allSessions.find((s) => !s.started_at && !s.ended_at)?.id ?? null;
 
+  const previewUrl = (sessionId: string) =>
+    `/teacher/session-preview?cohortId=${selectedCohortId}&sessionId=${sessionId}`;
+
   return (
     <div className={s.page}>
       <div className={s.sectionTitle}>Sessions</div>
@@ -119,8 +122,7 @@ export default function TeacherDashboardPage() {
         <div className={s.emptyState}>No sessions yet. Ask your admin to import templates for this cohort.</div>
       )}
 
-      {/* Session grid — square boxes in a row */}
-      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 32 }}>
+      <div className={s.sessionGrid}>
         {allSessions.map((ses) => {
           const isDone = doneIds.has(ses.id);
           const isEnded = endedIds.has(ses.id);
@@ -132,82 +134,56 @@ export default function TeacherDashboardPage() {
           return (
             <div
               key={ses.id}
+              className={`${s.sessionTileTeacher} ${
+                isDone ? s.sessionTileTeacherDone : isEnded ? s.sessionTileTeacherEnded : isLive || isNext ? s.sessionTileTeacherLive : ""
+              }`}
               style={{
-                width: 160, minHeight: 160,
-                borderRadius: 16,
-                padding: "16px 14px",
-                display: "flex", flexDirection: "column", justifyContent: "space-between",
-                background: isDone
-                  ? "linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)"
-                  : isEnded
-                    ? "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)"
-                    : isNext || isLive
-                      ? "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"
-                      : "var(--color-surface-card, #fff)",
-                border: isLive
-                  ? "2px solid #22c55e"
-                  : isEnded
-                    ? "2px solid #f59e0b"
-                    : isDone
-                      ? "1px solid #d1d5db"
-                      : isNext
-                        ? "2px solid #22c55e"
-                        : "1px solid var(--color-border-subtle, #e5e7eb)",
-                boxShadow: isLive || isNext ? "0 0 0 3px rgba(34,197,94,0.15)" : isEnded ? "0 0 0 3px rgba(245,158,11,0.12)" : "0 1px 3px rgba(0,0,0,0.06)",
-                opacity: isDone ? 0.6 : 1,
-                transition: "all 0.2s ease",
+                background: isDone ? "var(--color-surface-page, #f8fafc)" : "var(--color-surface-card, #fff)",
               }}
             >
-              {/* Session info */}
-              <div style={{ textAlign: "center" }}>
-                <div style={{
-                  fontSize: 13, fontWeight: 700, lineHeight: 1.3,
-                  color: isDone ? "#9ca3af" : isEnded ? "#92400e" : (isNext || isLive) ? "#16a34a" : "var(--color-text-primary, #333)",
-                  overflow: "hidden", textOverflow: "ellipsis",
-                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                }}>
-                  {ses.title ?? `Session ${ses.session_number}`}
-                </div>
+              <div className={s.sessionTileTitle}>
+                {ses.title ?? `Session ${ses.session_number}`}
+              </div>
+              {ses.description && (
+                <div className={s.sessionTileDesc}>{ses.description}</div>
+              )}
+              <div className={s.sessionTileMeta}>
                 {ses.scheduled_at && (
-                  <div style={{ fontSize: 10, marginTop: 6, opacity: 0.6 }}>
-                    <Calendar size={10} style={{ verticalAlign: "middle", marginRight: 2 }} />
-                    {new Date(ses.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <Calendar size={12} />
+                    {new Date(ses.scheduled_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                     {" · "}
                     {new Date(ses.scheduled_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-                  </div>
+                  </span>
                 )}
-                <div style={{ fontSize: 10, marginTop: 6, opacity: 0.5, display: "flex", justifyContent: "center", gap: 8 }}>
-                  <span>{ses.activity_count} activities</span>
-                  <span>{ses.total_questions} questions</span>
-                </div>
+                <span>{ses.activity_count} activities</span>
+                <span>{ses.total_questions} questions</span>
               </div>
-
-              {/* Bottom: status or button */}
-              <div style={{ textAlign: "center", marginTop: 12 }}>
+              <div className={s.sessionTileActions}>
+                <button
+                  type="button"
+                  className={s.actionBtnPreviewBlue}
+                  onClick={() => window.open(previewUrl(ses.id), "_blank")}
+                >
+                  <Eye size={14} />
+                  Activity Preview
+                </button>
                 {isDone ? (
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <CheckCircle2 size={13} /> Done
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-tertiary)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <CheckCircle2 size={14} /> Done
                   </span>
                 ) : isEnded ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <>
                     <button
-                      className={s.goLiveBtn}
+                      type="button"
+                      className={s.actionBtnWarning}
                       onClick={async () => {
                         setRestartingId(ses.id);
                         try {
                           await restartSession.mutateAsync(ses.id);
-                          // Re-enable HMS room and get room code
-                          const startData = await api
-                            .post(`/cohorts/${selectedCohortId}/sessions/${ses.id}/start-class`)
-                            .then((r) => r.data)
-                            .catch(() => null);
+                          const startData = await api.post(`/cohorts/${selectedCohortId}/sessions/${ses.id}/start-class`).then((r) => r.data).catch(() => null);
                           const hostCode = startData?.room_code_host;
-                          // Open live class tab
-                          const params = new URLSearchParams({
-                            cohortId: selectedCohortId!,
-                            sessionId: ses.id,
-                            userName: "Teacher",
-                          });
+                          const params = new URLSearchParams({ cohortId: selectedCohortId!, sessionId: ses.id, userName: "Teacher" });
                           if (hostCode) params.set("roomCode", hostCode);
                           window.open(`/teacher/live-class?${params.toString()}`, "_blank");
                           refetchSessions();
@@ -216,13 +192,12 @@ export default function TeacherDashboardPage() {
                         }
                       }}
                       disabled={restartingId === ses.id}
-                      style={{ width: "100%", padding: "7px 0", fontSize: 11, backgroundColor: "#f59e0b" }}
                     >
-                      <RotateCcw size={12} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                      {restartingId === ses.id ? "Restarting..." : "Restart"}
+                      <RotateCcw size={14} /> {restartingId === ses.id ? "Restarting…" : "Restart"}
                     </button>
                     <button
-                      className={s.goLiveBtn}
+                      type="button"
+                      className={s.actionBtnSecondary}
                       onClick={async () => {
                         setMarkingDoneId(ses.id);
                         try {
@@ -233,22 +208,17 @@ export default function TeacherDashboardPage() {
                         }
                       }}
                       disabled={markingDoneId === ses.id}
-                      style={{ width: "100%", padding: "7px 0", fontSize: 11, backgroundColor: "#6366f1" }}
                     >
-                      <Flag size={12} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                      {markingDoneId === ses.id ? "Marking..." : "Mark Done"}
+                      <Flag size={14} /> {markingDoneId === ses.id ? "Marking…" : "Mark Done"}
                     </button>
-                  </div>
+                  </>
                 ) : isLive ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <>
                     <button
-                      className={s.goLiveBtn}
+                      type="button"
+                      className={s.actionBtnPrimary}
                       onClick={() => {
-                        const params = new URLSearchParams({
-                          cohortId: selectedCohortId!,
-                          sessionId: ses.id,
-                          userName: "Teacher",
-                        });
+                        const params = new URLSearchParams({ cohortId: selectedCohortId!, sessionId: ses.id, userName: "Teacher" });
                         api.get(`/cohorts/${selectedCohortId}/sessions/${ses.id}/class-info`)
                           .then((r) => {
                             if (r.data.room_code) params.set("roomCode", r.data.room_code);
@@ -256,43 +226,36 @@ export default function TeacherDashboardPage() {
                           })
                           .catch(() => window.open(`/teacher/live-class?${params.toString()}`, "_blank"));
                       }}
-                      style={{ width: "100%", padding: "7px 0", fontSize: 11, backgroundColor: "#22c55e" }}
                     >
-                      <Video size={12} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                      Rejoin
+                      <Video size={14} /> Rejoin
                     </button>
                     <button
-                      className={s.goLiveBtn}
+                      type="button"
+                      className={s.actionBtnDanger}
                       onClick={async () => {
                         setEndingClassId(ses.id);
                         try {
                           endSession.mutate(ses.id);
-                          await api.post(`/cohorts/${selectedCohortId}/sessions/${ses.id}/end-class`).catch(() => { });
+                          await api.post(`/cohorts/${selectedCohortId}/sessions/${ses.id}/end-class`).catch(() => {});
                           refetchSessions();
                         } finally {
                           setEndingClassId(null);
                         }
                       }}
                       disabled={endingClassId === ses.id}
-                      style={{ width: "100%", padding: "7px 0", fontSize: 11, backgroundColor: "#ef4444" }}
                     >
-                      <Square size={12} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                      {endingClassId === ses.id ? "Ending..." : "End Class"}
+                      <Square size={14} /> {endingClassId === ses.id ? "Ending…" : "End Class"}
                     </button>
-                  </div>
+                  </>
                 ) : (
                   <button
-                    className={s.goLiveBtn}
+                    type="button"
+                    className={s.actionBtnPrimary}
                     onClick={() => handleGoLive(ses.id)}
                     disabled={!canStart || goingLiveId === ses.id}
-                    style={{
-                      width: "100%", padding: "8px 0", fontSize: 12,
-                      ...(isFuture || !canStart ? { backgroundColor: "#9ca3af", cursor: "not-allowed", opacity: 0.5 } : {}),
-                      ...(isNext && canStart ? { backgroundColor: "#22c55e" } : {}),
-                    }}
+                    style={isFuture || !canStart ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
                   >
-                    <Video size={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                    {goingLiveId === ses.id ? "Starting..." : "Go Live"}
+                    <Video size={14} /> {goingLiveId === ses.id ? "Starting…" : "Go Live"}
                   </button>
                 )}
               </div>

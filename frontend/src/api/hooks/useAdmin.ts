@@ -8,6 +8,7 @@ import type {
     CohortSession,
     QuestionTemplate,
     ActivityQuestion,
+    SessionViewOut,
 } from "@/api/types/admin";
 
 // ──────────────── Template hooks ────────────────
@@ -44,7 +45,10 @@ export function useUpdateTemplate() {
         onSuccess: (_data, vars) => {
             qc.invalidateQueries({ queryKey: ["templates"] });
             qc.invalidateQueries({ queryKey: ["templates", vars.id] });
-            qc.invalidateQueries({ queryKey: ["cohorts"] });  // sync template changes to sessions
+            // Template edits can cascade into cohort sessions (title/desc/activities), so refresh all cohort views.
+            qc.invalidateQueries({ queryKey: ["cohorts"] });
+            qc.invalidateQueries({ queryKey: ["cohorts", vars.id] }); // no-op if not present, ok
+            qc.invalidateQueries({ queryKey: ["cohorts"], exact: false });
         },
     });
 }
@@ -145,6 +149,14 @@ export function useUpdateCohortSession() {
     });
 }
 
+export function useSessionView(cohortId: string | undefined, sessionId: string | undefined) {
+    return useQuery<SessionViewOut>({
+        queryKey: ["cohorts", cohortId, "sessions", sessionId, "view"],
+        queryFn: () => api.get(`/cohorts/${cohortId}/sessions/${sessionId}/view`).then((r) => r.data),
+        enabled: !!cohortId && !!sessionId,
+    });
+}
+
 // Keep old name as alias
 export const useLiveBatches = useCohorts;
 
@@ -240,6 +252,15 @@ export function useUnlinkActivityQuestion() {
     });
 }
 
+export function useReorderActivityQuestions() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ activityId, questionIds }: { activityId: string; questionIds: string[] }) =>
+            api.put(`/activities/${activityId}/questions/reorder`, questionIds).then((r) => r.data),
+        onSuccess: () => qc.invalidateQueries({ queryKey: ["activities"] }),
+    });
+}
+
 // ──────────────── Activity Question hooks ────────────────
 
 export function useActivityQuestions(templateId?: string) {
@@ -253,7 +274,7 @@ export function useActivityQuestions(templateId?: string) {
 export function useCreateActivityQuestion() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (data: { template_id: string; title: string; data: Record<string, unknown>; grade_band?: string; competency_id: string; difficulty?: number; is_published?: boolean }) =>
+        mutationFn: (data: { template_id: string; title: string; data: Record<string, unknown>; grade_band?: string; competency_ids: string[]; difficulty?: number; is_published?: boolean; competency_id?: string }) =>
             api.post<ActivityQuestion>("/admin/activity-questions", data).then((r) => r.data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
     });
@@ -262,7 +283,7 @@ export function useCreateActivityQuestion() {
 export function useUpdateActivityQuestion() {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, ...data }: { id: string; title?: string; data?: Record<string, unknown>; grade_band?: string; competency_id?: string; difficulty?: number; is_published?: boolean }) =>
+        mutationFn: ({ id, ...data }: { id: string; title?: string; data?: Record<string, unknown>; grade_band?: string; competency_ids?: string[]; competency_id?: string; difficulty?: number; is_published?: boolean }) =>
             api.put<ActivityQuestion>(`/admin/activity-questions/${id}`, data).then((r) => r.data),
         onSuccess: () => qc.invalidateQueries({ queryKey: ["activity-questions"] }),
     });

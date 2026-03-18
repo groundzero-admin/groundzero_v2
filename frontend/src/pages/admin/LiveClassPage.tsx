@@ -25,6 +25,7 @@ import {
     useLivePulse,
     useSessionScores,
     useEndSession,
+    useTeacherSessionView,
 } from "@/api/hooks/useTeacher";
 import {
     Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause,
@@ -108,14 +109,36 @@ export default function LiveClassPage() {
     const [activeType, setActiveType] = useState<string | null>(null);
     const [joinError, setJoinError] = useState<string | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const [sidebarWidth, setSidebarWidth] = useState<number>(380);
+    const [isResizing, setIsResizing] = useState(false);
 
     // ── Data hooks ──
     const { data: sessionActivities } = useSessionActivities(sessionId || undefined);
     const { data: pulseEvents } = useLivePulse(cohortId || undefined, sessionId || undefined);
     const { data: sessionScores } = useSessionScores(cohortId || undefined, sessionId || undefined);
+    const { data: sessionView } = useTeacherSessionView(cohortId || undefined, sessionId || undefined);
     const launchActivity = useLaunchActivity();
     const pauseActivity = usePauseActivity();
     const endSession = useEndSession();
+
+    // ── Sidebar resizing ──
+    useEffect(() => {
+        if (!isResizing) return;
+        const onMove = (e: MouseEvent) => {
+            const rightPadding = 24;
+            const minW = 320;
+            const maxW = Math.min(560, window.innerWidth - rightPadding);
+            const next = Math.max(minW, Math.min(maxW, window.innerWidth - e.clientX));
+            setSidebarWidth(next);
+        };
+        const onUp = () => setIsResizing(false);
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+        return () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+        };
+    }, [isResizing]);
 
     // ── Join HMS room ──
     useEffect(() => {
@@ -204,6 +227,10 @@ export default function LiveClassPage() {
 
     // ── Activity data ──
     const activities = sessionActivities ?? [];
+    const activityInfoById = new Map<string, { description?: string | null; questionCount?: number }>();
+    for (const a of (sessionView?.activities ?? [])) {
+        activityInfoById.set(a.activity_id, { description: a.description, questionCount: a.questions?.length ?? 0 });
+    }
     const typeCounts: Record<string, number> = {};
     for (const a of activities) {
         const t = a.activity_type ?? "other";
@@ -214,21 +241,21 @@ export default function LiveClassPage() {
     const filteredActivities = activities.filter((a) => (a.activity_type ?? "other") === selectedType);
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0b0b1a", color: "#fff", fontFamily: "'Inter',sans-serif" }}>
-            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}} ::-webkit-scrollbar{width:4px;height:4px} ::-webkit-scrollbar-thumb{background:#333;border-radius:4px}`}</style>
+        <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#f8fafc", color: "#0f172a", fontFamily: "'Inter',sans-serif" }}>
+            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}} ::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}`}</style>
 
             {/* ═══ HEADER ═══ */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px", background: "#101020", borderBottom: "1px solid #1c1c30", flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#ffffff", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14 }}>🎥 Live Class</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#4ade80" }}>
+                    <span style={{ fontWeight: 800, fontSize: 14, color: "#0f172a" }}>Live Class</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#16a34a", fontWeight: 700 }}>
                         <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "pulse 1.5s infinite" }} />
                         {peers.length} joined
                     </div>
-                    {hasScreenShare && <span style={{ fontSize: 9, background: "#f59e0b18", color: "#f59e0b", padding: "1px 6px", borderRadius: 6, fontWeight: 600 }}>🖥️ Screen shared</span>}
+                    {hasScreenShare && <span style={{ fontSize: 10, background: "#f59e0b18", color: "#b45309", padding: "2px 8px", borderRadius: 999, fontWeight: 700 }}>Screen shared</span>}
                 </div>
                 <div style={{ display: "flex", gap: 4 }}>
-                    {pinnedId && <button onClick={() => setPinnedId(null)} style={{ background: "#fbbf2420", border: "1px solid #fbbf2440", borderRadius: 6, padding: "2px 10px", color: "#fbbf24", cursor: "pointer", fontSize: 10, fontWeight: 600 }}>Unpin</button>}
+                    {pinnedId && <button onClick={() => setPinnedId(null)} style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 999, padding: "6px 10px", color: "#9a3412", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>Unpin</button>}
                 </div>
             </div>
 
@@ -236,7 +263,7 @@ export default function LiveClassPage() {
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
                 {/* ── VIDEO AREA ── */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, background: "#0b0b1a" }}>
 
                     {/* Spotlight */}
                     <div style={{ flex: 1, minHeight: 0, padding: 6, paddingBottom: 4, position: "relative" }}>
@@ -335,23 +362,38 @@ export default function LiveClassPage() {
                     )}
                 </div>
 
+                {/* ── DRAG RESIZER ── */}
+                <div
+                    role="separator"
+                    aria-orientation="vertical"
+                    onMouseDown={() => setIsResizing(true)}
+                    style={{
+                        width: 8,
+                        cursor: "col-resize",
+                        background: isResizing ? "rgba(99,102,241,0.20)" : "rgba(148,163,184,0.25)",
+                        borderLeft: "1px solid rgba(148,163,184,0.35)",
+                        borderRight: "1px solid rgba(148,163,184,0.35)",
+                    }}
+                    title="Drag to resize"
+                />
+
                 {/* ── RIGHT SIDEBAR — Tabs ── */}
-                <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #1c1c30", background: "#0e0e1e" }}>
+                <div style={{ width: sidebarWidth, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #e2e8f0", background: "#ffffff" }}>
                     {/* Tab header */}
-                    <div style={{ display: "flex", borderBottom: "1px solid #1c1c30", flexShrink: 0 }}>
+                    <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                         {(["activities", "feed", "chat"] as const).map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 style={{
-                                    flex: 1, padding: "8px 0", border: "none", cursor: "pointer",
-                                    background: activeTab === tab ? "#161628" : "transparent",
-                                    color: activeTab === tab ? "#fff" : "#666",
-                                    fontWeight: 600, fontSize: 11,
+                                    flex: 1, padding: "10px 0", border: "none", cursor: "pointer",
+                                    background: activeTab === tab ? "#eef2ff" : "transparent",
+                                    color: activeTab === tab ? "#1e293b" : "#64748b",
+                                    fontWeight: 800, fontSize: 11,
                                     borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent",
                                 }}
                             >
-                                {tab === "activities" ? "📝 Activities" : tab === "feed" ? "📊 Feed" : "💬 Chat"}
+                                {tab === "activities" ? "Activities" : tab === "feed" ? "Feed" : "Chat"}
                             </button>
                         ))}
                     </div>
@@ -363,7 +405,7 @@ export default function LiveClassPage() {
                         {activeTab === "activities" && (
                             <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                                 {/* Type chips */}
-                                <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                     {availableTypes.map((t) => {
                                         const meta = TYPE_META[t] ?? { icon: <BookOpen size={14} />, color: "#888", label: t };
                                         const isActive = t === selectedType;
@@ -373,15 +415,28 @@ export default function LiveClassPage() {
                                                 key={t}
                                                 onClick={() => setActiveType(t)}
                                                 style={{
-                                                    display: "flex", alignItems: "center", gap: 4,
-                                                    padding: "4px 10px", borderRadius: 20,
-                                                    border: isActive ? `1px solid ${meta.color}` : "1px solid #2a2a3e",
-                                                    background: isActive ? `${meta.color}18` : "transparent",
-                                                    color: isActive ? meta.color : "#888",
-                                                    cursor: "pointer", fontSize: 10, fontWeight: 600,
+                                                    display: "inline-flex", alignItems: "center", gap: 8,
+                                                    padding: "7px 12px", borderRadius: 999,
+                                                    border: isActive ? `1px solid ${meta.color}55` : "1px solid #e2e8f0",
+                                                    background: isActive ? `${meta.color}12` : "#f8fafc",
+                                                    color: isActive ? "#0f172a" : "#334155",
+                                                    cursor: "pointer", fontSize: 11, fontWeight: 800,
+                                                    boxShadow: isActive ? `0 0 0 3px ${meta.color}14` : "none",
                                                 }}
                                             >
-                                                {meta.icon} {meta.label} ({doneCount}/{typeCounts[t]})
+                                                <span style={{
+                                                    width: 22, height: 22, borderRadius: 999,
+                                                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                                    background: `${meta.color}18`, color: meta.color,
+                                                }}>
+                                                    {meta.icon}
+                                                </span>
+                                                <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+                                                    {meta.label}
+                                                    <span style={{ fontSize: 10, fontWeight: 900, color: "#64748b" }}>
+                                                        {doneCount}/{typeCounts[t]}
+                                                    </span>
+                                                </span>
                                             </button>
                                         );
                                     })}
@@ -392,27 +447,47 @@ export default function LiveClassPage() {
                                     const isLive = a.status === "active";
                                     const isDone = a.status === "completed";
                                     const isPaused = a.status === "paused";
+                                    const info = activityInfoById.get(a.activity_id);
                                     return (
                                         <div
                                             key={a.id}
                                             style={{
-                                                background: isLive ? "#22c55e12" : isPaused ? "#f59e0b12" : "#161628",
-                                                border: isLive ? "1px solid #22c55e40" : isPaused ? "1px solid #f59e0b40" : "1px solid #1c1c30",
-                                                borderRadius: 10, padding: "8px 10px",
+                                                background: isLive ? "#dcfce7" : isPaused ? "#ffedd5" : "#f8fafc",
+                                                border: isLive ? "1px solid #22c55e55" : isPaused ? "1px solid #f59e0b55" : "1px solid #e2e8f0",
+                                                borderRadius: 14, padding: "10px 12px",
                                                 display: "flex", alignItems: "center", gap: 8,
                                             }}
                                         >
                                             <div style={{ flex: 1 }}>
-                                                <div style={{ fontWeight: 600, fontSize: 11, color: isDone ? "#9ca3af" : "#fff" }}>
+                                                <div style={{ fontWeight: 900, fontSize: 12, color: isDone ? "#94a3b8" : "#0f172a" }}>
                                                     {isDone && <CheckCircle2 size={12} color="#22c55e" style={{ marginRight: 4, verticalAlign: "middle" }} />}
                                                     {isLive && <Radio size={12} color="#22c55e" style={{ marginRight: 4, verticalAlign: "middle" }} />}
                                                     {isPaused && <Pause size={12} color="#f59e0b" style={{ marginRight: 4, verticalAlign: "middle" }} />}
                                                     {a.activity_name ?? a.activity_id}
                                                 </div>
-                                                <div style={{ fontSize: 9, opacity: 0.5, marginTop: 2 }}>
+                                                {(info?.description || info?.questionCount != null) && (
+                                                    <div style={{ fontSize: 10, color: "#475569", marginTop: 4, lineHeight: 1.2 }}>
+                                                        {info?.description ? (
+                                                            <div style={{
+                                                                display: "-webkit-box",
+                                                                WebkitLineClamp: 2,
+                                                                WebkitBoxOrient: "vertical",
+                                                                overflow: "hidden",
+                                                            }}>
+                                                                {info.description}
+                                                            </div>
+                                                        ) : null}
+                                                        {info?.questionCount != null ? (
+                                                            <div style={{ marginTop: info?.description ? 3 : 0, fontWeight: 800, color: "#334155" }}>
+                                                                {info.questionCount} questions
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                )}
+                                                <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>
                                                     {a.duration_minutes ? `${a.duration_minutes} min` : ""}
                                                     {a.launched_at ? ` · ${new Date(a.launched_at).toLocaleTimeString()}` : ""}
-                                                    {isPaused && <span style={{ color: "#f59e0b", marginLeft: 4 }}>Paused</span>}
+                                                    {isPaused && <span style={{ color: "#b45309", marginLeft: 6, fontWeight: 800 }}>Paused</span>}
                                                 </div>
                                             </div>
                                             {!isDone && (
@@ -422,8 +497,8 @@ export default function LiveClassPage() {
                                                             onClick={() => sessionId && pauseActivity.mutate(sessionId)}
                                                             disabled={pauseActivity.isPending}
                                                             style={{
-                                                                padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-                                                                fontWeight: 600, fontSize: 10, color: "#fff", background: "#f59e0b",
+                                                                padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                                                                fontWeight: 900, fontSize: 11, color: "#fff", background: "#f59e0b",
                                                             }}
                                                         >
                                                             Pause
@@ -434,8 +509,8 @@ export default function LiveClassPage() {
                                                             onClick={() => sessionId && launchActivity.mutate({ sessionId, activityId: a.activity_id })}
                                                             disabled={launchActivity.isPending}
                                                             style={{
-                                                                padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-                                                                fontWeight: 600, fontSize: 10, color: "#fff",
+                                                                padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer",
+                                                                fontWeight: 900, fontSize: 11, color: "#fff",
                                                                 background: isPaused ? "#f59e0b" : "#6366f1",
                                                             }}
                                                         >
@@ -475,14 +550,14 @@ export default function LiveClassPage() {
                             return (
                                 <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                                     {/* Confidence pulse from HMS */}
-                                    <div style={{ background: "#161628", borderRadius: 8, padding: 10 }}>
-                                        <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 6, color: "#fff" }}>💬 How Students Feel</div>
+                                    <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 12 }}>
+                                        <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8, color: "#0f172a" }}>💬 How Students Feel</div>
                                         {confidenceMsgs.length > 0 ? (
                                             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                                                 {confidenceMsgs.slice(0, 15).map((msg) => (
                                                     <div key={msg.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, padding: "3px 0" }}>
                                                         <span style={{ fontSize: 13 }}>{moodEmoji[msg.value]}</span>
-                                                        <span style={{ fontWeight: 600, color: "#ccc" }}>{msg.studentName}</span>
+                                                        <span style={{ fontWeight: 800, color: "#334155" }}>{msg.studentName}</span>
                                                         <span style={{ color: moodColor[msg.value] }}>{moodLabel[msg.value]}</span>
                                                         <span style={{ marginLeft: "auto", opacity: 0.4, fontSize: 9 }}>
                                                             {new Date(msg.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -491,19 +566,19 @@ export default function LiveClassPage() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <div style={{ textAlign: "center", padding: 8, opacity: 0.4, fontSize: 10 }}>No responses yet</div>
+                                            <div style={{ textAlign: "center", padding: 8, color: "#64748b", fontSize: 10 }}>No responses yet</div>
                                         )}
                                     </div>
 
                                     {/* Scores */}
                                     {sessionScores && sessionScores.some((sc) => sc.total > 0) && (
-                                        <div style={{ background: "#161628", borderRadius: 8, padding: 10 }}>
-                                            <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 6, color: "#fff" }}>📊 Scores</div>
+                                        <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 12 }}>
+                                            <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8, color: "#0f172a" }}>📊 Scores</div>
                                             {sessionScores.filter((sc) => sc.total > 0).map((sc) => {
                                                 const pct = Math.round((sc.correct / sc.total) * 100);
                                                 return (
                                                     <div key={sc.student_id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "3px 0", fontSize: 10 }}>
-                                                        <span style={{ color: "#ccc" }}>{sc.student_name}</span>
+                                                        <span style={{ color: "#334155", fontWeight: 700 }}>{sc.student_name}</span>
                                                         <span style={{
                                                             fontWeight: 700,
                                                             color: pct >= 70 ? "#22c55e" : pct >= 40 ? "#f59e0b" : "#ef4444",
@@ -516,11 +591,11 @@ export default function LiveClassPage() {
                                         </div>
                                     )}
                                     {/* Pulse events */}
-                                    <div style={{ background: "#161628", borderRadius: 8, padding: 10 }}>
-                                        <div style={{ fontWeight: 600, fontSize: 11, marginBottom: 6, color: "#fff" }}>📡 Live Pulse</div>
+                                    <div style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 12 }}>
+                                        <div style={{ fontWeight: 900, fontSize: 11, marginBottom: 8, color: "#0f172a" }}>📡 Live Pulse</div>
                                         {pulseEvents && pulseEvents.length > 0 ? (
                                             pulseEvents.slice(0, 10).map((e) => (
-                                                <div key={e.id} style={{ fontSize: 10, padding: "3px 0", color: "#ccc", display: "flex", gap: 6 }}>
+                                                <div key={e.id} style={{ fontSize: 10, padding: "3px 0", color: "#334155", display: "flex", gap: 6 }}>
                                                     <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{e.student_name.split(" ")[0]}</span>
                                                     <span style={{ color: e.outcome >= 0.7 ? "#22c55e" : e.outcome < 0.4 ? "#ef4444" : "#f59e0b" }}>
                                                         {e.outcome >= 0.7 ? "✓" : e.outcome < 0.4 ? "✗" : "~"}
@@ -529,7 +604,7 @@ export default function LiveClassPage() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <div style={{ textAlign: "center", padding: 10, opacity: 0.4, fontSize: 10 }}>No events yet</div>
+                                            <div style={{ textAlign: "center", padding: 10, color: "#64748b", fontSize: 10 }}>No events yet</div>
                                         )}
                                     </div>
                                 </div>
@@ -545,17 +620,17 @@ export default function LiveClassPage() {
                                             try { return !JSON.parse(m.message)?.type; } catch { return true; }
                                         })
                                         .map((m: any, i: number) => (
-                                            <div key={i} style={{ background: "#161628", borderRadius: 6, padding: "4px 7px", fontSize: 10 }}>
-                                                <div style={{ fontWeight: 600, fontSize: 8, opacity: 0.5, marginBottom: 1 }}>{m.senderName}</div>
-                                                {m.message}
+                                            <div key={i} style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", fontSize: 10 }}>
+                                                <div style={{ fontWeight: 900, fontSize: 9, color: "#64748b", marginBottom: 2 }}>{m.senderName}</div>
+                                                <div style={{ color: "#0f172a" }}>{m.message}</div>
                                             </div>
                                         ))}
-                                    {!messages.filter((m: any) => { try { return !JSON.parse(m.message)?.type; } catch { return true; } }).length && <div style={{ textAlign: "center", padding: 20, opacity: 0.3, fontSize: 11 }}>No messages yet</div>}
+                                    {!messages.filter((m: any) => { try { return !JSON.parse(m.message)?.type; } catch { return true; } }).length && <div style={{ textAlign: "center", padding: 20, color: "#94a3b8", fontSize: 11 }}>No messages yet</div>}
                                     <div ref={chatEndRef} />
                                 </div>
-                                <div style={{ display: "flex", padding: 6, gap: 4, borderTop: "1px solid #1c1c30" }}>
-                                    <input style={{ flex: 1, background: "#161628", border: "none", borderRadius: 6, padding: "6px 8px", color: "#fff", fontSize: 11, outline: "none" }} value={chatText} onChange={(e) => setChatText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Message…" />
-                                    <button onClick={sendMessage} style={{ background: "#6366f1", border: "none", borderRadius: 6, padding: "6px 10px", color: "#fff", fontWeight: 600, fontSize: 11, cursor: "pointer" }}>↑</button>
+                                <div style={{ display: "flex", padding: 10, gap: 8, borderTop: "1px solid #e2e8f0", background: "#ffffff" }}>
+                                    <input style={{ flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontSize: 12, outline: "none" }} value={chatText} onChange={(e) => setChatText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendMessage()} placeholder="Message…" />
+                                    <button onClick={sendMessage} style={{ background: "#6366f1", border: "none", borderRadius: 12, padding: "10px 12px", color: "#fff", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>↑</button>
                                 </div>
                             </div>
                         )}

@@ -17,6 +17,7 @@ import StudioPage from "@/pages/StudioPage";
 import StudioPlayerPage from "@/pages/StudioPlayerPage";
 import TeacherShell from "@/components/layout/TeacherShell";
 import TeacherDashboardPage from "@/pages/teacher/TeacherDashboardPage";
+import TeacherSessionPreviewPage from "@/pages/teacher/TeacherSessionPreviewPage";
 import SkillGraphPage from "@/pages/SkillGraphPage";
 
 // Plugin: Benchmark (remove this block to disable)
@@ -211,6 +212,16 @@ export default function App() {
               >
                 <Route path="/teacher" element={<TeacherDashboardPage />} />
               </Route>
+
+              {/* ── Teacher session preview (full-screen, no shell) ── */}
+              <Route
+                path="/teacher/session-preview"
+                element={
+                  <RequireAuth allowedRoles={["teacher", "admin"]}>
+                    <TeacherSessionPreviewPage />
+                  </RequireAuth>
+                }
+              />
 
               {/* ── Admin routes ── */}
               <Route
