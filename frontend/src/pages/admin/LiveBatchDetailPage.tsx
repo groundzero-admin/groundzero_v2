@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -6,12 +6,33 @@ import {
     useTemplates,
     useImportTemplates,
     useUpdateCohortSession,
+    useSessionView,
 } from "@/api/hooks/useAdmin";
 import type { ImportTemplateItem } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
-import type { CohortSession } from "@/api/types/admin";
-import { ArrowLeft, Download, Pencil, Link2, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight, BarChart2 } from "lucide-react";
+import type { CohortSession, SessionViewOut, SessionViewQuestion } from "@/api/types/admin";
+import {
+    ArrowLeft,
+    Download,
+    Pencil,
+    Users,
+    UserPlus,
+    UserMinus,
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    Calendar,
+    User,
+    ArrowUp,
+    ArrowDown,
+    ArrowUpDown,
+    Hash,
+    Eye,
+    Layers,
+    BarChart2,
+} from "lucide-react";
 import * as s from "./admin.css";
+import LivePreview from "./LivePreview";
 
 // ── Enrollment types ──
 
@@ -67,6 +88,16 @@ export default function CohortDetailPage() {
     const [formScheduledAt, setFormScheduledAt] = useState("");
     const [formTeacherId, setFormTeacherId] = useState("");
 
+    // Session viewer (admin preview)
+    const [sessionViewSessionId, setSessionViewSessionId] = useState<string | null>(null);
+    const [sessionViewActiveActivityId, setSessionViewActiveActivityId] = useState<string | null>(null);
+    const [sessionViewPreviewQuestion, setSessionViewPreviewQuestion] = useState<SessionViewQuestion | null>(null);
+
+    const {
+        data: sessionView,
+        isLoading: sessionViewLoading,
+    } = useSessionView(id, sessionViewSessionId ?? undefined);
+
     // Student enrollment
     const [showLinkModal, setShowLinkModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
@@ -95,6 +126,19 @@ export default function CohortDetailPage() {
         },
     });
 
+    useEffect(() => {
+        if (!sessionView) return;
+        if (sessionView.activities.length === 0) return;
+        if (sessionViewActiveActivityId) return;
+        setSessionViewActiveActivityId(sessionView.activities[0].activity_id);
+    }, [sessionView, sessionViewActiveActivityId]);
+
+    useEffect(() => {
+        if (!sessionView || !sessionViewActiveActivityId) return;
+        const act = sessionView.activities.find((a) => a.activity_id === sessionViewActiveActivityId);
+        setSessionViewPreviewQuestion(act?.questions?.[0] ?? null);
+    }, [sessionView, sessionViewActiveActivityId]);
+
     const unenrollMutation = useMutation({
         mutationFn: (studentId: string) =>
             api.delete(`/cohorts/${id}/students/${studentId}`),
@@ -104,8 +148,24 @@ export default function CohortDetailPage() {
         },
     });
 
+    if (isLoading) return <p className={s.emptyState}>Loading...</p>;
+    if (!cohort) return <p className={s.emptyState}>Cohort not found.</p>;
+
     // Already imported template IDs
-    const importedTemplateIds = new Set(cohort?.sessions.map(s => s.template_id).filter(Boolean));
+    const importedTemplateIds = new Set(cohort.sessions.map(s => s.template_id).filter(Boolean));
+
+    function getEffectiveOrder(sess: CohortSession, fallbackIndex: number) {
+        return (typeof sess.order === "number" ? sess.order : null) ?? sess.session_number ?? (fallbackIndex + 1);
+    }
+
+    const teacherById = new Map((teachers ?? []).map((t) => [t.id, t]));
+
+    const sortedSessions = [...(cohort.sessions ?? [])].sort((a, b) => {
+        // Always render in saved order if present; otherwise fallback to session_number.
+        const aIdx = getEffectiveOrder(a, 0);
+        const bIdx = getEffectiveOrder(b, 0);
+        return aIdx - bIdx;
+    });
 
     function toggleTemplate(tid: string) {
         setImportItems(prev => {
@@ -144,7 +204,8 @@ export default function CohortDetailPage() {
         setFormTitle(sess.title ?? "");
         setFormDesc(sess.description ?? "");
         setFormScheduledAt(sess.scheduled_at ? sess.scheduled_at.slice(0, 16) : "");
-        setFormTeacherId("");
+        // Prefill current assignment so "Save" doesn't accidentally clear it.
+        setFormTeacherId(sess.teacher_id ?? "");
     }
 
     async function handleUpdateSession(e: FormEvent) {
@@ -161,8 +222,43 @@ export default function CohortDetailPage() {
         setEditingSession(null);
     }
 
-    if (isLoading) return <p className={s.emptyState}>Loading...</p>;
-    if (!cohort) return <p className={s.emptyState}>Cohort not found.</p>;
+    async function moveSession(sessionId: string, dir: "up" | "down") {
+        if (!id) return;
+        const list = [...sortedSessions];
+        const fromIdx = list.findIndex((s) => s.id === sessionId);
+        if (fromIdx === -1) return;
+        const toIdx = dir === "up" ? fromIdx - 1 : fromIdx + 1;
+        if (toIdx < 0 || toIdx >= list.length) return;
+
+        const a = list[fromIdx];
+        const b = list[toIdx];
+
+        // Ensure we have numeric orders to swap (use current visual order)
+        const aOrder = getEffectiveOrder(a, fromIdx);
+        const bOrder = getEffectiveOrder(b, toIdx);
+
+        // Swap orders and persist
+        await updateSession.mutateAsync({ cohortId: id, sessionId: a.id, order: bOrder });
+        await updateSession.mutateAsync({ cohortId: id, sessionId: b.id, order: aOrder });
+    }
+
+    async function applyOrderBySchedule() {
+        if (!id) return;
+
+        const scheduleSorted = [...(cohort!.sessions ?? [])].sort((a, b) => {
+            const at = a.scheduled_at ? Date.parse(a.scheduled_at) : Number.POSITIVE_INFINITY;
+            const bt = b.scheduled_at ? Date.parse(b.scheduled_at) : Number.POSITIVE_INFINITY;
+            if (at !== bt) return at - bt;
+            // tie-breaker: stable by current order
+            return getEffectiveOrder(a, 0) - getEffectiveOrder(b, 0);
+        });
+
+        // Persist sequential order numbers (1..n)
+        for (let i = 0; i < scheduleSorted.length; i++) {
+            const sess = scheduleSorted[i];
+            await updateSession.mutateAsync({ cohortId: id, sessionId: sess.id, order: i + 1 });
+        }
+    }
 
     return (
         <div className={s.page}>
@@ -191,32 +287,116 @@ export default function CohortDetailPage() {
                 </p>
             )}
 
-            <div className={s.sessionList}>
-                {cohort.sessions.map((sess) => (
-                    <div key={sess.id} className={s.sessionCard}>
-                        <div className={s.sessionOrder}>{sess.order ?? sess.session_number}</div>
-                        <div className={s.sessionInfo}>
-                            <div className={s.sessionTitle}>{sess.title ?? `Session ${sess.session_number}`}</div>
-                            <div className={s.sessionMeta}>
-                                {sess.scheduled_at && new Date(sess.scheduled_at).toLocaleString()}
-                                {sess.description && ` — ${sess.description}`}
-                            </div>
-                            {sess.template_id && (
-                                <span className={`${s.badge} ${s.badgeSuccess}`} style={{ marginTop: 4 }}>
-                                    <Link2 size={10} style={{ marginRight: 4 }} /> From template
-                                </span>
-                            )}
-                        </div>
-                        <div className={s.sessionActions}>
-                            <button className={s.editBtn} onClick={() => navigate(`/admin/sessions/${sess.id}/class-report`)}>
-                                <BarChart2 size={12} /> Class Report
-                            </button>
-                            <button className={s.editBtn} onClick={() => openEditSession(sess)}>
-                                <Pencil size={12} /> Edit
-                            </button>
+            {!!cohort.sessions.length && (
+                <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div>
+                        <div className={s.title} style={{ fontSize: 18 }}>Imported Sessions</div>
+                        <div className={s.subtitle}>
+                            Cards show title, schedule, teacher, and template linkage. Use arrows to reorder.
                         </div>
                     </div>
-                ))}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        <button
+                            className={s.tinyBtn}
+                            onClick={applyOrderBySchedule}
+                            disabled={updateSession.isPending}
+                            title="Sort by scheduled time and save to DB order"
+                        >
+                            <ArrowUpDown size={14} /> Sort by schedule
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className={s.sessionGrid}>
+                {sortedSessions.map((sess, idx) => {
+                    const teacher = sess.teacher_id ? teacherById.get(sess.teacher_id) : undefined;
+                    const effectiveOrder = getEffectiveOrder(sess, idx);
+                    const scheduledLabel = sess.scheduled_at ? new Date(sess.scheduled_at).toLocaleString() : "Not scheduled";
+                    const isFirst = idx === 0;
+                    const isLast = idx === sortedSessions.length - 1;
+
+                    return (
+                        <div key={sess.id} className={s.sessionTile}>
+                            <div className={s.sessionTileTop}>
+                                <div style={{ minWidth: 0 }}>
+                                    <div className={s.sessionTileTitle}>
+                                        {sess.title ?? `Session ${sess.session_number}`}
+                                    </div>
+                                    <div className={s.sessionTileMeta} style={{ marginTop: 8 }}>
+                                        <span className={s.metaPill} title="Saved order (used for sorting)">
+                                            <Hash size={12} /> Order {effectiveOrder}
+                                        </span>
+                                        <span className={s.metaPill} title="Scheduled time">
+                                            <Calendar size={12} /> {scheduledLabel}
+                                        </span>
+                                        <span className={s.metaPill} title="Assigned teacher">
+                                            <User size={12} /> {teacher ? teacher.full_name : sess.teacher_id ? "Assigned" : "No teacher"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className={s.sessionTileActions}>
+                                    <button
+                                        className={s.iconBtn}
+                                        onClick={() => moveSession(sess.id, "up")}
+                                        disabled={isFirst || updateSession.isPending}
+                                        title="Move up"
+                                    >
+                                        <ArrowUp size={16} />
+                                    </button>
+                                    <button
+                                        className={s.iconBtn}
+                                        onClick={() => moveSession(sess.id, "down")}
+                                        disabled={isLast || updateSession.isPending}
+                                        title="Move down"
+                                    >
+                                        <ArrowDown size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {sess.description ? (
+                                <div className={s.sessionTileDesc}>{sess.description}</div>
+                            ) : (
+                                <div className={s.sessionTileDesc} style={{ opacity: 0.6 }}>
+                                    No description
+                                </div>
+                            )}
+
+                            <div className={s.sessionTileFooter}>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    {sess.is_live ? (
+                                        <span className={`${s.badge} ${s.badgeWarning}`}>Live now</span>
+                                    ) : (
+                                        <span className={s.badge}>Not live</span>
+                                    )}
+                                </div>
+                                <button
+                                    className={s.editBtn}
+                                    onClick={() => navigate(`/admin/sessions/${sess.id}/class-report`)}
+                                    title="View class report"
+                                >
+                                    <BarChart2 size={12} /> Class Report
+                                </button>
+                                <button
+                                    className={s.editBtn}
+                                    onClick={() => {
+                                        setSessionViewSessionId(sess.id);
+                                        setSessionViewActiveActivityId(null);
+                                        setSessionViewPreviewQuestion(null);
+                                    }}
+                                    disabled={sessionViewLoading}
+                                    title="View activities + questions"
+                                >
+                                    <Eye size={12} /> View
+                                </button>
+                                <button className={s.editBtn} onClick={() => openEditSession(sess)}>
+                                    <Pencil size={12} /> Edit
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* ── Students Section ── */}
@@ -434,6 +614,199 @@ export default function CohortDetailPage() {
                     </div>
                 </div>
             )}
+
+            {/* ── Session Viewer Modal (activities + questions) ── */}
+            {sessionViewSessionId && (
+                <div
+                    className={s.overlay}
+                    onClick={() => {
+                        setSessionViewSessionId(null);
+                        setSessionViewActiveActivityId(null);
+                        setSessionViewPreviewQuestion(null);
+                    }}
+                >
+                    <div
+                        className={s.modal}
+                        style={{
+                            maxWidth: 1200,
+                            width: "92vw",
+                            maxHeight: "92vh",
+                            overflow: "hidden",
+                            display: "flex",
+                            flexDirection: "column",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                            <div style={{ minWidth: 0 }}>
+                                <h2 className={s.modalTitle} style={{ marginBottom: 8 }}>
+                                    Session Viewer
+                                </h2>
+                                {sessionView ? (
+                                    <div style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
+                                        {sessionView.session.title ?? `Session ${sessionView.session.session_number}`} · {sessionView.session.scheduled_at ? new Date(sessionView.session.scheduled_at).toLocaleString() : "Not scheduled"}
+                                    </div>
+                                ) : (
+                                    <div style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>Loading...</div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                className={s.cancelBtn}
+                                onClick={() => {
+                                    setSessionViewSessionId(null);
+                                    setSessionViewActiveActivityId(null);
+                                    setSessionViewPreviewQuestion(null);
+                                }}
+                            >
+                                Close
+                            </button>
+                        </div>
+
+                        {sessionViewLoading ? (
+                            <p className={s.emptyState} style={{ marginTop: 16 }}>Loading session plan...</p>
+                        ) : !sessionView ? (
+                            <p className={s.emptyState} style={{ marginTop: 16 }}>No data.</p>
+                        ) : (
+                            <SessionPlanViewer
+                                sessionView={sessionView}
+                                activeActivityId={sessionViewActiveActivityId}
+                                onSelectActivity={(aid) => setSessionViewActiveActivityId(aid)}
+                                previewQuestion={sessionViewPreviewQuestion}
+                                onSelectQuestion={(q) => setSessionViewPreviewQuestion(q)}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function extractStatementSnippet(data: unknown): string | null {
+    if (!data || typeof data !== "object") return null;
+    const d = data as Record<string, unknown>;
+    const candidates = [d.instruction, d.prompt, d.question, d.text, d.sentence, d.stem];
+    for (const v of candidates) {
+        if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return null;
+}
+
+function SessionPlanViewer({
+    sessionView,
+    activeActivityId,
+    onSelectActivity,
+    previewQuestion,
+    onSelectQuestion,
+}: {
+    sessionView: SessionViewOut;
+    activeActivityId: string | null;
+    onSelectActivity: (activityId: string) => void;
+    previewQuestion: SessionViewQuestion | null;
+    onSelectQuestion: (q: SessionViewQuestion) => void;
+}) {
+    const activeActivity = sessionView.activities.find((a) => a.activity_id === activeActivityId) ?? sessionView.activities[0];
+    const questions = activeActivity?.questions ?? [];
+
+    return (
+        <div style={{ display: "flex", flex: 1, minHeight: 0, gap: 16, marginTop: 16 }}>
+            {/* Activities */}
+            <div style={{ width: 320, flexShrink: 0, minHeight: 0, overflowY: "auto" }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Layers size={16} /> Activities ({sessionView.activities.length})
+                </div>
+                {sessionView.activities.map((a, idx) => {
+                    const selected = a.activity_id === activeActivity?.activity_id;
+                    return (
+                        <button
+                            key={a.session_activity_id}
+                            type="button"
+                            onClick={() => onSelectActivity(a.activity_id)}
+                            style={{
+                                width: "100%",
+                                textAlign: "left",
+                                padding: 12,
+                                borderRadius: 12,
+                                border: selected ? "1px solid var(--color-primary, #6366f1)" : "1px solid var(--color-border-subtle, #e5e7eb)",
+                                backgroundColor: selected ? "var(--color-surface-2, rgba(99,102,241,0.06))" : "var(--color-surface, #fff)",
+                                cursor: "pointer",
+                                marginBottom: 10,
+                            }}
+                        >
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                                <span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>Order {idx + 1}</span>
+                                <span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{a.questions.length} questions</span>
+                            </div>
+                            <div style={{ fontWeight: 700, fontSize: 13, marginTop: 4 }}>{a.name}</div>
+                            <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginTop: 4 }}>
+                                {a.type} · {a.module_id} {a.duration_minutes != null ? `· ${a.duration_minutes}m` : ""}
+                            </div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Questions */}
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10 }}>Questions ({questions.length})</div>
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                        gap: 12,
+                    }}
+                >
+                    {questions.map((q, qi) => {
+                        const selected = previewQuestion?.id === q.id;
+                        const snippet = extractStatementSnippet(q.data);
+                        return (
+                            <button
+                                key={q.id}
+                                type="button"
+                                onClick={() => onSelectQuestion(q)}
+                                style={{
+                                    textAlign: "left",
+                                    padding: 12,
+                                    borderRadius: 14,
+                                    border: selected ? "1px solid var(--color-primary, #6366f1)" : "1px solid var(--color-border-subtle, #e5e7eb)",
+                                    backgroundColor: selected ? "var(--color-surface-2, rgba(99,102,241,0.06))" : "var(--color-surface, #fff)",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                                    <span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>#{qi + 1}</span>
+                                    <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>
+                                        {q.is_published ? "Published" : "Draft"}
+                                    </span>
+                                </div>
+                                <div style={{ fontWeight: 800, fontSize: 13, marginTop: 6 }}>{q.title}</div>
+                                {snippet && (
+                                    <div style={{ marginTop: 8, fontSize: 12, color: "#059669", lineHeight: 1.35 }}>
+                                        {snippet.slice(0, 160)}
+                                        {snippet.length > 160 ? "…" : ""}
+                                    </div>
+                                )}
+                                <div style={{ marginTop: 8, fontSize: 11, color: "var(--color-text-secondary)" }}>
+                                    {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"} · Difficulty {q.difficulty}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Preview */}
+            <div style={{ width: 400, flexShrink: 0, minHeight: 0, overflowY: "auto" }}>
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                    <Eye size={16} /> Student Preview
+                </div>
+                {previewQuestion?.template_slug ? (
+                    <LivePreview slug={previewQuestion.template_slug} data={previewQuestion.data ?? {}} />
+                ) : (
+                    <div className={s.emptyState}>Click a question card to preview.</div>
+                )}
+            </div>
         </div>
     );
 }

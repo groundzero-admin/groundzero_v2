@@ -10,6 +10,9 @@ from sqlalchemy.orm import selectinload
 from app.auth import require_role
 from app.database import get_db
 from app.models.session import Cohort, Session, SessionActivity
+from app.models.activity_question import ActivityQuestion
+from app.models.curriculum import Activity
+from app.models.question_template import QuestionTemplate
 from app.models.template_cohort import Template
 from app.models.user import User
 
@@ -72,6 +75,42 @@ class SessionUpdate(BaseModel):
     order: int | None = Field(default=None, ge=0)
     scheduled_at: str | None = None
     teacher_id: str | None = None
+
+
+class SessionViewQuestionOut(BaseModel):
+    id: str
+    template_id: str
+    template_slug: str | None = None
+    template_name: str | None = None
+    title: str
+    data: dict
+    grade_band: str
+    competency_id: str
+    difficulty: float
+    is_published: bool
+    created_at: str
+    updated_at: str
+
+
+class SessionViewActivityOut(BaseModel):
+    session_activity_id: str
+    order: int
+    status: str
+    launched_at: str | None
+    activity_id: str
+    name: str
+    type: str
+    mode: str
+    module_id: str
+    duration_minutes: int | None
+    description: str | None
+    question_ids: list[str]
+    questions: list[SessionViewQuestionOut]
+
+
+class SessionViewOut(BaseModel):
+    session: SessionOut
+    activities: list[SessionViewActivityOut]
 
 
 # ── Helpers ──
@@ -345,3 +384,215 @@ async def update_session(
         await db.refresh(session)
 
     return _session_out(session)
+
+
+# ── Session viewer (shared builder for admin + teacher) ──
+
+
+async def build_session_view(session: Session, db: AsyncSession) -> SessionViewOut:
+    """Build SessionViewOut for a given session (session must have live_room loaded)."""
+    session_id = session.id
+    activities_out: list[SessionViewActivityOut] = []
+    sa_result = await db.execute(
+        select(SessionActivity).where(SessionActivity.session_id == session_id).order_by(SessionActivity.order)
+    )
+    session_activities = sa_result.scalars().all()
+
+    # Primary path: we have explicit session_activities rows
+    if session_activities:
+        activity_ids = [sa.activity_id for sa in session_activities]
+        activity_rows = []
+        if activity_ids:
+            a_result = await db.execute(select(Activity).where(Activity.id.in_(activity_ids)))
+            activity_rows = a_result.scalars().all()
+        activity_map = {a.id: a for a in activity_rows}
+
+        # Collect all question ids across all activities.
+        all_qids: set[str] = set()
+        activity_question_ids: dict[str, list[str]] = {}
+        for sa in session_activities:
+            activity = activity_map.get(sa.activity_id)
+            qids = [str(x) for x in (activity.question_ids or [])] if activity else []
+            activity_question_ids[str(sa.activity_id)] = qids
+            for q in qids:
+                all_qids.add(q)
+
+        qids_uuid: list[uuid.UUID] = []
+        for q in all_qids:
+            try:
+                qids_uuid.append(uuid.UUID(q))
+            except (ValueError, TypeError):
+                continue
+
+        question_map: dict[str, tuple[ActivityQuestion, str | None, str | None]] = {}
+        if qids_uuid:
+            q_stmt = (
+                select(
+                    ActivityQuestion,
+                    QuestionTemplate.slug.label("template_slug"),
+                    QuestionTemplate.name.label("template_name"),
+                )
+                .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+                .where(ActivityQuestion.id.in_(qids_uuid))
+            )
+            q_rows = (await db.execute(q_stmt)).all()
+            for aq, slug, name in q_rows:
+                question_map[str(aq.id)] = (aq, slug, name)
+
+        for sa in session_activities:
+            activity = activity_map.get(sa.activity_id)
+            qids = activity_question_ids.get(str(sa.activity_id), [])
+
+            questions_out: list[SessionViewQuestionOut] = []
+            for qid in qids:
+                q_tuple = question_map.get(qid)
+                if not q_tuple:
+                    continue
+                aq, slug, name = q_tuple
+                questions_out.append(
+                    SessionViewQuestionOut(
+                        id=str(aq.id),
+                        template_id=str(aq.template_id),
+                        template_slug=slug,
+                        template_name=name,
+                        title=aq.title,
+                        data=aq.data or {},
+                        grade_band=aq.grade_band,
+                        competency_id=aq.competency_id,
+                        difficulty=aq.difficulty,
+                        is_published=aq.is_published,
+                        created_at=aq.created_at.isoformat(),
+                        updated_at=aq.updated_at.isoformat(),
+                    )
+                )
+
+            activities_out.append(
+                SessionViewActivityOut(
+                    session_activity_id=str(sa.id),
+                    order=sa.order,
+                    status=sa.status,
+                    launched_at=sa.launched_at.isoformat() if sa.launched_at else None,
+                    activity_id=str(sa.activity_id),
+                    name=activity.name if activity else sa.activity_id,
+                    type=activity.type if activity else "",
+                    mode=activity.mode if activity else "",
+                    module_id=activity.module_id if activity else "",
+                    duration_minutes=activity.duration_minutes if activity else None,
+                    description=activity.description if activity else None,
+                    question_ids=qids,
+                    questions=questions_out,
+                )
+            )
+    # Fallback path: no session_activities rows (likely imported before activities existed).
+    # For viewer purposes, derive activities from the current template.activities.
+    elif session.template_id:
+        tmpl = await db.get(Template, session.template_id)
+        activity_ids = list(tmpl.activities or []) if tmpl else []
+        if activity_ids:
+            a_result = await db.execute(select(Activity).where(Activity.id.in_(activity_ids)))
+            activity_rows = a_result.scalars().all()
+        else:
+            activity_rows = []
+        activity_map = {a.id: a for a in activity_rows}
+
+        # Collect all question ids across all activities.
+        all_qids: set[str] = set()
+        activity_question_ids: dict[str, list[str]] = {}
+        for aid in activity_ids:
+            activity = activity_map.get(aid)
+            qids = [str(x) for x in (activity.question_ids or [])] if activity else []
+            activity_question_ids[aid] = qids
+            for q in qids:
+                all_qids.add(q)
+
+        qids_uuid: list[uuid.UUID] = []
+        for q in all_qids:
+            try:
+                qids_uuid.append(uuid.UUID(q))
+            except (ValueError, TypeError):
+                continue
+
+        question_map: dict[str, tuple[ActivityQuestion, str | None, str | None]] = {}
+        if qids_uuid:
+            q_stmt = (
+                select(
+                    ActivityQuestion,
+                    QuestionTemplate.slug.label("template_slug"),
+                    QuestionTemplate.name.label("template_name"),
+                )
+                .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+                .where(ActivityQuestion.id.in_(qids_uuid))
+            )
+            q_rows = (await db.execute(q_stmt)).all()
+            for aq, slug, name in q_rows:
+                question_map[str(aq.id)] = (aq, slug, name)
+
+        for idx, aid in enumerate(activity_ids, start=1):
+            activity = activity_map.get(aid)
+            qids = activity_question_ids.get(aid, [])
+
+            questions_out: list[SessionViewQuestionOut] = []
+            for qid in qids:
+                q_tuple = question_map.get(qid)
+                if not q_tuple:
+                    continue
+                aq, slug, name = q_tuple
+                questions_out.append(
+                    SessionViewQuestionOut(
+                        id=str(aq.id),
+                        template_id=str(aq.template_id),
+                        template_slug=slug,
+                        template_name=name,
+                        title=aq.title,
+                        data=aq.data or {},
+                        grade_band=aq.grade_band,
+                        competency_id=aq.competency_id,
+                        difficulty=aq.difficulty,
+                        is_published=aq.is_published,
+                        created_at=aq.created_at.isoformat(),
+                        updated_at=aq.updated_at.isoformat(),
+                    )
+                )
+
+            activities_out.append(
+                SessionViewActivityOut(
+                    session_activity_id=aid,  # synthetic id for viewer purposes
+                    order=idx,
+                    status="pending",
+                    launched_at=None,
+                    activity_id=aid,
+                    name=activity.name if activity else aid,
+                    type=activity.type if activity else "",
+                    mode=activity.mode if activity else "",
+                    module_id=activity.module_id if activity else "",
+                    duration_minutes=activity.duration_minutes if activity else None,
+                    description=activity.description if activity else None,
+                    question_ids=qids,
+                    questions=questions_out,
+                )
+            )
+
+    return SessionViewOut(session=_session_out(session), activities=activities_out)
+
+
+@router.get(
+    "/{cohort_id}/sessions/{session_id}/view",
+    response_model=SessionViewOut,
+    summary="View session plan (activities + student-ready questions)",
+    description="Admin-only: returns this session's activities in correct order and all linked questions in order (including template slug/data for student preview).",
+)
+async def view_session(
+    cohort_id: uuid.UUID,
+    session_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("admin")),
+):
+    result = await db.execute(
+        select(Session)
+        .where(Session.id == session_id, Session.cohort_id == cohort_id)
+        .options(selectinload(Session.live_room))
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return await build_session_view(session, db)

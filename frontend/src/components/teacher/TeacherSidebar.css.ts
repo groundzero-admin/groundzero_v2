@@ -4,6 +4,8 @@ import { vars } from "@/styles/theme.css";
 export const sidebar = style({
   width: "280px",
   minWidth: "280px",
+  flex: "0 0 280px",
+  alignSelf: "stretch",
   height: "100%",
   overflowY: "auto",
   borderRight: `1px solid ${vars.color.border.subtle}`,

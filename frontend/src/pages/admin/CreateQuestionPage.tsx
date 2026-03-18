@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router";
 import {
   useQuestionTemplates,
   useCreateActivityQuestion,
@@ -16,93 +17,9 @@ import LivePreview from "./LivePreview";
 import * as s from "./admin.css";
 
 type Step = "pick" | "fill";
-type D = Record<string, unknown>;
-type Rule = (d: D) => string | null;
-
-const req = (key: string, label: string): Rule =>
-  (d) => !d[key] || !(d[key] as string).trim() ? `${label} is required.` : null;
-
-// Widgets with a fixed correct answer — must be defined before saving
-const mcqRules: Rule[] = [
-  req("question", "Question text"),
-  (d) => {
-    const opts = Array.isArray(d.options) ? d.options as { text: string; is_correct: boolean }[] : [];
-    if (opts.length < 2) return "Add at least 2 options.";
-    if (opts.some((o) => !o.text?.trim())) return "All options must have text.";
-    const n = opts.filter((o) => o.is_correct).length;
-    if (n === 0) return "Mark one option as correct (click the circle).";
-    if (n > 1) return "Only one option can be correct.";
-    return null;
-  },
-  req("explanation", "Explanation"),
-];
-
-// Widgets graded by LLM — no fixed correct answer required, just the question content
-const SLUG_RULES: Record<string, Rule[]> = {
-  mcq_single: mcqRules,
-  mcq_timed:  mcqRules,
-
-  slider_input: [
-    req("prompt", "Prompt"),
-    (d) => {
-      if (d.correct_value === undefined || d.correct_value === "") return "Correct value is required.";
-      const min = Number(d.min_value ?? 0), max = Number(d.max_value ?? 100), cv = Number(d.correct_value);
-      if (max <= min) return "Max must be greater than min.";
-      if (cv < min || cv > max) return "Correct value must be between min and max.";
-      return null;
-    },
-  ],
-
-  drag_drop_classifier: [
-    req("instruction", "Instruction"),
-    (d) => {
-      const cats = Array.isArray(d.categories) ? d.categories as string[] : [];
-      if (cats.length < 2) return "Add at least 2 categories.";
-      const items = Array.isArray(d.items) ? d.items as { label: string; correct_category: string }[] : [];
-      if (!items.length) return "Add at least one item.";
-      if (items.some((it) => !it.correct_category)) return "All items must have a correct category assigned.";
-      return null;
-    },
-  ],
-
-  drag_drop_placement: [req("instruction", "Instruction")],
-  flowchart:           [req("instruction", "Instruction")],
-
-  label_elements: [
-    req("instruction", "Instruction"),
-    (d) => {
-      const l = Array.isArray(d.label_options) ? d.label_options as string[] : [];
-      return l.length ? null : "Add at least one label option.";
-    },
-  ],
-
-  geometry_explorer: [req("question", "Question")],
-  geometry_animated: [req("question", "Question")],
-
-  // LLM-graded — only need the question content, no fixed correct answer
-  fill_blanks:      [(d) => {
-    const s = typeof d.sentence === "string" ? d.sentence : "";
-    if (!s.trim()) return "Sentence is required.";
-    if (!s.toLowerCase().includes("{{blank}}")) return "Sentence must contain at least one {{blank}}.";
-    return null;
-  }],
-  short_answer:     [req("prompt", "Prompt")],
-  image_response:   [req("prompt", "Prompt")],
-  audio_response:   [req("prompt", "Prompt")],
-  reflection_rating:[req("prompt", "Prompt")],
-  draw_scribble:    [req("prompt", "Prompt")],
-  debate_opinion:   [
-    req("topic", "Topic"),
-    (d) => (Array.isArray(d.stances) && (d.stances as string[]).length >= 2) ? null : "Add at least 2 stances.",
-  ],
-  ai_conversation:  [(d) => (!d.opening_message && !d.system_prompt) ? "Opening message or system prompt is required." : null],
-  multi_step:       [
-    req("overall_instruction", "Overall instruction"),
-    (d) => (Array.isArray(d.steps) && (d.steps as unknown[]).length > 0) ? null : "Add at least one step.",
-  ],
-};
 
 export default function CreateQuestionPage() {
+  const navigate = useNavigate();
   const { data: templates, isLoading: loadingT } = useQuestionTemplates();
   const { data: questions, isLoading: loadingQ } = useActivityQuestions();
   const { data: graph } = useSkillGraph();
@@ -117,12 +34,23 @@ export default function CreateQuestionPage() {
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [title, setTitle] = useState("");
   const [gradeBand, setGradeBand] = useState("");
-  const [competencyId, setCompetencyId] = useState("");
+  const [competencyIds, setCompetencyIds] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState(0.5);
   const [pillarFilter, setPillarFilter] = useState("");
   const [compSearch, setCompSearch] = useState("");
   const [compOpen, setCompOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+
+  // Recently created modals (match Question Bank UX)
+  const [previewQ, setPreviewQ] = useState<ActivityQuestion | null>(null);
+  const [editingQ, setEditingQ] = useState<ActivityQuestion | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editGradeBand, setEditGradeBand] = useState("");
+  const [editCompetencyIds, setEditCompetencyIds] = useState<string[]>([]);
+  const [editDifficulty, setEditDifficulty] = useState(0.5);
+  const [editPublished, setEditPublished] = useState(false);
+  const [editDataJson, setEditDataJson] = useState("");
+  const [aiDesc, setAiDesc] = useState("");
 
   // Competency tree: pillar → capabilities → competencies
   const pillars = graph?.pillars ?? [];
@@ -133,6 +61,91 @@ export default function CreateQuestionPage() {
     : capabilities.map((c) => c.id);
   const filteredComps = competencies.filter((c) => filteredCapIds.includes(c.capability_id));
 
+  function extractStatementSnippet(data: unknown): string | null {
+    if (!data || typeof data !== "object") return null;
+    const d = data as Record<string, unknown>;
+    const candidates = [
+      d.instruction,
+      d.prompt,
+      d.question,
+      d.text,
+      d.sentence,
+      d.stem,
+    ];
+    for (const v of candidates) {
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return null;
+  }
+
+  const compOptions = useMemo(() => {
+    const capIds = pillarFilter
+      ? capabilities.filter((c) => c.pillar_id === pillarFilter).map((c) => c.id)
+      : capabilities.map((c) => c.id);
+    return competencies.filter((c) => capIds.includes(c.capability_id));
+  }, [pillarFilter, capabilities, competencies]);
+
+  const openRecentPreview = useCallback((q: ActivityQuestion) => {
+    setPreviewQ(q);
+  }, []);
+
+  const openRecentEdit = useCallback((q: ActivityQuestion) => {
+    setEditingQ(q);
+    setEditTitle(q.title ?? "");
+    setEditGradeBand(q.grade_band ?? "");
+    setEditCompetencyIds(
+      (q.competency_ids && q.competency_ids.length) ? q.competency_ids : (q.competency_id ? [q.competency_id] : []),
+    );
+    setEditDifficulty(typeof q.difficulty === "number" ? q.difficulty : 0.5);
+    setEditPublished(!!q.is_published);
+    setEditDataJson(JSON.stringify(q.data ?? {}, null, 2));
+    setAiDesc("");
+  }, []);
+
+  const saveRecentEdit = useCallback(async () => {
+    if (!editingQ) return;
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = editDataJson.trim() ? JSON.parse(editDataJson) : {};
+    } catch {
+      alert("Invalid JSON in Question Content. Fix it and try again.");
+      return;
+    }
+    await updateMut.mutateAsync({
+      id: editingQ.id,
+      title: editTitle.trim(),
+      grade_band: editGradeBand,
+      competency_ids: editCompetencyIds,
+      difficulty: editDifficulty,
+      is_published: editPublished,
+      data: parsed,
+    });
+    setEditingQ(null);
+  }, [editingQ, editDataJson, updateMut, editTitle, editGradeBand, editCompetencyIds, editDifficulty, editPublished]);
+
+  const generateWithAi = useCallback(async () => {
+    if (!editingQ) return;
+    const templateId = editingQ.template_id as string | undefined;
+    if (!templateId) {
+      alert("This question is missing template_id, so AI generation is not available.");
+      return;
+    }
+    const desc = aiDesc.trim();
+    if (!desc) return;
+    const data = await generateMut.mutateAsync({
+      templateId,
+      description: desc,
+      gradeBand: editGradeBand,
+    });
+    let current: Record<string, unknown> = {};
+    try { current = editDataJson.trim() ? JSON.parse(editDataJson) : {}; } catch { current = {}; }
+    const merged = { ...current, ...data };
+    setEditDataJson(JSON.stringify(merged, null, 2));
+    if (!editTitle.trim() && typeof (data as any).instruction === "string") {
+      setEditTitle(String((data as any).instruction).slice(0, 80));
+    }
+  }, [editingQ, aiDesc, generateMut, editGradeBand, editDataJson, editTitle]);
+
   const pickTemplate = useCallback((t: QuestionTemplate) => {
     setSelected(t);
     setEditingId(null);
@@ -140,25 +153,12 @@ export default function CreateQuestionPage() {
     setFormData({});
     setTitle("");
     setGradeBand("");
-    setCompetencyId("");
+    setCompetencyIds([]);
     setDifficulty(0.5);
     setPillarFilter("");
     setCompSearch("");
     setCompOpen(false);
   }, []);
-
-  const openQuestion = useCallback((q: ActivityQuestion) => {
-    const tmpl = templates?.find((t) => t.id === q.template_id);
-    if (!tmpl) return;
-    setSelected(tmpl);
-    setEditingId(q.id);
-    setTitle(q.title);
-    setGradeBand(q.grade_band);
-    setCompetencyId(q.competency_id ?? "");
-    setDifficulty(q.difficulty ?? 0.5);
-    setFormData(q.data as Record<string, unknown>);
-    setStep("fill");
-  }, [templates]);
 
   const goBack = useCallback(() => {
     setStep("pick");
@@ -172,36 +172,19 @@ export default function CreateQuestionPage() {
   }, []);
 
   const isSaving = createMut.isPending || updateMut.isPending;
-
-  const validationError = useCallback((): string | null => {
-    if (!title.trim()) return "Question title is required.";
-    if (!gradeBand) return "Grade band is required.";
-    if (!pillarFilter) return "Pillar is required.";
-    if (!competencyId) return "Competency is required.";
-    if (!formData.hint || !(formData.hint as string).trim()) return "Hint is required.";
-    const rules = SLUG_RULES[selected?.slug ?? ""] ?? [];
-    for (const rule of rules) {
-      const err = rule(formData);
-      if (err) return err;
-    }
-    return null;
-  }, [selected, title, gradeBand, pillarFilter, competencyId, formData]);
-
-  const canSave = !validationError();
+  const canSave = !!title.trim() && competencyIds.length > 0;
 
   const handleSave = useCallback(
     (publish: boolean) => {
-      const err = validationError();
-      if (err) { alert(err); return; }
-      if (!selected) return;
-      const payload = { title: title.trim(), data: formData, grade_band: gradeBand, competency_id: competencyId, difficulty, is_published: publish };
+      if (!selected || !title.trim() || competencyIds.length === 0) return;
+      const payload = { title: title.trim(), data: formData, grade_band: gradeBand, competency_ids: competencyIds, difficulty, is_published: publish };
       if (editingId) {
         updateMut.mutate({ id: editingId, ...payload }, { onSuccess: () => goBack() });
       } else {
         createMut.mutate({ template_id: selected.id, ...payload }, { onSuccess: () => goBack() });
       }
     },
-    [selected, editingId, title, formData, gradeBand, competencyId, difficulty, createMut, updateMut, goBack, validationError],
+    [selected, editingId, title, formData, gradeBand, competencyIds, difficulty, createMut, updateMut, goBack],
   );
 
   if (loadingT || loadingQ) {
@@ -257,7 +240,7 @@ export default function CreateQuestionPage() {
 
               <div>
                 <label className={s.label}>Pillar <span style={{ color: "#a0aec0", fontWeight: 400 }}>(filter)</span></label>
-                <select className={s.select} value={pillarFilter} onChange={(e) => { setPillarFilter(e.target.value); setCompetencyId(""); }}>
+                <select className={s.select} value={pillarFilter} onChange={(e) => { setPillarFilter(e.target.value); setCompetencyIds([]); }}>
                   <option value="">All pillars</option>
                   {pillars.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -267,8 +250,13 @@ export default function CreateQuestionPage() {
                 label="Competency"
                 required
                 options={filteredComps}
-                value={competencyId}
-                onSelect={(id) => { setCompetencyId(id); setCompOpen(false); setCompSearch(""); }}
+                values={competencyIds}
+                onSelect={(id) => {
+                  setCompetencyIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                  setCompOpen(false);
+                  setCompSearch("");
+                }}
+                onRemove={(id) => setCompetencyIds((prev) => prev.filter((x) => x !== id))}
                 search={compSearch}
                 onSearchChange={setCompSearch}
                 open={compOpen}
@@ -343,12 +331,6 @@ export default function CreateQuestionPage() {
                 ))}
               </div>
 
-              {validationError() && (
-                <div style={{ padding: "10px 14px", borderRadius: 8, background: "#FEF2F2", color: "#991B1B", fontSize: 13, fontWeight: 500, border: "1px solid #FECACA" }}>
-                  {validationError()}
-                </div>
-              )}
-
               <div className={s.formActions}>
                 <button className={s.cancelBtn} onClick={goBack}>Cancel</button>
                 <button
@@ -385,7 +367,14 @@ export default function CreateQuestionPage() {
   return (
     <div className={s.page}>
       <div className={s.header}>
-        <div>
+        <button
+          className={s.addBtn}
+          type="button"
+          onClick={() => navigate("/admin/question-bank")}
+        >
+          ← Back to Question Bank
+        </button>
+        <div style={{ textAlign: "center", flex: 1 }}>
           <h1 className={s.title}>Create Question</h1>
           <p className={s.subtitle}>Pick a template, then fill in the question content</p>
         </div>
@@ -401,19 +390,30 @@ export default function CreateQuestionPage() {
               <div
                 key={q.id}
                 className={s.sessionCard}
-                style={{ cursor: "pointer" }}
-                onClick={() => openQuestion(q)}
+                style={{ cursor: "default" }}
               >
                 <div className={s.sessionInfo}>
                   <div className={s.sessionTitle}>{q.title}</div>
                   <div className={s.sessionMeta}>
                     {q.template_name} {q.grade_band && `\u00B7 ${q.grade_band}`} {q.is_published ? "\u00B7 Published" : "\u00B7 Draft"}
                   </div>
+                  {extractStatementSnippet(q.data) && (
+                    <div style={{ marginTop: 6, fontSize: 12, color: "#059669", lineHeight: 1.4 }}>
+                      {(extractStatementSnippet(q.data) as string).slice(0, 140)}
+                      {(extractStatementSnippet(q.data) as string).length > 140 ? "…" : ""}
+                    </div>
+                  )}
                 </div>
                 <div className={s.sessionActions}>
                   <button
                     className={s.editBtn}
-                    onClick={(e) => { e.stopPropagation(); openQuestion(q); }}
+                    onClick={() => openRecentPreview(q)}
+                  >
+                    <Eye size={12} /> Preview
+                  </button>
+                  <button
+                    className={s.editBtn}
+                    onClick={() => openRecentEdit(q)}
                   >
                     <Pencil size={12} /> Edit
                   </button>
@@ -426,6 +426,206 @@ export default function CreateQuestionPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Preview Modal (recent) ── */}
+      {previewQ && (
+        <div className={s.overlay} onClick={() => setPreviewQ(null)}>
+          <div className={s.modal} style={{ maxWidth: 760 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div>
+                <h2 className={s.modalTitle} style={{ marginBottom: 6 }}>Preview</h2>
+                <div className={s.subtitle}>
+                  {previewQ.title} {previewQ.template_name ? `· ${previewQ.template_name}` : ""}
+                </div>
+              </div>
+              <button className={s.cancelBtn} onClick={() => setPreviewQ(null)}>Close</button>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              {previewQ.template_slug ? (
+                <LivePreview slug={previewQ.template_slug} data={previewQ.data ?? {}} />
+              ) : (
+                <div className={s.emptyState}>No preview available (missing template slug).</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit Modal (recent) ── */}
+      {editingQ && (
+        <div className={s.overlay} onClick={() => setEditingQ(null)}>
+          <div className={s.modal} style={{ maxWidth: 860 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+              <div>
+                <h2 className={s.modalTitle} style={{ marginBottom: 6 }}>Edit Question</h2>
+                <div className={s.subtitle}>
+                  {editingQ.template_name ?? "—"} · ID: <span style={{ fontFamily: "monospace" }}>{editingQ.id}</span>
+                </div>
+              </div>
+              <button className={s.cancelBtn} onClick={() => setEditingQ(null)}>Close</button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 16 }}>
+              <div>
+                <div className={s.form}>
+                  {(() => {
+                    const tmpl = templates?.find((t) => t.id === (editingQ.template_id as string));
+                    const canGen = !!tmpl?.llm_prompt_template;
+                    if (!canGen) return null;
+                    return (
+                      <div style={{
+                        background: "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                        border: "1px solid #86efac",
+                        borderRadius: 12,
+                        padding: "12px 14px",
+                        marginBottom: 4,
+                      }}>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: "#047857", marginBottom: 8 }}>
+                          Generate with AI
+                        </div>
+                        <textarea
+                          className={s.textarea}
+                          value={aiDesc}
+                          onChange={(e) => setAiDesc(e.target.value)}
+                          rows={3}
+                          placeholder="Describe what you want the new question to be…"
+                          style={{ marginBottom: 0, background: "#fff" }}
+                        />
+                        {generateMut.error && (
+                          <div style={{ fontSize: 11, color: "#E53E3E", marginTop: 6 }}>
+                            Generation failed — try again.
+                          </div>
+                        )}
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                          <button
+                            className={s.submitBtn}
+                            onClick={generateWithAi}
+                            disabled={generateMut.isPending || !aiDesc.trim()}
+                          >
+                            {generateMut.isPending ? "Generating..." : "Generate"}
+                          </button>
+                        </div>
+                        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 6, color: "#065f46" }}>
+                          This will update the JSON below (you can still edit manually).
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div>
+                    <label className={s.label}>Title *</label>
+                    <input className={s.input} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={s.label}>Grade band</label>
+                    <select className={s.select} value={editGradeBand} onChange={(e) => setEditGradeBand(e.target.value)}>
+                      <option value="">Any</option>
+                      <option value="4-5">4-5</option>
+                      <option value="6-7">6-7</option>
+                      <option value="8-9">8-9</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={s.label}>Competency *</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                      {editCompetencyIds.map((cid) => (
+                        <button
+                          key={cid}
+                          type="button"
+                          className={s.metaPill}
+                          onClick={() => setEditCompetencyIds((prev) => prev.filter((x) => x !== cid))}
+                          title="Remove"
+                          style={{ cursor: "pointer" }}
+                        >
+                          {cid} ×
+                        </button>
+                      ))}
+                      {!editCompetencyIds.length && (
+                        <span style={{ fontSize: 12, color: "var(--color-text-tertiary, #94a3b8)" }}>
+                          Select one or more competencies below
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      className={s.select}
+                      value=""
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        if (!id) return;
+                        setEditCompetencyIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                      }}
+                    >
+                      <option value="">Add competency…</option>
+                      {compOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.id} — {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={s.label} style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Difficulty</span>
+                      <span style={{ fontWeight: 700, color: "#6366f1" }}>{editDifficulty.toFixed(2)}</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={editDifficulty}
+                      onChange={(e) => setEditDifficulty(parseFloat(e.target.value))}
+                      style={{ width: "100%", accentColor: "#6366f1" }}
+                    />
+                  </div>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--color-text-secondary, #666)" }}>
+                    <input type="checkbox" checked={editPublished} onChange={(e) => setEditPublished(e.target.checked)} />
+                    Published
+                  </label>
+                  <div>
+                    <label className={s.label}>Question content (JSON)</label>
+                    <textarea
+                      className={s.textarea}
+                      value={editDataJson}
+                      onChange={(e) => setEditDataJson(e.target.value)}
+                      rows={10}
+                      style={{ fontFamily: "monospace", fontSize: 12 }}
+                    />
+                    <div style={{ fontSize: 11, opacity: 0.6, marginTop: 4 }}>
+                      This updates `activity_questions.data`. Keep valid JSON.
+                    </div>
+                  </div>
+                </div>
+                <div className={s.formActions}>
+                  <button className={s.cancelBtn} onClick={() => setEditingQ(null)}>Cancel</button>
+                  <button
+                    className={s.submitBtn}
+                    onClick={saveRecentEdit}
+                    disabled={updateMut.isPending || !editTitle.trim() || editCompetencyIds.length === 0}
+                  >
+                    {updateMut.isPending ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ alignSelf: "start" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--color-text-secondary, #666)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Eye size={14} /> Student Preview
+                </div>
+                {editingQ.template_slug ? (
+                  (() => {
+                    let parsed: Record<string, unknown> = {};
+                    try { parsed = editDataJson.trim() ? JSON.parse(editDataJson) : {}; } catch { parsed = editingQ.data ?? {}; }
+                    return <LivePreview slug={editingQ.template_slug} data={parsed} />;
+                  })()
+                ) : (
+                  <div className={s.emptyState}>No preview available (missing template slug).</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -464,8 +664,9 @@ function CompetencyPicker({
   label,
   required,
   options,
-  value,
+  values,
   onSelect,
+  onRemove,
   search,
   onSearchChange,
   open,
@@ -475,15 +676,18 @@ function CompetencyPicker({
   label: string;
   required?: boolean;
   options: CompetencyOption[];
-  value: string;
+  values: string[];
   onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
   search: string;
   onSearchChange: (v: string) => void;
   open: boolean;
   onToggle: () => void;
   onBlur: () => void;
 }) {
-  const selected = options.find((o) => o.id === value);
+  const selected = values
+    .map((id) => options.find((o) => o.id === id))
+    .filter(Boolean) as CompetencyOption[];
   const visibleOptions = options.filter((o) =>
     !search || `${o.id} ${o.name}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -498,10 +702,27 @@ function CompetencyPicker({
         onClick={onToggle}
         style={{ cursor: "pointer", userSelect: "none", display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 38 }}
       >
-        {selected ? (
-          <span style={{ fontSize: 13 }}><span style={{ fontWeight: 600, color: "#6366f1" }}>{selected.id}</span> — {selected.name}</span>
+        {selected.length ? (
+          <span style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {selected.slice(0, 3).map((c) => (
+              <span
+                key={c.id}
+                className={s.metaPill}
+                style={{ cursor: "pointer" }}
+                onClick={(e) => { e.stopPropagation(); onRemove(c.id); }}
+                title="Remove"
+              >
+                {c.id}
+              </span>
+            ))}
+            {selected.length > 3 && (
+              <span style={{ fontSize: 12, color: "#64748b", fontWeight: 700 }}>
+                +{selected.length - 3} more
+              </span>
+            )}
+          </span>
         ) : (
-          <span style={{ color: "#a0aec0", fontSize: 13 }}>Select competency…</span>
+          <span style={{ color: "#a0aec0", fontSize: 13 }}>Select competencies…</span>
         )}
         <span style={{ fontSize: 10, color: "#a0aec0" }}>{open ? "▲" : "▼"}</span>
       </div>
@@ -532,11 +753,11 @@ function CompetencyPicker({
                 onMouseDown={() => onSelect(o.id)}
                 style={{
                   padding: "8px 14px", fontSize: 13, cursor: "pointer",
-                  background: o.id === value ? "#f0f4ff" : "transparent",
-                  borderLeft: o.id === value ? "3px solid #6366f1" : "3px solid transparent",
+                  background: values.includes(o.id) ? "#f0f4ff" : "transparent",
+                  borderLeft: values.includes(o.id) ? "3px solid #6366f1" : "3px solid transparent",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f9fa")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = o.id === value ? "#f0f4ff" : "transparent")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = values.includes(o.id) ? "#f0f4ff" : "transparent")}
               >
                 <span style={{ fontWeight: 600, color: "#6366f1", marginRight: 6 }}>{o.id}</span>
                 {o.name}

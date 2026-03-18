@@ -25,8 +25,6 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
   }, [resetKey]);
   const isCorrect = Math.abs(val - correct) <= tolerance;
 
-  const _pct = ((val - min) / (max - min)) * 100; void _pct;
-
   return (
     <div style={CARD}>
       <div style={HEADING}>{prompt}</div>

@@ -51,6 +51,7 @@ export interface CohortSession {
     id: string;
     cohort_id: string;
     template_id: string | null;
+    teacher_id?: string | null;
     title: string | null;
     description: string | null;
     order: number | null;
@@ -77,9 +78,46 @@ export interface ActivityQuestion {
     data: Record<string, unknown>;
     grade_band: string;
     competency_id: string;
+    competency_ids: string[];
     difficulty: number;
     created_by: string | null;
     is_published: boolean;
     created_at: string;
     updated_at: string;
+}
+
+export interface SessionViewQuestion {
+    id: string;
+    template_id: string;
+    template_slug: string | null;
+    template_name: string | null;
+    title: string;
+    data: Record<string, unknown>;
+    grade_band: string;
+    competency_id: string;
+    difficulty: number;
+    is_published: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SessionViewActivity {
+    session_activity_id: string;
+    order: number;
+    status: string;
+    launched_at: string | null;
+    activity_id: string;
+    name: string;
+    type: string;
+    mode: string;
+    module_id: string;
+    duration_minutes: number | null;
+    description: string | null;
+    question_ids: string[];
+    questions: SessionViewQuestion[];
+}
+
+export interface SessionViewOut {
+    session: CohortSession;
+    activities: SessionViewActivity[];
 }

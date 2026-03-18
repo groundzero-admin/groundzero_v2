@@ -64,7 +64,8 @@ class ActivityOut(BaseModel):
 
 class QuestionCreate(BaseModel):
     module_id: str
-    competency_id: str = Field(..., description="Competency ID e.g. C1.1")
+    competency_id: str | None = Field(None, description="Legacy primary competency ID e.g. C1.1")
+    competency_ids: list[str] | None = Field(None, description='List of competency IDs e.g. ["C1.1","C2.3"]')
     text: str
     type: str = Field("mcq", description="mcq | short_answer")
     options: list[dict] | None = Field(
@@ -85,12 +86,15 @@ class QuestionUpdate(BaseModel):
     difficulty: float | None = Field(None, ge=0.0, le=1.0)
     grade_band: str | None = None
     explanation: str | None = None
+    competency_id: str | None = None
+    competency_ids: list[str] | None = None
 
 
 class QuestionOut(BaseModel):
     id: uuid.UUID
     module_id: str
     competency_id: str
+    competency_ids: list[str] = Field(default_factory=list)
     text: str
     type: str
     options: list[dict] | None = None

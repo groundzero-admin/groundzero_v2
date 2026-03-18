@@ -104,11 +104,19 @@ async def update_template(
     for field, value in updated_fields.items():
         setattr(t, field, value)
 
-    # ── Cascade changes to un-started sessions linked to this template ──
+    # ── Cascade changes to sessions linked to this template ──
+    #
+    # Goal: consistency across templates + imported cohort sessions.
+    # - Always sync title/description to ALL not-ended sessions.
+    # - If activities changed:
+    #   - For un-started sessions: fully rebuild session_activities.
+    #   - For started but not-ended sessions: "safe sync" — preserve status/launched_at for
+    #     existing activity_ids, reorder to match template, add missing as pending, and only
+    #     remove activities that are still pending (so we don't erase history/progress).
     linked_result = await db.execute(
         select(Session).where(
             Session.template_id == template_id,
-            Session.started_at.is_(None),  # only un-started sessions
+            Session.ended_at.is_(None),  # keep completed sessions immutable
         )
     )
     linked_sessions = linked_result.scalars().all()
@@ -118,17 +126,51 @@ async def update_template(
         session.title = t.title
         session.description = t.description
 
-        # If activities changed, rebuild session_activities
+        # If activities changed, sync session_activities
         if "activities" in updated_fields:
-            await db.execute(
-                delete(SessionActivity).where(SessionActivity.session_id == session.id)
-            )
-            for idx, activity_id in enumerate(t.activities or [], start=1):
-                db.add(SessionActivity(
-                    session_id=session.id,
-                    activity_id=activity_id,
-                    order=idx,
-                ))
+            template_activity_ids = list(t.activities or [])
+
+            if session.started_at is None:
+                # Un-started: hard replace
+                await db.execute(
+                    delete(SessionActivity).where(SessionActivity.session_id == session.id)
+                )
+                for idx, activity_id in enumerate(template_activity_ids, start=1):
+                    db.add(
+                        SessionActivity(
+                            session_id=session.id,
+                            activity_id=activity_id,
+                            order=idx,
+                        )
+                    )
+            else:
+                # Started (but not ended): safe sync
+                existing_result = await db.execute(
+                    select(SessionActivity).where(SessionActivity.session_id == session.id)
+                )
+                existing_rows = list(existing_result.scalars().all())
+                by_activity_id = {row.activity_id: row for row in existing_rows}
+
+                # Reorder + add missing
+                keep_ids: set[str] = set()
+                for idx, activity_id in enumerate(template_activity_ids, start=1):
+                    keep_ids.add(activity_id)
+                    if activity_id in by_activity_id:
+                        by_activity_id[activity_id].order = idx
+                    else:
+                        db.add(
+                            SessionActivity(
+                                session_id=session.id,
+                                activity_id=activity_id,
+                                order=idx,
+                                status="pending",
+                            )
+                        )
+
+                # Remove only pending activities that are no longer in template
+                for row in existing_rows:
+                    if row.activity_id not in keep_ids and row.status == "pending":
+                        await db.delete(row)
 
     await db.commit()
     await db.refresh(t)

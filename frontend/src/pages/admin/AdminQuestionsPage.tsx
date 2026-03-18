@@ -16,6 +16,7 @@ interface Question {
     id: string;
     module_id: string;
     competency_id: string;
+    competency_ids?: string[];
     text: string;
     type: string;
     options: QuestionOption[] | null;
@@ -55,7 +56,7 @@ export default function AdminQuestionsPage() {
     const [qText, setQText] = useState("");
     const [qType, setQType] = useState("mcq");
     const [qModuleId, setQModuleId] = useState("level_1");
-    const [qCompetencyId, setQCompetencyId] = useState("");
+    const [qCompetencyIds, setQCompetencyIds] = useState<string[]>([]);
     const [qDifficulty, setQDifficulty] = useState(0.5);
     const [qGradeBand, setQGradeBand] = useState("6-7");
     const [qCorrectAnswer, setQCorrectAnswer] = useState("");
@@ -85,7 +86,7 @@ export default function AdminQuestionsPage() {
         setQText("");
         setQType("mcq");
         setQModuleId("level_1");
-        setQCompetencyId("");
+        setQCompetencyIds([]);
         setQDifficulty(0.5);
         setQGradeBand("6-7");
         setQCorrectAnswer("");
@@ -104,7 +105,7 @@ export default function AdminQuestionsPage() {
         setQText(q.text);
         setQType(q.type);
         setQModuleId(q.module_id);
-        setQCompetencyId(q.competency_id);
+        setQCompetencyIds((q.competency_ids && q.competency_ids.length) ? q.competency_ids : (q.competency_id ? [q.competency_id] : []));
         setQDifficulty(q.difficulty);
         setQGradeBand(q.grade_band);
         setQCorrectAnswer(q.correct_answer ?? "");
@@ -126,7 +127,7 @@ export default function AdminQuestionsPage() {
             text: qText,
             type: qType,
             module_id: qModuleId,
-            competency_id: qCompetencyId,
+            competency_ids: qCompetencyIds,
             difficulty: qDifficulty,
             grade_band: qGradeBand,
             correct_answer: qCorrectAnswer || null,
@@ -148,6 +149,7 @@ export default function AdminQuestionsPage() {
         const matchSearch =
             !search ||
             q.text.toLowerCase().includes(search.toLowerCase()) ||
+            (q.competency_ids && q.competency_ids.join(",").toLowerCase().includes(search.toLowerCase())) ||
             q.competency_id.toLowerCase().includes(search.toLowerCase());
         const matchType = !typeFilter || q.type === typeFilter;
         return matchSearch && matchType;
@@ -198,7 +200,12 @@ export default function AdminQuestionsPage() {
                             <div className={s.sessionMeta}>
                                 <span style={{ fontWeight: 600 }}>{q.type.toUpperCase()}</span>
                                 {" · "}
-                                {compMap.get(q.competency_id) ?? q.competency_id}
+                                {(() => {
+                                    const ids: string[] = (q.competency_ids && q.competency_ids.length) ? q.competency_ids : (q.competency_id ? [q.competency_id] : []);
+                                    const first = ids[0] ?? "";
+                                    const rest = ids.length - 1;
+                                    return `${compMap.get(first) ?? first}${rest > 0 ? ` (+${rest})` : ""}`;
+                                })()}
                                 {" · Diff: "}{q.difficulty}
                                 {" · Grade "}{q.grade_band}
                                 {q.options && (
@@ -246,8 +253,36 @@ export default function AdminQuestionsPage() {
                             <div style={{ display: "flex", gap: 12 }}>
                                 <div style={{ flex: 1 }}>
                                     <label className={s.label}>Competency *</label>
-                                    <select className={s.select} value={qCompetencyId} onChange={(e) => setQCompetencyId(e.target.value)} required>
-                                        <option value="">-- Select --</option>
+                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                                        {qCompetencyIds.map((cid) => (
+                                            <button
+                                                key={cid}
+                                                type="button"
+                                                className={s.metaPill}
+                                                onClick={() => setQCompetencyIds((prev) => prev.filter((x) => x !== cid))}
+                                                title="Remove"
+                                                style={{ cursor: "pointer" }}
+                                            >
+                                                {cid} ×
+                                            </button>
+                                        ))}
+                                        {!qCompetencyIds.length && (
+                                            <span style={{ fontSize: 12, color: "var(--color-text-tertiary, #94a3b8)" }}>
+                                                Select one or more competencies below
+                                            </span>
+                                        )}
+                                    </div>
+                                    <select
+                                        className={s.select}
+                                        value=""
+                                        onChange={(e) => {
+                                            const id = e.target.value;
+                                            if (!id) return;
+                                            setQCompetencyIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                                        }}
+                                        required={qCompetencyIds.length === 0}
+                                    >
+                                        <option value="">Add competency…</option>
                                         {competencies?.map((c) => (
                                             <option key={c.id} value={c.id}>{c.id} — {c.name}</option>
                                         ))}
