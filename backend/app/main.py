@@ -4,6 +4,7 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.admin_diagnostics import router as admin_diagnostics_router
 from app.api.admin_students import router as admin_students_router
 from app.api.activity_questions import router as activity_questions_router
 from app.api.question_templates import router as question_templates_router
@@ -62,6 +63,7 @@ app.include_router(cohorts_router, prefix=settings.API_V1_PREFIX)
 app.include_router(cohort_enrollments_router, prefix=settings.API_V1_PREFIX)
 app.include_router(live_class_router, prefix=settings.API_V1_PREFIX)
 app.include_router(student_live_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_diagnostics_router, prefix=settings.API_V1_PREFIX)
 app.include_router(admin_students_router, prefix=settings.API_V1_PREFIX)
 app.include_router(question_templates_router, prefix=settings.API_V1_PREFIX)
 app.include_router(activity_questions_router, prefix=settings.API_V1_PREFIX)

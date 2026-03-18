@@ -83,7 +83,7 @@ export default function LivePage() {
 
   // SPARK AI Companion — manual hint only
   const [sparkTrigger, setSparkTrigger] = useState<SparkTriggerData | null>(null);
-  const [aiInteraction, setAiInteraction] = useState<"none" | "hint" | "conversation">("none");
+  const [_aiInteraction, setAiInteraction] = useState<"none" | "hint" | "conversation">("none");
   const [wantHint, setWantHint] = useState(false); // shown after wrong answer
 
   // ── Stateful countdown timer — derived from server launched_at ──
@@ -173,9 +173,7 @@ export default function LivePage() {
         total: prev.total + 1,
         correct: prev.correct + (correct ? 1 : 0),
       }));
-      if (result.updates.length > 0) {
-        setToastUpdates(result.updates);
-      }
+      // BKT updates intentionally not shown to student
       if (!correct) {
         setWantHint(true);
       }

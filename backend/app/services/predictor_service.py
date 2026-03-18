@@ -683,6 +683,62 @@ async def get_next_activity_question(
     promoted = await _auto_promote(db, student_id, comp_ids, states)
     comp_ids = comp_ids + promoted
 
+    # ── ZPD Prerequisite Gate ──
+    # For each candidate competency, check if direct prerequisites have p_learned >= 0.5.
+    # If not met, remove the competency from candidates and add the blocking prereq instead.
+    # This ensures the system serves the right level automatically.
+    prereq_edge_result = await db.execute(
+        select(PrerequisiteEdge).where(PrerequisiteEdge.target_id.in_(comp_ids))
+    )
+    prereq_edges_for_gate = prereq_edge_result.scalars().all()
+
+    # Build map: target_id -> [source_ids]
+    prereqs_of_candidate: dict[str, list[str]] = defaultdict(list)
+    for edge in prereq_edges_for_gate:
+        prereqs_of_candidate[edge.target_id].append(edge.source_id)
+
+    # Collect all prereq IDs we might need states for
+    all_prereq_ids = [pid for pids in prereqs_of_candidate.values() for pid in pids]
+    missing_ids = [pid for pid in all_prereq_ids if pid not in states]
+    if missing_ids:
+        missing_result = await db.execute(
+            select(StudentCompetencyState).where(
+                StudentCompetencyState.student_id == student_id,
+                StudentCompetencyState.competency_id.in_(missing_ids),
+            )
+        )
+        for s in missing_result.scalars().all():
+            states[s.competency_id] = s
+
+    gated_out: set[str] = set()
+    gate_replacements: list[str] = []
+    for cid in comp_ids:
+        for prereq_id in prereqs_of_candidate.get(cid, []):
+            prereq_state = states.get(prereq_id)
+            prereq_p_l = prereq_state.p_learned if prereq_state else 0.0
+            if prereq_p_l < 0.5:
+                gated_out.add(cid)
+                if prereq_id not in comp_ids and prereq_id not in gate_replacements:
+                    gate_replacements.append(prereq_id)
+                break  # one unmet prereq is enough to gate
+
+    if gated_out:
+        comp_ids = [cid for cid in comp_ids if cid not in gated_out] + gate_replacements
+        # Load states and names for newly added prereq replacements
+        new_ids = [pid for pid in gate_replacements if pid not in states]
+        if new_ids:
+            new_states_result = await db.execute(
+                select(StudentCompetencyState).where(
+                    StudentCompetencyState.student_id == student_id,
+                    StudentCompetencyState.competency_id.in_(new_ids),
+                )
+            )
+            for s in new_states_result.scalars().all():
+                states[s.competency_id] = s
+
+    if not comp_ids:
+        return None
+
     # Load competency names
     comp_result = await db.execute(select(Competency).where(Competency.id.in_(comp_ids)))
     comp_names = {c.id: c.name for c in comp_result.scalars().all()}

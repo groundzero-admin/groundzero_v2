@@ -10,7 +10,7 @@ import {
 import type { ImportTemplateItem } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
 import type { CohortSession } from "@/api/types/admin";
-import { ArrowLeft, Download, Pencil, Link2, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Download, Pencil, Link2, Users, UserPlus, UserMinus, Search, ChevronLeft, ChevronRight, BarChart2 } from "lucide-react";
 import * as s from "./admin.css";
 
 // ── Enrollment types ──
@@ -208,6 +208,9 @@ export default function CohortDetailPage() {
                             )}
                         </div>
                         <div className={s.sessionActions}>
+                            <button className={s.editBtn} onClick={() => navigate(`/admin/sessions/${sess.id}/class-report`)}>
+                                <BarChart2 size={12} /> Class Report
+                            </button>
                             <button className={s.editBtn} onClick={() => openEditSession(sess)}>
                                 <Pencil size={12} /> Edit
                             </button>

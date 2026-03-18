@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { api } from "@/api/client";
 import { useCohorts } from "@/api/hooks/useAdmin";
-import { Plus, Copy, Check, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Plus, Copy, Check, Search, ChevronLeft, ChevronRight, RefreshCw, GitBranch } from "lucide-react";
 import * as s from "./admin.css";
 
 // ── Types ──
@@ -32,6 +33,7 @@ interface PaginatedStudents {
 // ── Component ──
 
 export default function AdminStudentsPage() {
+    const navigate = useNavigate();
     const qc = useQueryClient();
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState("");
@@ -218,6 +220,15 @@ export default function AdminStudentsPage() {
                             </div>
                         </div>
                         <div className={s.sessionActions}>
+                            {st.student_id && (
+                                <button
+                                    className={s.editBtn}
+                                    onClick={() => navigate(`/admin/students/${st.student_id}/skill-graph`)}
+                                    title="View skill graph"
+                                >
+                                    <GitBranch size={12} /> Skill Graph
+                                </button>
+                            )}
                             {st.invite_status === "pending" && st.invite_link && (
                                 <button
                                     className={copiedId === st.id ? s.addBtn : s.editBtn}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { QuestionProps } from "./shared";
-import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, FEEDBACK_OK, FEEDBACK_ERR, str, arr, num } from "./shared";
+import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, FEEDBACK_ERR, str, arr, num } from "./shared";
 
 interface McqProps extends QuestionProps {
   timed?: boolean;
@@ -50,13 +50,11 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
   const optStyle = (i: number, correct: boolean) => {
     if (!submitted) return selected === i ? OPT_SEL : OPT;
     if (selected === i) return correct ? OPT_CORRECT : OPT_WRONG;
-    if (correct) return OPT_CORRECT;
     return OPT;
   };
   const radioStyle = (i: number, correct: boolean) => {
     if (!submitted) return selected === i ? RADIO_SEL : RADIO;
     if (selected === i) return correct ? RADIO_OK : RADIO_BAD;
-    if (correct) return RADIO_OK;
     return RADIO;
   };
 
@@ -92,17 +90,8 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
           <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
-      {submitted && (
-        <>
-          {timeLeft === 0 && timed && !selected && (
-            <div style={FEEDBACK_ERR}>Time's up!</div>
-          )}
-          {str(data.explanation) && (
-            <div style={options.length > 0 && selected !== null && getOptionInfo(options[selected]).correct ? FEEDBACK_OK : FEEDBACK_ERR}>
-              {str(data.explanation)}
-            </div>
-          )}
-        </>
+      {submitted && timed && timeLeft === 0 && !selected && (
+        <div style={FEEDBACK_ERR}>Time's up!</div>
       )}
     </div>
   );

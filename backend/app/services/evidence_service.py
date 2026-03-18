@@ -70,13 +70,17 @@ async def process_evidence(
     5. Persist updated state(s)
     """
     feedback: str | None = None
+    _activity_question: ActivityQuestion | None = None
+    _template_slug: str = "mcq_single"
 
     # ── Evaluate activity question response if provided ──
     if data.activity_question_id and data.response is not None:
         aq = await db.get(ActivityQuestion, data.activity_question_id)
         if aq:
+            _activity_question = aq
             tmpl = await db.get(QuestionTemplate, aq.template_id)
             slug = tmpl.slug if tmpl else "mcq_single"
+            _template_slug = slug
             try:
                 from app.config import Settings
                 from openai import AsyncOpenAI
@@ -135,8 +139,13 @@ async def process_evidence(
     )
     primary_state_db = result.scalar_one_or_none()
     if primary_state_db is None:
-        await db.commit()
-        return event, []
+        # Auto-initialize state for first evidence on this competency
+        primary_state_db = StudentCompetencyState(
+            student_id=data.student_id,
+            competency_id=data.competency_id,
+        )
+        db.add(primary_state_db)
+        await db.flush()
 
     # 3. Load prerequisite edges for FIRe decay clock reset
     prereq_result = await db.execute(select(PrerequisiteEdge))
@@ -205,6 +214,7 @@ async def process_evidence(
 
     await db.commit()
     await db.refresh(event)
+
     return event, update_results, feedback
 
 

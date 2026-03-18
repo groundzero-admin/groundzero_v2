@@ -26,6 +26,8 @@ class EvidenceEvent(Base):
     meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # meta may contain: responseTimeMs, confidence, attempts, aiInteraction, evidenceText
 
+    misconception: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=None)
+
     is_propagated: Mapped[bool] = mapped_column(Boolean, server_default="false")
     source_event_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
 

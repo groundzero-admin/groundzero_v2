@@ -38,6 +38,8 @@ import AdminActivitiesPage from "@/pages/admin/AdminActivitiesPage";
 import LiveClassPage from "@/pages/admin/LiveClassPage";
 import CreateQuestionPage from "@/pages/admin/CreateQuestionPage";
 import QuestionBankPage from "@/pages/admin/QuestionBankPage";
+import AdminStudentSkillGraphPage from "@/pages/admin/AdminStudentSkillGraphPage";
+import ClassReportPage from "@/pages/admin/ClassReportPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -226,6 +228,8 @@ export default function App() {
                 <Route path="/admin/cohorts" element={<CohortListPage />} />
                 <Route path="/admin/cohorts/:id" element={<CohortDetailPage />} />
                 <Route path="/admin/students" element={<AdminStudentsPage />} />
+                <Route path="/admin/students/:studentId/skill-graph" element={<AdminStudentSkillGraphPage />} />
+                <Route path="/admin/sessions/:sessionId/class-report" element={<ClassReportPage />} />
                 <Route path="/admin/question-bank" element={<QuestionBankPage />} />
                 <Route path="/admin/create-question" element={<CreateQuestionPage />} />
               </Route>

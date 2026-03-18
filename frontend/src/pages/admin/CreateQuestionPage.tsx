@@ -22,6 +22,7 @@ type Rule = (d: D) => string | null;
 const req = (key: string, label: string): Rule =>
   (d) => !d[key] || !(d[key] as string).trim() ? `${label} is required.` : null;
 
+// Widgets with a fixed correct answer — must be defined before saving
 const mcqRules: Rule[] = [
   req("question", "Question text"),
   (d) => {
@@ -36,20 +37,10 @@ const mcqRules: Rule[] = [
   req("explanation", "Explanation"),
 ];
 
+// Widgets graded by LLM — no fixed correct answer required, just the question content
 const SLUG_RULES: Record<string, Rule[]> = {
   mcq_single: mcqRules,
   mcq_timed:  mcqRules,
-
-  fill_blanks: [
-    (d) => {
-      const s = typeof d.sentence === "string" ? d.sentence : "";
-      if (!s.trim()) return "Sentence is required.";
-      if (!s.toLowerCase().includes("{{blank}}")) return "Sentence must contain at least one {{blank}}.";
-      const a = Array.isArray(d.answers) ? d.answers as string[] : [];
-      if (!a.length || a.some((x) => !x.trim())) return "All correct answers must have text.";
-      return null;
-    },
-  ],
 
   slider_input: [
     req("prompt", "Prompt"),
@@ -85,30 +76,29 @@ const SLUG_RULES: Record<string, Rule[]> = {
     },
   ],
 
-  short_answer:   [req("prompt", "Prompt")],
-  image_response: [req("prompt", "Prompt")],
-  audio_response: [req("prompt", "Prompt")],
-  reflection_rating: [req("prompt", "Prompt")],
-  draw_scribble:  [req("prompt", "Prompt")],
+  geometry_explorer: [req("question", "Question")],
+  geometry_animated: [req("question", "Question")],
 
-  debate_opinion: [
+  // LLM-graded — only need the question content, no fixed correct answer
+  fill_blanks:      [(d) => {
+    const s = typeof d.sentence === "string" ? d.sentence : "";
+    if (!s.trim()) return "Sentence is required.";
+    if (!s.toLowerCase().includes("{{blank}}")) return "Sentence must contain at least one {{blank}}.";
+    return null;
+  }],
+  short_answer:     [req("prompt", "Prompt")],
+  image_response:   [req("prompt", "Prompt")],
+  audio_response:   [req("prompt", "Prompt")],
+  reflection_rating:[req("prompt", "Prompt")],
+  draw_scribble:    [req("prompt", "Prompt")],
+  debate_opinion:   [
     req("topic", "Topic"),
-    (d) => {
-      const s = Array.isArray(d.stances) ? d.stances as string[] : [];
-      return s.length >= 2 ? null : "Add at least 2 stances.";
-    },
+    (d) => (Array.isArray(d.stances) && (d.stances as string[]).length >= 2) ? null : "Add at least 2 stances.",
   ],
-
-  ai_conversation: [
-    (d) => (!d.opening_message && !d.system_prompt) ? "Opening message or system prompt is required." : null,
-  ],
-
-  multi_step: [
+  ai_conversation:  [(d) => (!d.opening_message && !d.system_prompt) ? "Opening message or system prompt is required." : null],
+  multi_step:       [
     req("overall_instruction", "Overall instruction"),
-    (d) => {
-      const steps = Array.isArray(d.steps) ? d.steps : [];
-      return steps.length ? null : "Add at least one step.";
-    },
+    (d) => (Array.isArray(d.steps) && (d.steps as unknown[]).length > 0) ? null : "Add at least one step.",
   ],
 };
 
