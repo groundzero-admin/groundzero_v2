@@ -1,16 +1,26 @@
-"""Benchmark orchestration: evaluate Q&A answers, save result, seed BKT states."""
+"""Benchmark orchestration: evaluate Q&A answers, save result, seed BKT states.
+
+Two paths for seeding student skill scores:
+  1. First-time (no prior evidence): apply_diagnostic() sets P(L) directly from stages.
+  2. Returning student (has evidence): process_evidence() per competency so the BKT
+     engine does a proper Bayesian update — right answer pushes P(L) up, wrong pushes down.
+"""
 
 import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.competency import Competency
+from app.models.student import StudentCompetencyState
 from app.plugins.benchmark.models import BenchmarkQuestion, BenchmarkResult, BenchmarkSession, BenchmarkTurn
 from app.plugins.benchmark.seed_questions import get_grade_band
 from app.plugins.benchmark.services import claude_service
+from app.schemas.evidence import EvidenceCreate
 from app.services.diagnostic_service import apply_diagnostic
+from app.services.evidence_service import process_evidence
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +42,14 @@ CAPABILITY_TO_COMPETENCY_PREFIX = {
     "N": ["C4.6", "C4.7", "C4.8", "C4.9", "C4.10"],
     "O": ["C4.11", "C4.12", "C4.13"],
     "P": ["C4.14", "C4.15", "C4.16", "C4.17", "C4.18", "C4.19"],
+}
+
+STAGE_TO_OUTCOME: dict[int, float] = {
+    1: 0.0,
+    2: 0.25,
+    3: 0.50,
+    4: 0.80,
+    5: 1.0,
 }
 
 
@@ -132,7 +150,7 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
 
     if student:
         try:
-            overrides = {}
+            overrides: dict[str, int] = {}
             for cap_id, stage in capability_stages.items():
                 if stage is None:
                     continue
@@ -140,18 +158,101 @@ async def run_benchmark(session_id: UUID, db: AsyncSession) -> BenchmarkResult:
                 for cid in competency_ids:
                     overrides[cid] = stage
 
-            diagnostic_profile = {
-                "pillar_stages": pillar_stages,
-                "overrides": overrides,
-            }
+            has_prior = await _student_has_prior_evidence(db, student.id)
 
-            await apply_diagnostic(db, student.id, diagnostic_profile)
+            if has_prior:
+                await _seed_bkt_via_evidence(
+                    db, student.id, overrides, session_id,
+                )
+            else:
+                diagnostic_profile = {
+                    "pillar_stages": pillar_stages,
+                    "overrides": overrides,
+                }
+                await apply_diagnostic(db, student.id, diagnostic_profile)
+
             benchmark.bkt_seeded = "done"
             await db.commit()
-            logger.info("BKT states seeded from benchmark for student %s", student.id)
+            logger.info(
+                "BKT states seeded from benchmark for student %s (method=%s)",
+                student.id, "evidence" if has_prior else "diagnostic",
+            )
         except Exception as e:
             logger.error("Failed to seed BKT from benchmark: %s", e)
             benchmark.bkt_seeded = "failed"
             await db.commit()
 
     return benchmark
+
+
+async def _student_has_prior_evidence(db: AsyncSession, student_id: UUID) -> bool:
+    """Check if the student has any prior BKT evidence (total_evidence > 0 on any competency)."""
+    result = await db.execute(
+        select(func.coalesce(func.sum(StudentCompetencyState.total_evidence), 0))
+        .where(StudentCompetencyState.student_id == student_id)
+    )
+    total = result.scalar_one()
+    return total > 0
+
+
+async def _ensure_competency_state_exists(
+    db: AsyncSession, student_id: UUID, competency_id: str,
+) -> None:
+    """Create a StudentCompetencyState row if one doesn't exist for this student+competency."""
+    result = await db.execute(
+        select(StudentCompetencyState).where(
+            StudentCompetencyState.student_id == student_id,
+            StudentCompetencyState.competency_id == competency_id,
+        )
+    )
+    if result.scalar_one_or_none() is not None:
+        return
+
+    comp_result = await db.execute(
+        select(Competency).where(Competency.id == competency_id)
+    )
+    comp = comp_result.scalar_one_or_none()
+    params = (comp.default_params or {}) if comp else {}
+
+    state = StudentCompetencyState(
+        student_id=student_id,
+        competency_id=competency_id,
+        p_learned=params.get("p_l0", 0.10),
+        p_transit=params.get("p_transit", 0.15),
+        p_guess=params.get("p_guess", 0.25),
+        p_slip=params.get("p_slip", 0.10),
+    )
+    db.add(state)
+    await db.flush()
+
+
+async def _seed_bkt_via_evidence(
+    db: AsyncSession,
+    student_id: UUID,
+    overrides: dict[str, int],
+    benchmark_session_id: UUID,
+) -> list:
+    """Submit per-competency evidence through the BKT engine for returning students.
+
+    Each capability stage is converted to an outcome (0-1) and fed through
+    process_evidence() so the Bayesian update respects prior learning history.
+    """
+    all_updates = []
+
+    for competency_id, stage in overrides.items():
+        outcome = STAGE_TO_OUTCOME.get(stage, 0.0)
+
+        await _ensure_competency_state_exists(db, student_id, competency_id)
+
+        evidence = EvidenceCreate(
+            student_id=student_id,
+            competency_id=competency_id,
+            outcome=outcome,
+            source="diagnostic",
+            session_id=benchmark_session_id,
+        )
+
+        _event, updates = await process_evidence(db, evidence)
+        all_updates.extend(updates)
+
+    return all_updates

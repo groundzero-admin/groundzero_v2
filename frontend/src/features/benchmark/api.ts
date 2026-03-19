@@ -22,7 +22,7 @@ export interface BenchmarkSessionResponse {
   total_questions: number;
 }
 
-const S3_AUDIO_BASE = "https://groundzero-static-ap.s3.ap-southeast-2.amazonaws.com/question-audio";
+const S3_AUDIO_BASE = "https://groundzero-static.s3.ap-southeast-2.amazonaws.com/question-audio";
 
 export function getQuestionAudioUrl(characterId: string, gradeBand: string, questionNumber: number): string {
   return `${S3_AUDIO_BASE}/${characterId}/${gradeBand}_${questionNumber}.wav`;
