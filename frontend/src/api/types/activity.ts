@@ -35,10 +35,13 @@ export interface Question {
   competency_id: string;
   competency_ids?: string[];
   text: string;
-  type: "mcq" | "short_answer";
+  type: string;
   options: Array<{ label: string; text: string; is_correct: boolean }> | null;
   correct_answer: string | null;
   difficulty: number;
   grade_band: string;
   explanation: string | null;
+  template_slug?: string | null;
+  template_name?: string | null;
+  data?: Record<string, unknown>;
 }

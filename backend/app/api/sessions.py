@@ -6,16 +6,21 @@ Nothing in the core engine depends on these routes.
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
 from app.database import get_db
+from app.models.activity_question import ActivityQuestion
 from app.models.curriculum import Activity
 from app.models.evidence import EvidenceEvent
+from app.models.question_template import QuestionTemplate
 from app.models.session import Cohort, FacilitatorNote, LiveRoom, Session, SessionActivity
+from app.models.student import Student
 from app.models.user import User
+from app.schemas.curriculum import QuestionOut
 from app.schemas.session import (
     FacilitatorNoteCreate,
     FacilitatorNoteOut,
@@ -28,6 +33,31 @@ from app.schemas.session import (
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 MAX_SESSION_NUMBER = 14
+
+
+class SessionActivityQuestionFlowOut(BaseModel):
+    questions: list["SessionActivityQuestionOut"]
+    attempted_question_ids: list[str]
+    attempted_results: dict[str, bool] = {}
+    next_question_index: int
+
+
+class SessionActivityQuestionOut(BaseModel):
+    id: uuid.UUID
+    module_id: str
+    competency_id: str
+    competency_ids: list[str]
+    text: str
+    type: str
+    options: list[dict] | None = None
+    correct_answer: str | None = None
+    difficulty: float
+    grade_band: str
+    topic_id: str | None = None
+    explanation: str | None = None
+    template_slug: str | None = None
+    template_name: str | None = None
+    data: dict = {}
 
 
 # ── Sessions ──
@@ -203,6 +233,182 @@ async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depen
         )
         for sa, name, atype, mode, duration in rows
     ]
+
+
+@router.get(
+    "/{session_id}/activities/{activity_id}/questions",
+    response_model=list[SessionActivityQuestionOut],
+    summary="Get Questions for Session Activity",
+    description="Returns ordered questions linked to an activity within a session. Normalized to QuestionOut for live student delivery.",
+)
+async def get_session_activity_questions(
+    session_id: uuid.UUID,
+    activity_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("student", "teacher", "admin")),
+):
+    # Ensure activity is part of this session.
+    sa_result = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.activity_id == activity_id,
+        )
+    )
+    if not sa_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Activity not found in this session")
+
+    activity_result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = activity_result.scalar_one_or_none()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    qids_raw = activity.question_ids or []
+    qids: list[uuid.UUID] = []
+    for qid in qids_raw:
+        try:
+            qids.append(uuid.UUID(str(qid)))
+        except (ValueError, TypeError):
+            continue
+
+    if not qids:
+        return []
+
+    aq_result = await db.execute(
+        select(ActivityQuestion, QuestionTemplate.slug, QuestionTemplate.name)
+        .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+        .where(ActivityQuestion.id.in_(qids))
+    )
+    aq_rows = {row[0].id: row for row in aq_result.all()}
+
+    out: list[SessionActivityQuestionOut] = []
+    for qid in qids:
+        row = aq_rows.get(qid)
+        if not row:
+            continue
+        aq, template_slug, template_name = row
+
+        data = aq.data or {}
+        raw_options = data.get("options") if isinstance(data, dict) else None
+        norm_options: list[dict] = []
+        if isinstance(raw_options, list):
+            for idx, opt in enumerate(raw_options):
+                if not isinstance(opt, dict):
+                    continue
+                label = opt.get("label")
+                if not isinstance(label, str) or not label.strip():
+                    label = chr(65 + idx)  # A, B, C...
+                text = str(opt.get("text") or "")
+                is_correct = bool(opt.get("is_correct", False))
+                norm_options.append({
+                    "label": label,
+                    "text": text,
+                    "is_correct": is_correct,
+                })
+
+        correct_label = None
+        for opt in norm_options:
+            if opt.get("is_correct"):
+                correct_label = str(opt.get("label"))
+                break
+
+        inferred_type = "mcq" if str(template_slug or "").startswith("mcq_") else str(data.get("type") or "widget")
+        if not isinstance(data, dict):
+            data = {}
+
+        out.append(
+            SessionActivityQuestionOut(
+                id=aq.id,
+                module_id=activity.module_id,
+                competency_id=aq.competency_id,
+                competency_ids=list(aq.competency_ids or [aq.competency_id]),
+                text=str(data.get("question") or data.get("prompt") or aq.title),
+                type=inferred_type,
+                options=norm_options or None,
+                correct_answer=correct_label,
+                difficulty=float(aq.difficulty),
+                grade_band=aq.grade_band or "",
+                topic_id=None,
+                explanation=str(data.get("explanation")) if data.get("explanation") else None,
+                template_slug=str(template_slug) if template_slug else None,
+                template_name=str(template_name) if template_name else None,
+                data=data,
+            )
+        )
+
+    return out
+
+
+@router.get(
+    "/{session_id}/activities/{activity_id}/question-flow",
+    response_model=SessionActivityQuestionFlowOut,
+    summary="Get student question flow for a session activity",
+    description="Returns ordered activity questions plus attempted question IDs and next unanswered question index for this student in the session.",
+)
+async def get_session_activity_question_flow(
+    session_id: uuid.UUID,
+    activity_id: str,
+    student_id: uuid.UUID | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("student", "teacher", "admin")),
+):
+    effective_student_id = student_id
+    if user.role == "student":
+        s_res = await db.execute(select(Student.id).where(Student.user_id == user.id))
+        current_student_id = s_res.scalar_one_or_none()
+        if not current_student_id:
+            raise HTTPException(status_code=404, detail="Student record not found")
+        effective_student_id = current_student_id
+
+    # Reuse base question endpoint logic
+    questions = await get_session_activity_questions(
+        session_id=session_id,
+        activity_id=activity_id,
+        db=db,
+        user=user,
+    )
+    if not questions:
+        return SessionActivityQuestionFlowOut(
+            questions=[],
+            attempted_question_ids=[],
+            attempted_results={},
+            next_question_index=0,
+        )
+
+    attempted_question_ids: list[str] = []
+    attempted_results: dict[str, bool] = {}
+    if effective_student_id is not None:
+        qid_set = {str(q.id) for q in questions}
+        ev_result = await db.execute(
+            select(EvidenceEvent.meta["questionId"].astext, EvidenceEvent.outcome)
+            .where(
+                EvidenceEvent.student_id == effective_student_id,
+                EvidenceEvent.session_id == session_id,
+                EvidenceEvent.meta["questionId"].astext.is_not(None),
+            )
+            .order_by(EvidenceEvent.created_at.desc())
+        )
+        seen: set[str] = set()
+        for qid, outcome in ev_result.all():
+            if qid and qid in qid_set and qid not in seen:
+                seen.add(qid)
+                attempted_question_ids.append(qid)
+                attempted_results[qid] = bool((outcome or 0.0) >= 0.5)
+
+    attempted_set = set(attempted_question_ids)
+    next_idx = 0
+    for idx, q in enumerate(questions):
+        if str(q.id) not in attempted_set:
+            next_idx = idx
+            break
+    else:
+        next_idx = len(questions)
+
+    return SessionActivityQuestionFlowOut(
+        questions=questions,
+        attempted_question_ids=attempted_question_ids,
+        attempted_results=attempted_results,
+        next_question_index=next_idx,
+    )
 
 
 @router.put(

@@ -304,6 +304,104 @@ async def get_session_scores(
     ]
 
 
+class StudentQuestionResponseOut(BaseModel):
+    student_id: str
+    student_name: str
+    question_id: str
+    outcome: float
+    correct: bool
+    confidence: str | None = None  # got_it | kinda | lost
+    response_time_ms: int | None = None
+    created_at: str
+
+
+@router.get(
+    "/cohorts/{cohort_id}/sessions/{session_id}/questions/{question_id}/student-responses",
+    response_model=list[StudentQuestionResponseOut],
+    summary="Get per-student responses for a question",
+    description="Teacher feed: latest evidence event per student for a given session+question. Uses evidence_events.meta->questionId JSON field; no schema changes.",
+)
+async def get_student_responses_for_question(
+    cohort_id: uuid.UUID,
+    session_id: uuid.UUID,
+    question_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("teacher", "admin")),
+):
+    # Teacher: only sessions they are assigned to. Admin: any session.
+    if user.role == "teacher":
+        session_q = await db.execute(
+            select(Session.teacher_id).where(Session.id == session_id, Session.cohort_id == cohort_id)
+        )
+        teacher_id = session_q.scalar_one_or_none()
+        if teacher_id is None or str(teacher_id) != str(user.id):
+            raise HTTPException(status_code=403, detail="Not assigned to this session")
+
+    student_ids_subq = (
+        select(Student.id)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
+    )
+
+    evidence_question_match = EvidenceEvent.meta["questionId"].astext == str(question_id)
+
+    latest_per_student_subq = (
+        select(
+            EvidenceEvent.student_id.label("sid"),
+            func.max(EvidenceEvent.created_at).label("max_created_at"),
+        )
+        .where(
+            EvidenceEvent.session_id == session_id,
+            EvidenceEvent.student_id.in_(student_ids_subq),
+            evidence_question_match,
+        )
+        .group_by(EvidenceEvent.student_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(EvidenceEvent, Student.name.label("student_name"))
+        .join(Student, Student.id == EvidenceEvent.student_id)
+        .join(
+            latest_per_student_subq,
+            (EvidenceEvent.student_id == latest_per_student_subq.c.sid)
+            & (EvidenceEvent.created_at == latest_per_student_subq.c.max_created_at),
+        )
+        .where(
+            EvidenceEvent.session_id == session_id,
+            evidence_question_match,
+        )
+    )
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    out: list[StudentQuestionResponseOut] = []
+    for e, student_name in rows:
+        confidence = None
+        response_time_ms = None
+        if e.meta:
+            confidence = e.meta.get("confidence")
+            response_time_ms = e.meta.get("responseTimeMs")
+
+        correct = bool(e.outcome >= 0.5)
+        out.append(
+            StudentQuestionResponseOut(
+                student_id=str(e.student_id),
+                student_name=str(student_name),
+                question_id=str(question_id),
+                outcome=float(e.outcome),
+                correct=correct,
+                confidence=confidence if isinstance(confidence, str) else None,
+                response_time_ms=int(response_time_ms) if isinstance(response_time_ms, int) else None,
+                created_at=e.created_at.isoformat(),
+            )
+        )
+
+    out.sort(key=lambda x: x.student_name)
+    return out
+
+
 # ── Class Analytics ──────────────────────────────────────────────
 
 

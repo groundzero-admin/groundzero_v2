@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import type { Cohort, Session, SessionActivity, LivePulseEvent, StudentScore } from "@/api/types";
+import type { Cohort, Session, SessionActivity, LivePulseEvent, StudentQuestionResponse, StudentScore } from "@/api/types";
 import type { Student } from "@/api/types";
 import type { SessionViewOut } from "@/api/types/admin";
 
@@ -70,6 +70,27 @@ export function useSessionScores(cohortId: string | null | undefined, sessionId?
   });
 }
 
+export function useStudentQuestionResponses(
+  cohortId: string | null | undefined,
+  sessionId: string | null | undefined,
+  questionId: string | null | undefined
+) {
+  return useQuery<StudentQuestionResponse[]>({
+    queryKey: ["student-question-responses", cohortId, sessionId, questionId],
+    queryFn: async () =>
+      (
+        await api.get(
+          `/teacher/cohorts/${cohortId}/sessions/${sessionId}/questions/${questionId}/student-responses`
+        )
+      ).data,
+    enabled: !!cohortId && !!sessionId && !!questionId,
+    // Poll only while a question dropdown is open.
+    refetchInterval: 5000,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+}
+
 export function useSessionActivities(sessionId: string | null | undefined) {
   return useQuery<SessionActivity[]>({
     queryKey: ["session-activities", sessionId],
@@ -123,6 +144,7 @@ export function useLaunchActivity() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["session-activities"] });
+      qc.invalidateQueries({ queryKey: ["session-activity-question-flow"] });
       qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });
@@ -224,6 +246,7 @@ export function usePauseActivity() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["session-activities"] });
+      qc.invalidateQueries({ queryKey: ["session-activity-question-flow"] });
       qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });

@@ -12,6 +12,8 @@ export function useActiveSession(cohortId: string | null | undefined) {
       return data[0] ?? null;
     },
     enabled: !!cohortId,
-    refetchInterval: 5_000,
+    // Keep student live state in sync with teacher launch/pause actions.
+    refetchInterval: 3_000,
+    refetchOnWindowFocus: true,
   });
 }

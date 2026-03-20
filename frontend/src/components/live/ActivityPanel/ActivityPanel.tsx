@@ -1,6 +1,7 @@
 import { BookOpen, Loader2, Radio, Clock } from "lucide-react";
 import type { Question, Session, Activity } from "@/api/types";
 import { Button, Card } from "@/components/ui";
+import { QuestionRenderer } from "@/components/questions";
 import { MCQQuestion } from "../MCQQuestion";
 import * as s from "./ActivityPanel.css";
 
@@ -10,10 +11,18 @@ interface ActivityPanelProps {
   activityLoading: boolean;
   question: Question | null;
   questionsLoading: boolean;
-  selectedOption: string | null;
+  questionIndex?: number;
+  totalQuestions?: number;
+  attemptedResult?: boolean | null;
+  allAttempted?: boolean;
+  onRestartReview?: () => void;
+  selectedOptions: string[];
   onSelectOption: (label: string) => void;
+  onWidgetAnswer?: (answer: unknown) => void;
+  widgetAnswered?: boolean;
   submitted: boolean;
   onSubmit: () => void;
+  onPrev?: () => void;
   onNext: () => void;
   submitting: boolean;
   timeLeft?: number | null;
@@ -27,10 +36,18 @@ export function ActivityPanel({
   activityLoading,
   question,
   questionsLoading,
-  selectedOption,
+  questionIndex = 0,
+  totalQuestions = 1,
+  attemptedResult = null,
+  allAttempted = false,
+  onRestartReview,
+  selectedOptions,
   onSelectOption,
+  onWidgetAnswer,
+  widgetAnswered = false,
   submitted,
   onSubmit,
+  onPrev,
   onNext,
   submitting,
   timeLeft,
@@ -63,6 +80,15 @@ export function ActivityPanel({
       </Card>
     );
   }
+
+  const isWidgetQuestion = !!question?.template_slug && !String(question.template_slug).startsWith("mcq_");
+  const allowMultipleMcq =
+    !!question &&
+    (
+      (Array.isArray(question.options) && question.options.filter((o) => o.is_correct).length > 1) ||
+      !!(question.data && typeof question.data === "object" && (question.data as Record<string, unknown>).multiple)
+    );
+  const canGoNext = submitted || attemptedResult !== null;
 
   return (
     <Card elevation="low" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -138,40 +164,78 @@ export function ActivityPanel({
                 <div className={s.emptyIcon}>
                   <BookOpen size={24} />
                 </div>
-                <div className={s.emptyTitle}>All caught up!</div>
+                <div className={s.emptyTitle}>{allAttempted ? "You attempted all questions" : "All caught up!"}</div>
                 <div className={s.emptyText}>
-                  No more questions for this skill right now. Great work!
+                  {allAttempted
+                    ? "Review what you did and re-attempt any question."
+                    : "No more questions for this skill right now. Great work!"}
                 </div>
+                {allAttempted && onRestartReview && (
+                  <Button variant="primary" size="md" onClick={onRestartReview} style={{ marginTop: 10 }}>
+                    Review From First Question
+                  </Button>
+                )}
               </div>
             ) : (
-              <MCQQuestion
-                question={question}
-                questionIndex={0}
-                totalQuestions={1}
-                selectedOption={selectedOption}
-                onSelectOption={onSelectOption}
-                submitted={submitted}
-              />
+              <>
+                {attemptedResult !== null && (
+                  <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, color: attemptedResult ? "#059669" : "#dc2626" }}>
+                    Previous attempt: {attemptedResult ? "Correct" : "Incorrect"} (you can re-attempt)
+                  </div>
+                )}
+                {isWidgetQuestion ? (
+                  <QuestionRenderer
+                    slug={String(question.template_slug)}
+                    data={question.data ?? {}}
+                    onAnswer={onWidgetAnswer}
+                  />
+                ) : (
+                  <MCQQuestion
+                    question={question}
+                    questionIndex={questionIndex}
+                    totalQuestions={Math.max(1, totalQuestions)}
+                    selectedOptions={selectedOptions}
+                    onSelectOption={onSelectOption}
+                    submitted={submitted}
+                    allowMultiple={allowMultipleMcq}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
 
         {question && !timerExpired && (
           <div className={s.actions}>
-            {!submitted ? (
-              <Button
-                variant="primary"
-                size="md"
-                onClick={onSubmit}
-                disabled={!selectedOption || submitting}
-                style={{ flex: 1 }}
-              >
-                {submitting ? (
-                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                ) : (
-                  "Submit Answer"
-                )}
-              </Button>
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={onPrev}
+              disabled={!onPrev || questionIndex <= 0}
+              style={{ flex: 1 }}
+            >
+              Previous
+            </Button>
+            {!canGoNext ? (
+              isWidgetQuestion ? (
+                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#64748b", fontWeight: 700 }}>
+                  {widgetAnswered ? "Answer saved automatically" : "Complete all inputs to auto-save"}
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={onSubmit}
+                  disabled={selectedOptions.length === 0 || submitting}
+                  style={{ flex: 1 }}
+                >
+                  {submitting ? (
+                    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    "Submit Answer"
+                  )}
+                </Button>
+              )
             ) : (
               <Button
                 variant="primary"

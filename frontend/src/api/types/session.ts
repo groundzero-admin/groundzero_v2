@@ -1,3 +1,5 @@
+import type { Question } from "./activity";
+
 export interface Session {
   id: string;
   cohort_id: string | null;
@@ -27,6 +29,17 @@ export interface StudentScore {
   total: number;
 }
 
+export interface StudentQuestionResponse {
+  student_id: string;
+  student_name: string;
+  question_id: string;
+  outcome: number;
+  correct: boolean;
+  confidence: "got_it" | "kinda" | "lost" | null;
+  response_time_ms: number | null;
+  created_at: string;
+}
+
 export interface LivePulseEvent {
   id: string;
   student_id: string;
@@ -37,4 +50,11 @@ export interface LivePulseEvent {
   outcome: number;
   meta: Record<string, unknown> | null;
   created_at: string;
+}
+
+export interface SessionActivityQuestionFlow {
+  questions: Question[];
+  attempted_question_ids: string[];
+  attempted_results: Record<string, boolean>;
+  next_question_index: number;
 }

@@ -74,6 +74,7 @@ export default function AdminActivitiesPage() {
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
     const [showQuestionModal, setShowQuestionModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
+    const [showLinkModal, setShowLinkModal] = useState(false);
     const [previewQuestion, setPreviewQuestion] = useState<ActivityQuestion | null>(null);
 
     function openCreateActivity() {
@@ -287,7 +288,8 @@ export default function AdminActivitiesPage() {
                                         {linked.length === 0 ? (
                                             <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>No questions linked yet. Add some below.</p>
                                         ) : (
-                                            <div className={s.questionsCardGrid}>
+                                            <div style={{ maxHeight: "42vh", overflowY: "auto", paddingRight: 6 }}>
+                                                <div className={s.questionsCardGrid}>
                                                 {linked.map((q) => {
                                                     const pos = (activeActivity.question_ids ?? []).indexOf(String(q.id));
                                                     const canMoveLeft = pos > 0;
@@ -366,14 +368,23 @@ export default function AdminActivitiesPage() {
                                                         </div>
                                                     );
                                                 })}
+                                                </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Add question: Link Existing (search) + Create New */}
+                                    {/* Add/link actions */}
                                     <div style={{ borderTop: "1px solid var(--color-border-subtle)", paddingTop: 16 }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                                             <span style={{ fontWeight: 600, fontSize: 14 }}>Add question</span>
+                                            <button
+                                                type="button"
+                                                className={s.addBtn}
+                                                style={{ padding: "6px 14px", fontSize: 12 }}
+                                                onClick={() => { setShowLinkModal(true); setLinkSearch(""); }}
+                                            >
+                                                <Link2 size={12} /> Link New Question
+                                            </button>
                                             <button
                                                 type="button"
                                                 className={s.addBtn}
@@ -383,18 +394,58 @@ export default function AdminActivitiesPage() {
                                                 <ExternalLink size={12} /> Create New
                                             </button>
                                         </div>
+                                        {!linkSearch.trim() && unlinked.length === 0 && linked.length > 0 && (
+                                            <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>
+                                                All questions are already linked.
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right: Preview */}
+                                <div style={{ display: "flex", flexDirection: "column", minHeight: 0, borderLeft: "1px solid var(--color-border-subtle)", paddingLeft: 20 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, color: "var(--color-text-secondary)", fontWeight: 600, fontSize: 13 }}>
+                                        <Eye size={16} /> Question preview
+                                    </div>
+                                    <div style={{ flex: 1, minHeight: 280, overflow: "auto" }}>
+                                        {previewQuestion ? (
+                                            previewQuestion.template_slug ? (
+                                                <LivePreview slug={previewQuestion.template_slug} data={previewQuestion.data ?? {}} />
+                                            ) : (
+                                                <div className={s.emptyState}>No preview (missing template).</div>
+                                            )
+                                        ) : (
+                                            <div className={s.emptyState}>Click a question to preview.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={s.formActions} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
+                                <button type="button" className={s.cancelBtn} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>Close</button>
+                            </div>
+
+                            {/* Link New Question Modal */}
+                            {showLinkModal && (
+                                <div className={s.overlay} onClick={() => setShowLinkModal(false)}>
+                                    <div
+                                        className={s.modal}
+                                        style={{ width: "80vw", maxWidth: 900, maxHeight: "82vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <h3 className={s.modalTitle}>Link New Question</h3>
                                         <div style={{ position: "relative", marginBottom: 10 }}>
                                             <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }} />
                                             <input
                                                 className={s.input}
                                                 style={{ paddingLeft: 36 }}
-                                                placeholder="Search question bank by title or template…"
+                                                placeholder="Search unlinked questions by title or template…"
                                                 value={linkSearch}
                                                 onChange={(e) => setLinkSearch(e.target.value)}
                                             />
                                         </div>
-                                        <div className={s.addQuestionList}>
-                                            {showAddList && (linkSearch.trim() ? searchFiltered : unlinked).slice(0, 50).map((q: ActivityQuestion) => (
+                                        <div className={s.addQuestionList} style={{ maxHeight: "52vh" }}>
+                                            {(linkSearch.trim() ? searchFiltered : unlinked).slice(0, 80).map((q: ActivityQuestion) => (
                                                 <div key={q.id} className={s.addQuestionRow}>
                                                     <div style={{ flex: 1, minWidth: 0 }} onClick={() => setPreviewQuestion(q)}>
                                                         <div style={{ fontWeight: 500, fontSize: 13 }}>{q.title}</div>
@@ -428,40 +479,20 @@ export default function AdminActivitiesPage() {
                                                     </button>
                                                 </div>
                                             ))}
-                                            {!linkSearch.trim() && unlinked.length === 0 && linked.length > 0 && (
-                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>All questions are already linked.</p>
-                                            )}
-                                            {linkSearch.trim() && searchFiltered.length === 0 && (
-                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
-                                                    No matches. <button type="button" className={s.editBtn} style={{ fontSize: 12 }} onClick={() => navigate("/admin/create-question")}>Create new question →</button>
+                                            {(linkSearch.trim() ? searchFiltered : unlinked).length === 0 && (
+                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", padding: 8 }}>
+                                                    No unlinked questions found.
                                                 </p>
                                             )}
                                         </div>
+                                        <div className={s.formActions} style={{ marginTop: 12 }}>
+                                            <button type="button" className={s.cancelBtn} onClick={() => setShowLinkModal(false)}>
+                                                Close
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Right: Preview */}
-                                <div style={{ display: "flex", flexDirection: "column", minHeight: 0, borderLeft: "1px solid var(--color-border-subtle)", paddingLeft: 20 }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, color: "var(--color-text-secondary)", fontWeight: 600, fontSize: 13 }}>
-                                        <Eye size={16} /> Question preview
-                                    </div>
-                                    <div style={{ flex: 1, minHeight: 280, overflow: "auto" }}>
-                                        {previewQuestion ? (
-                                            previewQuestion.template_slug ? (
-                                                <LivePreview slug={previewQuestion.template_slug} data={previewQuestion.data ?? {}} />
-                                            ) : (
-                                                <div className={s.emptyState}>No preview (missing template).</div>
-                                            )
-                                        ) : (
-                                            <div className={s.emptyState}>Click a question to preview.</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={s.formActions} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
-                                <button type="button" className={s.cancelBtn} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>Close</button>
-                            </div>
+                            )}
                         </div>
                     </div>
                 );

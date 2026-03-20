@@ -54,7 +54,7 @@ const queryClient = new QueryClient({
 function RequireStudent({ children }: { children: React.ReactNode }) {
   const { studentId, isLoading } = useStudent();
   if (isLoading) return null;
-  if (!studentId) return <Navigate to="/home" replace />;
+  if (!studentId) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -66,7 +66,7 @@ function RootRedirect() {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === "teacher") return <Navigate to="/teacher" replace />;
   if (user?.role === "admin") return <Navigate to="/admin" replace />;
-  return <Navigate to="/home" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 export default function App() {

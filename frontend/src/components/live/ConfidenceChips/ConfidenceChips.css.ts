@@ -9,6 +9,12 @@ const press = keyframes({
   "100%": { transform: "scale(1)" },
 });
 
+const pulseGlow = keyframes({
+  "0%": { boxShadow: "0 0 0 var(--pulse-color)", transform: "scale(1)" },
+  "40%": { boxShadow: "0 0 22px var(--pulse-color)", transform: "scale(1.06)" },
+  "100%": { boxShadow: "0 0 0 var(--pulse-color)", transform: "scale(1)" },
+});
+
 export const root = style({
   display: "flex",
   flexDirection: "column",
@@ -84,7 +90,7 @@ export const chipDark = style({
   },
   selectors: {
     "&:disabled": {
-      opacity: 0.35,
+      opacity: 1,
       pointerEvents: "none",
     },
   },
@@ -93,6 +99,11 @@ export const chipDark = style({
 /* plays the bounce on selection too */
 export const chipDarkSelected = style({
   animation: `${press} 0.3s ease`,
+});
+
+// Extra local "clicked" impression (only affects this student's UI).
+export const chipPulse = style({
+  animation: `${pulseGlow} 0.6s ease`,
 });
 
 /* ─── Per-mood selected colours ─── */
@@ -113,6 +124,40 @@ export const chipLost = style({
   backgroundColor: "rgba(239,68,68,0.16) !important",
   color: "#f87171 !important",
   boxShadow: "0 0 14px rgba(239,68,68,0.22)",
+});
+
+/* ─── Per-mood base colours (when enabled, but NOT persistent-selected) ─── */
+export const chipGotItBase = style({
+  borderColor: "rgba(34,197,94,0.45) !important",
+  backgroundColor: "rgba(34,197,94,0.10) !important",
+  color: "#22c55e !important",
+});
+export const chipKindaBase = style({
+  borderColor: "rgba(245,158,11,0.45) !important",
+  backgroundColor: "rgba(245,158,11,0.10) !important",
+  color: "#f59e0b !important",
+});
+export const chipLostBase = style({
+  borderColor: "rgba(239,68,68,0.45) !important",
+  backgroundColor: "rgba(239,68,68,0.10) !important",
+  color: "#ef4444 !important",
+});
+
+/* ─── Per-mood disabled colours (10s cooldown) ─── */
+export const chipGotItDisabled = style({
+  borderColor: "rgba(34,197,94,0.20) !important",
+  backgroundColor: "rgba(34,197,94,0.07) !important",
+  color: "rgba(34,197,94,0.75) !important",
+});
+export const chipKindaDisabled = style({
+  borderColor: "rgba(245,158,11,0.20) !important",
+  backgroundColor: "rgba(245,158,11,0.07) !important",
+  color: "rgba(245,158,11,0.75) !important",
+});
+export const chipLostDisabled = style({
+  borderColor: "rgba(239,68,68,0.22) !important",
+  backgroundColor: "rgba(239,68,68,0.07) !important",
+  color: "rgba(239,68,68,0.80) !important",
 });
 
 /* ─── Light base chip ─── */

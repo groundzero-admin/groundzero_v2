@@ -105,6 +105,21 @@ export const controlBtnActive = style({
   },
 });
 
+export const exitBtn = style({
+  border: "none",
+  padding: "10px 14px",
+  borderRadius: 999,
+  cursor: "pointer",
+  color: "#fff",
+  fontWeight: 800,
+  fontSize: 12,
+  background: "linear-gradient(135deg, rgba(239,68,68,0.95), rgba(244,63,94,0.85))",
+  boxShadow: "0 8px 24px rgba(239,68,68,0.25)",
+  transition: "transform 0.15s ease, filter 0.15s ease",
+  ":hover": { transform: "translateY(-1px)", filter: "brightness(1.05)" },
+  ":active": { transform: "translateY(0px) scale(0.98)" },
+});
+
 export const thumbnails = style({
   display: "flex",
   gap: vars.space[2],

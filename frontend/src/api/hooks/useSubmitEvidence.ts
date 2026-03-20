@@ -15,6 +15,7 @@ export function useSubmitEvidence(studentId: string | null) {
       queryClient.invalidateQueries({
         queryKey: ["next-activity", studentId],
       });
+      queryClient.invalidateQueries({ queryKey: ["session-activity-question-flow"] });
       queryClient.invalidateQueries({ queryKey: ["evidence", studentId] });
     },
   });

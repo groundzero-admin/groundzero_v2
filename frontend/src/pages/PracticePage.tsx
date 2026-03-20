@@ -31,10 +31,10 @@ export default function PracticePage() {
   const question = nextQ?.question ?? null;
 
   // Answer state
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [confidence, setConfidence] = useState<"got_it" | "kinda" | "lost" | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const questionShownAt = useRef<number>(Date.now());
+  const questionShownAt = useRef<number>(0);
 
   // BKT toast
   const [toastUpdates, setToastUpdates] = useState<BKTUpdate[] | null>(null);
@@ -54,10 +54,10 @@ export default function PracticePage() {
       questionId: question.id,
       trigger: "low_confidence",
       competencyId: nextQ.competency_id,
-      selectedOption: selectedOption ?? undefined,
+      selectedOption: selectedOptions.join(", ") || undefined,
       confidenceReport: "lost",
     });
-  }, [confidence, submitted, studentId, nextQ, question, selectedOption, sparkTrigger]);
+  }, [confidence, submitted, studentId, nextQ, question, selectedOptions, sparkTrigger]);
 
   // Trigger SPARK after 30s of no answer
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function PracticePage() {
           questionId: question.id,
           trigger: "hint_request",
           competencyId: nextQ.competency_id,
-          selectedOption: selectedOption ?? undefined,
+          selectedOption: selectedOptions.join(", ") || undefined,
         });
       }
     }, 30_000);
@@ -80,7 +80,7 @@ export default function PracticePage() {
     return () => {
       if (stuckTimerRef.current) clearTimeout(stuckTimerRef.current);
     };
-  }, [studentId, nextQ, question, submitted, sparkTrigger, selectedOption]);
+  }, [studentId, nextQ, question, submitted, sparkTrigger, selectedOptions]);
 
   // Submit mutation
   const { mutateAsync: submitEvidence, isPending: submitting } =
@@ -88,7 +88,7 @@ export default function PracticePage() {
 
   // Reset when question changes
   useEffect(() => {
-    setSelectedOption(null);
+    setSelectedOptions([]);
     setConfidence(null);
     setSubmitted(false);
     setSparkTrigger(null);
@@ -97,11 +97,12 @@ export default function PracticePage() {
   }, [nextQ?.question?.id]);
 
   const handleSubmit = useCallback(async () => {
-    if (!studentId || !selectedOption || !question || !nextQ) return;
+    if (!studentId || selectedOptions.length === 0 || !question || !nextQ) return;
 
-    const correctLabel =
-      question.options?.find((o) => o.is_correct)?.label ?? null;
-    const isCorrect = selectedOption === correctLabel;
+    const correctLabels = (question.options ?? []).filter((o) => o.is_correct).map((o) => o.label);
+    const isCorrect =
+      selectedOptions.length === correctLabels.length &&
+      selectedOptions.every((label) => correctLabels.includes(label));
     const responseTimeMs = Date.now() - questionShownAt.current;
 
     const evidence: EvidenceCreate = {
@@ -129,14 +130,14 @@ export default function PracticePage() {
           questionId: question.id,
           trigger: !isCorrect ? "wrong_answer" : "low_confidence",
           competencyId: nextQ.competency_id,
-          selectedOption: selectedOption,
+          selectedOption: selectedOptions.join(", "),
           confidenceReport: confidence ?? undefined,
         });
       }
     } catch {
       // handled by TanStack Query
     }
-  }, [studentId, selectedOption, confidence, question, nextQ, submitEvidence, aiInteraction]);
+  }, [studentId, selectedOptions, confidence, question, nextQ, submitEvidence, aiInteraction]);
 
   const handleNext = useCallback(() => {
     refetchQuestion();
@@ -198,15 +199,33 @@ export default function PracticePage() {
               question={question}
               questionIndex={0}
               totalQuestions={1}
-              selectedOption={selectedOption}
-              onSelectOption={setSelectedOption}
+              selectedOptions={selectedOptions}
+              onSelectOption={(label) => {
+                const allowMultiple =
+                  !!question &&
+                  (
+                    (Array.isArray(question.options) && question.options.filter((o) => o.is_correct).length > 1) ||
+                    !!(question.data && typeof question.data === "object" && (question.data as Record<string, unknown>).multiple)
+                  );
+                if (allowMultiple) {
+                  setSelectedOptions((prev) =>
+                    prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label]
+                  );
+                } else {
+                  setSelectedOptions([label]);
+                }
+              }}
               submitted={submitted}
+              allowMultiple={
+                (question.options ?? []).filter((o) => o.is_correct).length > 1 ||
+                !!(question.data && typeof question.data === "object" && (question.data as Record<string, unknown>).multiple)
+              }
             />
           )}
         </div>
       </Card>
 
-      {question && selectedOption && !submitted && (
+      {question && selectedOptions.length > 0 && !submitted && (
         <ConfidenceChips
           value={confidence}
           onChange={setConfidence}
@@ -221,7 +240,7 @@ export default function PracticePage() {
               variant="primary"
               size="lg"
               onClick={handleSubmit}
-              disabled={!selectedOption || submitting}
+              disabled={selectedOptions.length === 0 || submitting}
               style={{ flex: 1 }}
             >
               {submitting ? (

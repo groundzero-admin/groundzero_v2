@@ -197,6 +197,45 @@ export default function SessionCockpit({
                   <Tile key={t.id} trackId={t.trackId} label={t.label} style={{ width: "100%", aspectRatio: "16/9" }} />
                 ))}
               </div>
+              <div
+                style={{
+                  position: "absolute",
+                  left: "50%",
+                  bottom: 10,
+                  transform: "translateX(-50%)",
+                  zIndex: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 10px",
+                  borderRadius: 999,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  background: "rgba(0,0,0,0.55)",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <button
+                  type="button"
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isAudioOn ? "#4a5568" : "#e53e3e" }}
+                  onClick={() => { hmsActions.setLocalAudioEnabled(!isAudioOn); }}
+                >
+                  {isAudioOn ? "Mute" : "Unmute"}
+                </button>
+                <button
+                  type="button"
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isVideoOn ? "#4a5568" : "#e53e3e" }}
+                  onClick={() => { hmsActions.setLocalVideoEnabled(!isVideoOn); }}
+                >
+                  {isVideoOn ? "Cam Off" : "Cam On"}
+                </button>
+                <button
+                  type="button"
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isScreenShared ? "#d69e2e" : "#4a5568" }}
+                  onClick={() => { hmsActions.setScreenShareEnabled(!isScreenShared); }}
+                >
+                  {isScreenShared ? "Stop Share" : "Share Screen"}
+                </button>
+              </div>
             </>
           ) : (
             /* Not connected — show start button or connecting */
@@ -217,33 +256,6 @@ export default function SessionCockpit({
             </div>
           )}
         </div>
-
-        {/* Video controls */}
-        {isConnected && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, padding: 10 }}>
-            <button
-              type="button"
-              style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isAudioOn ? "#4a5568" : "#e53e3e" }}
-              onClick={() => { console.log("mic click"); hmsActions.setLocalAudioEnabled(!isAudioOn); }}
-            >
-              {isAudioOn ? "Mute" : "Unmute"}
-            </button>
-            <button
-              type="button"
-              style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isVideoOn ? "#4a5568" : "#e53e3e" }}
-              onClick={() => { console.log("cam click"); hmsActions.setLocalVideoEnabled(!isVideoOn); }}
-            >
-              {isVideoOn ? "Cam Off" : "Cam On"}
-            </button>
-            <button
-              type="button"
-              style={{ padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer", color: "#fff", fontWeight: 600, fontSize: 13, background: isScreenShared ? "#d69e2e" : "#4a5568" }}
-              onClick={() => { console.log("screen click"); hmsActions.setScreenShareEnabled(!isScreenShared); }}
-            >
-              {isScreenShared ? "Stop Share" : "Share Screen"}
-            </button>
-          </div>
-        )}
 
         {/* Session header */}
         <div className={s.sessionHeader}>

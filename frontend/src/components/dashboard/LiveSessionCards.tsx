@@ -15,6 +15,8 @@ interface LiveSession {
     description: string | null;
     order: number | null;
     scheduled_at: string | null;
+    started_at: string | null;
+    ended_at: string | null;
     is_live: boolean;
     room_code_guest: string | null;
     cohort_name: string;
@@ -35,8 +37,8 @@ function useMyLiveSessions() {
                 .finally(() => { if (active) setLoading(false); });
         };
         fetchSessions();
-        const interval = setInterval(fetchSessions, 10_000); // poll every 10s
-        return () => { active = false; clearInterval(interval); };
+        // No polling: we only fetch when this component mounts.
+        return () => { active = false; };
     }, []);
 
     return { sessions, loading };
@@ -44,54 +46,39 @@ function useMyLiveSessions() {
 
 // ─── Helpers ───
 
-/** Parse "2026-03-06" as a LOCAL date (not UTC) */
-function parseLocalDate(dateStr: string): Date {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d); // months are 0-indexed
-}
-
 function formatDate(dateStr: string | null): string {
     if (!dateStr) return "";
-    const target = parseLocalDate(dateStr);
+    const target = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
     const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
 
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "Tomorrow";
     if (diffDays === -1) return "Yesterday";
     if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
-    return target.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" });
+    return target.toLocaleDateString("en-IN", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+    });
 }
 
-function formatTime(timing: string | null): string {
-    if (!timing) return "";
-    const start = timing.split("-")[0]?.trim();
-    if (!start) return timing;
-    const [h, m] = start.split(":").map(Number);
+function formatTime(dateStr: string | null): string {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    const h = d.getHours();
+    const m = d.getMinutes();
     const ampm = h >= 12 ? "PM" : "AM";
     const hour12 = h % 12 || 12;
     return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
-function isPast(dateStr: string | null): boolean {
-    if (!dateStr) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return parseLocalDate(dateStr) < today;
-}
-
-function timeUntil(dateStr: string | null, timing: string | null): string {
+function timeUntil(dateStr: string | null): string {
     if (!dateStr) return "";
     const now = new Date();
     const target = new Date(dateStr);
-    if (timing) {
-        const start = timing.split("-")[0]?.trim();
-        if (start) {
-            const [h, m] = start.split(":").map(Number);
-            target.setHours(h, m, 0, 0);
-        }
-    }
     const diffMs = target.getTime() - now.getTime();
     if (diffMs <= 0) return "";
     const hours = Math.floor(diffMs / 3600000);
@@ -114,18 +101,138 @@ export function NextSessionCard() {
     const { sessions, loading } = useMyLiveSessions();
 
     if (loading) return null;
-    if (!sessions.length) return null;
+    if (!sessions.length) {
+        return (
+            <div
+                style={{
+                    ...cardBase,
+                    background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                    border: "1px solid #fdba74",
+                }}
+            >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                            <div
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "50%",
+                                    background: "#ffedd5",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 18,
+                                }}
+                            >
+                                📅
+                            </div>
+                            <span
+                                style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    color: "#6b7280",
+                                    letterSpacing: 1,
+                                }}
+                            >
+                                Live Class
+                            </span>
+                        </div>
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1f2937", margin: "0 0 4px" }}>
+                            No class
+                        </h3>
+                        <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px", lineHeight: 1.4 }}>
+                            No next class planned yet.
+                        </p>
+                    </div>
+                    <div
+                        style={{
+                            textAlign: "center",
+                            padding: "10px 16px",
+                            borderRadius: 12,
+                            background: "rgba(255,255,255,0.7)",
+                            minWidth: 80,
+                        }}
+                    >
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" }}>
+                            Next
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#1f2937" }}>—</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    // Find the next upcoming session (not past)
-    const upcoming = sessions.filter((s) => !isPast(s.scheduled_at));
-    const next = upcoming[0];
-    if (!next) return null;
+    const now = new Date();
+    const nowTs = now.getTime();
+
+    const live = sessions
+        .filter((s) => s.is_live)
+        .sort((a, b) => {
+            const at = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
+            const bt = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
+            return at - bt;
+        })[0];
+
+    const next = live
+        ? live
+        : sessions
+            .filter((s) => !s.is_live && !s.ended_at && s.scheduled_at)
+            .filter((s) => new Date(s.scheduled_at!).getTime() >= nowTs)
+            .sort((a, b) => new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime())[0];
+
+    if (!next) {
+        return (
+            <div
+                style={{
+                    ...cardBase,
+                    background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                    border: "1px solid #fdba74",
+                }}
+            >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                            <div
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                    borderRadius: "50%",
+                                    background: "#ffedd5",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 18,
+                                }}
+                            >
+                                📅
+                            </div>
+                            <span
+                                style={{
+                                    fontSize: 11,
+                                    fontWeight: 600,
+                                    textTransform: "uppercase",
+                                    color: "#6b7280",
+                                    letterSpacing: 1,
+                                }}
+                            >
+                                Live Class
+                            </span>
+                        </div>
+                        <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1f2937", margin: "0 0 4px" }}>
+                            No next class planned yet
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const dateLabel = formatDate(next.scheduled_at);
-    // Extract time from scheduled_at ISO string
-    const timingFromSchedule = next.scheduled_at ? next.scheduled_at.slice(11, 16) : null;
-    const timeLabel = formatTime(timingFromSchedule);
-    const unlockIn = timeUntil(next.scheduled_at, timingFromSchedule);
+    const timeLabel = formatTime(next.scheduled_at);
+    const unlockIn = timeUntil(next.scheduled_at);
 
     return (
         <div
@@ -155,7 +262,7 @@ export function NextSessionCard() {
                             ⚡
                         </div>
                         <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "#6b7280", letterSpacing: 1 }}>
-                            Live Session
+                            {next.is_live ? "Live Session" : "Next Live Session"}
                         </span>
                     </div>
                     <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1f2937", margin: "0 0 4px" }}>
@@ -201,7 +308,7 @@ export function NextSessionCard() {
                                 fontWeight: 500,
                             }}
                         >
-                            🔒 {unlockIn ? `Class unlocks in ${unlockIn}` : "Class not started yet"}
+                            🔒 {unlockIn ? `Starts in ${unlockIn}` : "Class not started yet"}
                         </div>
                     )}
                 </div>
@@ -229,10 +336,45 @@ export function NextSessionCard() {
 export function YourJourneyCard() {
     const { sessions } = useMyLiveSessions();
 
-    // Split into past + at most 2 upcoming, then reverse (newest first)
-    const pastSessions = sessions.filter((s) => isPast(s.scheduled_at));
-    const upcomingSessions = sessions.filter((s) => !isPast(s.scheduled_at)).slice(0, 2);
-    const sorted = [...pastSessions, ...upcomingSessions].reverse();
+    if (!sessions.length) {
+        return (
+            <div
+                style={{
+                    ...cardBase,
+                    background: "#faf9f6",
+                    border: "1px solid #e5e7eb",
+                }}
+            >
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <span style={{ fontSize: 18 }}>🕐</span>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1f2937", margin: 0 }}>Your Journey</h3>
+                </div>
+                <div style={{ color: "#6b7280", fontSize: 13, lineHeight: 1.4 }}>
+                    No sessions yet. Your journey will appear here as you attend live sessions.
+                </div>
+            </div>
+        );
+    }
+
+    const now = new Date();
+    const nowTs = now.getTime();
+
+    const liveSessions = sessions.filter((s) => s.is_live);
+    const nextUpcoming = sessions
+        .filter((s) => !s.is_live && !s.ended_at && s.scheduled_at)
+        .filter((s) => new Date(s.scheduled_at!).getTime() >= nowTs)
+        .sort((a, b) => new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime())[0];
+
+    const currentOrNext =
+        liveSessions.sort((a, b) => {
+            const at = a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0;
+            const bt = b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0;
+            return at - bt;
+        })[0] ?? nextUpcoming;
+
+    const sorted = [...sessions]
+        .filter((s) => s.scheduled_at)
+        .sort((a, b) => (b.scheduled_at ? new Date(b.scheduled_at).getTime() : 0) - (a.scheduled_at ? new Date(a.scheduled_at).getTime() : 0));
 
     return (
         <div
@@ -247,7 +389,7 @@ export function YourJourneyCard() {
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1f2937", margin: 0 }}>Your Journey</h3>
             </div>
 
-            <div style={{ position: "relative", paddingLeft: 20 }}>
+            <div style={{ position: "relative", paddingLeft: 20, maxHeight: 420, overflowY: "auto", paddingRight: 8 }}>
                 {/* Vertical line */}
                 <div
                     style={{
@@ -261,13 +403,15 @@ export function YourJourneyCard() {
                 />
 
                 {sorted.map((sess, i) => {
-                    const past = isPast(sess.scheduled_at);
-                    const isNext = !past && (i === sorted.length - 1 || isPast(sorted[i + 1]?.scheduled_at));
+                    const completed =
+                        !!sess.ended_at ||
+                        (!sess.is_live && sess.scheduled_at ? new Date(sess.scheduled_at).getTime() < nowTs : false);
+                    const isCurrentOrNext = currentOrNext?.id === sess.id;
 
-                    // Dot color: blue for next/current, green for past, gray for future
-                    let dotColor = "#d1d5db"; // gray — future
-                    if (isNext || sess.is_live) dotColor = "#6366f1"; // indigo — current
-                    else if (past) dotColor = "#10b981"; // green — done
+                    // Dot color: dark indigo for next/current, green for completed, gray for upcoming
+                    let dotColor = "#d1d5db"; // gray — upcoming
+                    if (sess.is_live || isCurrentOrNext) dotColor = "#6366f1";
+                    else if (completed) dotColor = "#10b981";
 
                     return (
                         <div
@@ -296,13 +440,15 @@ export function YourJourneyCard() {
                                 {sess.title ?? `Session ${sess.order ?? ""}`}
                             </div>
                             <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
-                                {past
-                                    ? `Completed ${formatDate(sess.scheduled_at)}`
-                                    : `${formatDate(sess.scheduled_at)}${sess.scheduled_at ? ", " + formatTime(sess.scheduled_at.slice(11, 16)) : ""}`}
+                                {sess.is_live
+                                    ? "Happening now"
+                                    : completed
+                                        ? `Completed ${formatDate(sess.ended_at ?? sess.scheduled_at)}`
+                                        : `${formatDate(sess.scheduled_at)}, ${formatTime(sess.scheduled_at)}`}
                             </div>
 
                             {/* Action buttons for past sessions */}
-                            {past && (
+                            {completed && (
                                 <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                                     <span
                                         style={{

@@ -8,14 +8,14 @@ import { useActiveSession } from "@/api/hooks/useActiveSession";
 import { useActivity } from "@/api/hooks/useActivities";
 import { useSessionActivities } from "@/api/hooks/useTeacher";
 import { useSessionScore } from "@/api/hooks/useSessionScore";
-import { useNextQuestion } from "@/api/hooks/useNextQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
 import { api } from "@/api/client";
-import type { BKTUpdate, EvidenceCreate } from "@/api/types";
+import type { BKTUpdate, EvidenceCreate, Question } from "@/api/types";
 import type { SparkTriggerData } from "@/components/live/AICompanionShell";
 import { AICompanionShell } from "@/components/live/AICompanionShell";
 import { VideoArea } from "@/components/live/VideoArea";
 import { ActivityPanel } from "@/components/live/ActivityPanel";
+import { ConfidenceChips } from "@/components/live/ConfidenceChips";
 import { BKTUpdateToast } from "@/components/live/BKTUpdateToast";
 import * as s from "./LivePage.css";
 
@@ -31,9 +31,14 @@ export default function LivePage() {
     try { return !JSON.parse(m.message)?.type; } catch { return true; }
   });
   const [chatText, setChatText] = useState("");
+  const chatInputRef = useRef<HTMLInputElement | null>(null);
+  const chatFileInputRef = useRef<HTMLInputElement | null>(null);
+  const pendingEmojiCursorPos = useRef<number | null>(null);
+  const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [sideTab, setSideTab] = useState<"activity" | "chat">("activity");
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [sidebarWidth, setSidebarWidth] = useState<number>(420);
+  const [chatImageError, setChatImageError] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(390);
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages.length]);
@@ -57,24 +62,78 @@ export default function LivePage() {
     };
   }, [isResizing]);
 
-  const sendChat = useCallback(() => {
+  const sendChat = useCallback(async () => {
     const txt = chatText.trim();
-    if (!txt) return;
-    hmsActions.sendBroadcastMessage(txt);
+    if (!txt && pendingImages.length === 0) return;
+
+    // Send text first (if any), then each pending image.
+    if (txt) await hmsActions.sendBroadcastMessage(txt);
+    for (const img of pendingImages) {
+      await hmsActions.sendBroadcastMessage(`[img]${img}`);
+    }
+
     setChatText("");
-  }, [chatText, hmsActions]);
+    setPendingImages([]);
+    requestAnimationFrame(() => chatInputRef.current?.focus());
+  }, [chatText, pendingImages, hmsActions]);
+
+  function appendEmoji(emoji: string) {
+    const el = chatInputRef.current;
+    const start = el?.selectionStart ?? chatText.length;
+    const end = el?.selectionEnd ?? chatText.length;
+
+    pendingEmojiCursorPos.current = start + emoji.length;
+    setChatText((prev) => prev.slice(0, start) + emoji + prev.slice(end));
+  }
+
+  // Keep caret position after emoji insertion.
+  useEffect(() => {
+    if (pendingEmojiCursorPos.current == null) return;
+    if (!chatInputRef.current) return;
+    const pos = pendingEmojiCursorPos.current;
+    chatInputRef.current.setSelectionRange(pos, pos);
+    pendingEmojiCursorPos.current = null;
+  }, [chatText]);
+
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const sendImageToChat = useCallback(
+    async (dataUrl: string) => {
+      // Add to pending tray; user can still type and add more images.
+      setPendingImages((prev) => [...prev, dataUrl]);
+      requestAnimationFrame(() => chatInputRef.current?.focus());
+    },
+    [],
+  );
+
+  function removePendingImage(idx: number) {
+    setPendingImages((prev) => prev.filter((_, i) => i !== idx));
+  }
 
   // Fetch student's live sessions to get HMS room code
-  const { data: liveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean }[]>({
+  const { data: liveSessions } = useQuery<
+    {
+      room_code_guest: string | null;
+      student_name: string;
+      is_live: boolean;
+      cohort_id?: string;
+    }[]
+  >({
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
-    refetchInterval: 15_000,
   });
   const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
 
   // Session-driven flow: find active session for student's cohort
-  const { data: session, isLoading: loadingSession } = useActiveSession(student?.cohort_id);
+  const { data: session, isLoading: loadingSession } = useActiveSession(activeLiveSession?.cohort_id ?? student?.cohort_id);
   const { data: activity, isLoading: loadingActivity } = useActivity(session?.current_activity_id);
   const { data: sessionActivities } = useSessionActivities(session?.id);
 
@@ -86,20 +145,41 @@ export default function LivePage() {
     [sessionActivities, session?.current_activity_id],
   );
 
-  // Backend picks the best competency + question for this activity
+  // Load launched activity questions + student's attempt progress.
   const {
-    data: nextQ,
+    data: questionFlow,
     isLoading: questionLoading,
-    refetch: refetchQuestion,
-  } = useNextQuestion(studentId, activity?.id ?? null);
-
-  const question = nextQ?.question ?? null;
+  } = useQuery<{
+    questions: Question[];
+    attempted_question_ids: string[];
+    attempted_results: Record<string, boolean>;
+    next_question_index: number;
+  }>({
+    queryKey: ["session-activity-question-flow", session?.id, activity?.id, studentId],
+    queryFn: async () =>
+      (
+        await api.get(`/sessions/${session?.id}/activities/${activity?.id}/question-flow`, {
+          params: studentId ? { student_id: studentId } : undefined,
+        })
+      ).data,
+    enabled: !!session?.id && !!activity?.id && !!session?.current_activity_id,
+    refetchInterval: 3_000,
+    refetchOnWindowFocus: true,
+  });
+  const activityQuestions = questionFlow?.questions ?? [];
+  const attemptedResults = questionFlow?.attempted_results ?? {};
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const question = activityQuestions[questionIndex] ?? null;
+  const allAttempted =
+    activityQuestions.length > 0 &&
+    (questionFlow?.next_question_index ?? 0) >= activityQuestions.length;
 
   // Answer state
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [widgetAnswer, setWidgetAnswer] = useState<unknown>(null);
   const [confidence, setConfidence] = useState<"got_it" | "kinda" | "lost" | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const questionShownAt = useRef<number>(Date.now());
+  const questionShownAt = useRef<number>(new Date().getTime());
 
   // BKT toast
   const [toastUpdates, setToastUpdates] = useState<BKTUpdate[] | null>(null);
@@ -161,30 +241,84 @@ export default function LivePage() {
   const { mutateAsync: submitEvidence, isPending: submitting } =
     useSubmitEvidence(studentId);
 
-  // Reset question state when question changes
+  // Reset question state when current question changes
   useEffect(() => {
-    setSelectedOption(null);
+    setSelectedOptions([]);
+    setWidgetAnswer(null);
     setConfidence(null);
     setSubmitted(false);
     setSparkTrigger(null);
     setAiInteraction("none");
     setWantHint(false);
     questionShownAt.current = Date.now();
-  }, [nextQ?.question?.id]);
+  }, [question?.id]);
 
-  const handleSubmit = useCallback(async () => {
-    if (!studentId || !selectedOption || !question || !nextQ) return;
+  // Start from the first unanswered question whenever activity changes/resumes.
+  useEffect(() => {
+    if (!session?.current_activity_id) {
+      setQuestionIndex(0);
+      return;
+    }
+    setQuestionIndex(questionFlow?.next_question_index ?? 0);
+  }, [activity?.id, session?.current_activity_id, questionFlow?.next_question_index]);
 
-    const correctLabel =
-      question.options?.find((o) => o.is_correct)?.label ?? null;
-    const isCorrect = selectedOption === correctLabel;
+  const isWidgetQuestion =
+    !!question?.template_slug && !String(question.template_slug).startsWith("mcq_");
+
+  const deriveWidgetOutcome = useCallback((
+    templateSlug: string | null | undefined,
+    answer: unknown,
+  ): number => {
+    if (typeof answer === "object" && answer !== null) {
+      const obj = answer as Record<string, unknown>;
+      if (typeof obj.correct === "boolean") return obj.correct ? 1.0 : 0.0;
+      if (typeof obj.score === "number") return Math.max(0, Math.min(1, obj.score));
+    }
+
+    const subjective = new Set([
+      "short_answer",
+      "image_response",
+      "audio_response",
+      "debate_opinion",
+      "ai_conversation",
+      "draw_scribble",
+      "reflection_rating",
+    ]);
+    if (templateSlug && subjective.has(templateSlug)) {
+      // Non-deterministic responses get completion credit instead of hard zero.
+      return 0.65;
+    }
+    return 0.5;
+  }, []);
+
+  const handleSubmit = useCallback(async (widgetAnswerOverride?: unknown) => {
+    if (!studentId || !question) return;
+    if (!isWidgetQuestion && selectedOptions.length === 0) return;
+    const effectiveWidgetAnswer = widgetAnswerOverride ?? widgetAnswer;
+    if (isWidgetQuestion && !effectiveWidgetAnswer) return;
+
+    let isCorrect = false;
+    let derivedOutcome = 0.0;
+    if (!isWidgetQuestion) {
+      const correctLabels = (question.options ?? []).filter((o) => o.is_correct).map((o) => o.label);
+      isCorrect =
+        selectedOptions.length === correctLabels.length &&
+        selectedOptions.every((label) => correctLabels.includes(label));
+      derivedOutcome = isCorrect ? 1.0 : 0.0;
+    } else if (typeof effectiveWidgetAnswer === "object" && effectiveWidgetAnswer !== null) {
+      derivedOutcome = deriveWidgetOutcome(question.template_slug, effectiveWidgetAnswer);
+      isCorrect = derivedOutcome >= 0.5;
+    } else {
+      derivedOutcome = deriveWidgetOutcome(question.template_slug, effectiveWidgetAnswer);
+      isCorrect = derivedOutcome >= 0.5;
+    }
     const responseTimeMs = Date.now() - questionShownAt.current;
 
     const evidence: EvidenceCreate = {
       student_id: studentId,
-      competency_id: nextQ.competency_id,
-      outcome: isCorrect ? 1.0 : 0.0,
-      source: "mcq",
+      competency_id: question.competency_id,
+      outcome: derivedOutcome,
+      source: isWidgetQuestion ? "artifact" : "mcq",
       question_id: question.id,
       module_id: question.module_id,
       session_id: session?.id,
@@ -198,7 +332,7 @@ export default function LivePage() {
       setSubmitted(true);
       setLocalScoreDelta((prev) => ({
         total: prev.total + 1,
-        correct: prev.correct + (isCorrect ? 1 : 0),
+        correct: prev.correct + (derivedOutcome >= 0.5 ? 1 : 0),
       }));
       if (result.updates.length > 0) {
         setToastUpdates(result.updates);
@@ -211,11 +345,28 @@ export default function LivePage() {
     } catch {
       // Mutation error handled by TanStack Query
     }
-  }, [studentId, selectedOption, question, nextQ, confidence, session?.id, submitEvidence, aiInteraction]);
+  }, [
+    studentId,
+    question,
+    isWidgetQuestion,
+    selectedOptions,
+    widgetAnswer,
+    confidence,
+    session?.id,
+    submitEvidence,
+    aiInteraction,
+    deriveWidgetOutcome,
+  ]);
 
   const handleNext = useCallback(() => {
-    refetchQuestion();
-  }, [refetchQuestion]);
+    setQuestionIndex((prev) => prev + 1);
+  }, []);
+  const handlePrev = useCallback(() => {
+    setQuestionIndex((prev) => Math.max(0, prev - 1));
+  }, []);
+  const handleRestartReview = useCallback(() => {
+    setQuestionIndex(0);
+  }, []);
 
   const dismissToast = useCallback(() => setToastUpdates(null), []);
 
@@ -289,12 +440,6 @@ export default function LivePage() {
                 }}
               >
                 {tab === "activity" ? "Activity" : "Chat"}
-                {tab === "chat" && chatMessages.length > 0 && sideTab !== "chat" && (
-                  <span style={{
-                    background: "#6366f1", borderRadius: "50%", width: 16, height: 16,
-                    fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>{chatMessages.length > 9 ? "9+" : chatMessages.length}</span>
-                )}
               </button>
             ))}
           </div>
@@ -310,20 +455,56 @@ export default function LivePage() {
                   activityLoading={loadingActivity}
                   question={question}
                   questionsLoading={questionLoading}
-                  selectedOption={selectedOption}
-                  onSelectOption={setSelectedOption}
+                  questionIndex={questionIndex}
+                  totalQuestions={activityQuestions.length}
+                  attemptedResult={question ? (question.id in attemptedResults ? attemptedResults[question.id] : null) : null}
+                  allAttempted={allAttempted}
+                  onRestartReview={handleRestartReview}
+                  selectedOptions={selectedOptions}
+                  onSelectOption={(label) => {
+                    const allowMultiple =
+                      !!question &&
+                      (
+                        (Array.isArray(question.options) && question.options.filter((o) => o.is_correct).length > 1) ||
+                        !!(question.data && typeof question.data === "object" && (question.data as Record<string, unknown>).multiple)
+                      );
+                    if (allowMultiple) {
+                      setSelectedOptions((prev) =>
+                        prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label]
+                      );
+                    } else {
+                      setSelectedOptions([label]);
+                    }
+                  }}
+                  onWidgetAnswer={(ans) => {
+                    setWidgetAnswer(ans);
+                    if (!submitted && !submitting) {
+                      void handleSubmit(ans);
+                    }
+                  }}
+                  widgetAnswered={widgetAnswer != null}
                   submitted={submitted}
                   onSubmit={handleSubmit}
+                  onPrev={handlePrev}
                   onNext={handleNext}
                   submitting={submitting}
                   timeLeft={isTimedMcq ? timeLeft : undefined}
                   totalAnswered={totalAnswered}
                   correctCount={correctCount}
                 />
+                {question && selectedOptions.length > 0 && !submitted && (
+                  <div style={{ padding: "0 14px 10px 14px" }}>
+                    <ConfidenceChips
+                      value={confidence}
+                      onChange={setConfidence}
+                      variant="light"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* ── Hint button — always at bottom, no scroll needed ── */}
-              {wantHint && !sparkTrigger && question && nextQ && studentId && (
+              {wantHint && !sparkTrigger && question && studentId && (
                 <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid #e2e8f0", background: "#fff" }}>
                   <button
                     onClick={() => {
@@ -331,8 +512,8 @@ export default function LivePage() {
                         studentId,
                         questionId: question.id,
                         trigger: "wrong_answer",
-                        competencyId: nextQ.competency_id,
-                        selectedOption: selectedOption ?? undefined,
+                        competencyId: question.competency_id,
+                        selectedOption: selectedOptions.join(", ") || undefined,
                         confidenceReport: confidence ?? undefined,
                       });
                       setAiInteraction("hint");
@@ -370,6 +551,10 @@ export default function LivePage() {
                   <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 24 }}>No messages yet — say hi!</div>
                 ) : chatMessages.map((m: any) => {
                   const isMe = m.senderName === (activeLiveSession?.student_name ?? student?.name ?? "Student");
+                  const msg: string = String(m.message ?? "");
+                  const normalized = msg.trim();
+                  const imgPrefix = "[img]";
+                  const imageUrl = normalized.startsWith(imgPrefix) ? normalized.slice(imgPrefix.length) : null;
                   return (
                     <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
                       <div style={{ fontSize: 10, color: "#64748b", marginBottom: 2, paddingLeft: 4, paddingRight: 4, fontWeight: 800 }}>{m.senderName}</div>
@@ -378,25 +563,180 @@ export default function LivePage() {
                         background: isMe ? "#4f46e5" : "#f1f5f9",
                         color: isMe ? "#fff" : "#0f172a",
                         fontSize: 12, lineHeight: 1.4,
-                      }}>{m.message}</div>
+                      }}>
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt="Shared"
+                            style={{ maxWidth: 220, borderRadius: 10, display: "block" }}
+                          />
+                        ) : (
+                          msg
+                        )}
+                      </div>
                     </div>
                   );
                 })}
                 <div ref={chatEndRef} />
               </div>
               <div style={{ display: "flex", gap: 8, padding: "10px 10px 12px", borderTop: "1px solid #e2e8f0", background: "#fff" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    {["👍", "😂", "❤️", "🎉"].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => appendEmoji(emoji)}
+                        style={{
+                          border: "1px solid #e2e8f0",
+                          background: "#f8fafc",
+                          borderRadius: 10,
+                          padding: "7px 9px",
+                          fontSize: 14,
+                          cursor: "pointer",
+                        }}
+                        title={`Insert ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+
+                  {chatImageError && (
+                    <div style={{ color: "#ef4444", fontSize: 12, fontWeight: 700 }}>{chatImageError}</div>
+                  )}
+
+                  {pendingImages.length > 0 && (
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {pendingImages.map((url, idx) => (
+                        <div key={idx} style={{ position: "relative" }}>
+                          <img
+                            src={url}
+                            alt={`Pending ${idx + 1}`}
+                            style={{
+                              width: 46,
+                              height: 46,
+                              objectFit: "cover",
+                              borderRadius: 10,
+                              border: "1px solid #e2e8f0",
+                              display: "block",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(idx)}
+                            style={{
+                              position: "absolute",
+                              top: -8,
+                              right: -8,
+                              width: 22,
+                              height: 22,
+                              borderRadius: 999,
+                              border: "1px solid #e2e8f0",
+                              background: "#fff",
+                              cursor: "pointer",
+                              fontWeight: 900,
+                              fontSize: 12,
+                              color: "#ef4444",
+                              boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+                            }}
+                            title="Remove image"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <input
+                    ref={chatInputRef}
+                    value={chatText}
+                    onChange={(e) => setChatText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && void sendChat()}
+                    onPaste={async (e) => {
+                      const items = e.clipboardData?.items;
+                      if (!items) return;
+                      const files: File[] = [];
+                      for (const item of Array.from(items)) {
+                        if (item.kind !== "file") continue;
+                        const file = item.getAsFile();
+                        if (!file) continue;
+                        if (file.type.startsWith("image/")) files.push(file);
+                      }
+
+                      if (!files.length) return;
+                      e.preventDefault();
+                      setChatImageError(null);
+
+                      for (const file of files) {
+                        if (file.size > 1_000_000) {
+                          setChatImageError("Image too large (max ~1MB for chat).");
+                          return;
+                        }
+                        const dataUrl = await readFileAsDataUrl(file);
+                        await sendImageToChat(dataUrl);
+                      }
+                    }}
+                    placeholder="Type a message or paste an image..."
+                    style={{
+                      flex: 1,
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      color: "#0f172a",
+                      fontSize: 12,
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
                 <input
-                  value={chatText}
-                  onChange={(e) => setChatText(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                  placeholder="Type a message..."
-                  style={{
-                    flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0",
-                    borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontSize: 12, outline: "none",
+                  ref={chatFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (!files.length) return;
+                    setChatImageError(null);
+                    for (const file of files) {
+                      if (!file.type.startsWith("image/")) continue;
+                      if (file.size > 1_000_000) {
+                        setChatImageError("Image too large (max ~1MB for chat).");
+                        return;
+                      }
+                      const dataUrl = await readFileAsDataUrl(file);
+                      await sendImageToChat(dataUrl);
+                    }
+                    // allow selecting same file again
+                    e.currentTarget.value = "";
                   }}
                 />
+
                 <button
-                  onClick={sendChat}
+                  onClick={() => chatFileInputRef.current?.click()}
+                  style={{
+                    background: "#f1f5f9",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 12,
+                    padding: "10px 12px",
+                    color: "#0f172a",
+                    fontWeight: 900,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Upload image"
+                >
+                  📎
+                </button>
+
+                <button
+                  onClick={() => void sendChat()}
                   style={{
                     background: "#4f46e5", border: "none", borderRadius: 12, padding: "10px 14px",
                     color: "#fff", fontWeight: 900, fontSize: 12, cursor: "pointer",

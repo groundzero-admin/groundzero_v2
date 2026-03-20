@@ -6,22 +6,27 @@ interface MCQQuestionProps {
   question: Question;
   questionIndex: number;
   totalQuestions: number;
-  selectedOption: string | null;
+  selectedOptions: string[];
   onSelectOption: (label: string) => void;
   submitted: boolean;
+  allowMultiple?: boolean;
 }
 
 export function MCQQuestion({
   question,
   questionIndex,
   totalQuestions,
-  selectedOption,
+  selectedOptions,
   onSelectOption,
   submitted,
+  allowMultiple = false,
 }: MCQQuestionProps) {
   const options = question.options ?? [];
-  const correctLabel = options.find((o) => o.is_correct)?.label ?? null;
-  const isCorrect = submitted && selectedOption === correctLabel;
+  const correctLabels = options.filter((o) => o.is_correct).map((o) => o.label);
+  const isCorrect =
+    submitted &&
+    selectedOptions.length === correctLabels.length &&
+    selectedOptions.every((label) => correctLabels.includes(label));
 
   return (
     <div className={s.root}>
@@ -30,10 +35,15 @@ export function MCQQuestion({
       </span>
 
       <div className={s.questionText}>{question.text}</div>
+      {allowMultiple && (
+        <div style={{ fontSize: 12, color: "#6366f1", fontWeight: 700, marginBottom: 8 }}>
+          Select all correct options
+        </div>
+      )}
 
       <div className={s.options}>
         {options.map((opt) => {
-          const isThisSelected = selectedOption === opt.label;
+          const isThisSelected = selectedOptions.includes(opt.label);
           const isThisCorrect = submitted && opt.is_correct;
           const isThisWrong = submitted && isThisSelected && !opt.is_correct;
 
@@ -80,7 +90,7 @@ export function MCQQuestion({
               </>
             ) : (
               <>
-                <XCircle size={18} /> Not quite — the answer is {correctLabel}.
+                <XCircle size={18} /> Not quite — the answer is {correctLabels.join(", ")}.
               </>
             )}
           </div>

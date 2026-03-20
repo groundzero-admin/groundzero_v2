@@ -381,6 +381,7 @@ async def get_next_questions(
     competency_id: str,
     count: int = 1,
     module_id: str | None = None,
+    allowed_question_ids: list[uuid.UUID] | None = None,
 ) -> list[Question]:
     """
     Pick the next question(s) for a student in the zone of proximal development.
@@ -437,7 +438,11 @@ async def get_next_questions(
     query = (
         select(Question)
         .where(
-            Question.competency_ids.contains([competency_id]),
+            # `competency_ids` is a Postgres `text[]`. Using `.contains([..])` can
+            # compile to `text[] @> varchar[]` depending on parameter typing and
+            # raise "operator does not exist". `.any()` avoids the array-vs-cast
+            # mismatch while keeping the intended semantics: "question includes this competency id".
+            Question.competency_ids.any(competency_id),
             Question.difficulty >= diff_min,
             Question.difficulty <= diff_max,
         )
@@ -446,6 +451,10 @@ async def get_next_questions(
     )
     if module_id:
         query = query.where(Question.module_id == module_id)
+    if allowed_question_ids is not None:
+        if not allowed_question_ids:
+            return []
+        query = query.where(Question.id.in_(allowed_question_ids))
     if answered_ids:
         query = query.where(Question.id.notin_(answered_ids))
 
@@ -459,7 +468,7 @@ async def get_next_questions(
         fallback = (
             select(Question)
             .where(
-                Question.competency_ids.contains([competency_id]),
+                Question.competency_ids.any(competency_id),
                 Question.id.notin_(already) if already else True,
             )
             .order_by(func.abs(Question.difficulty - target_center))
@@ -467,6 +476,10 @@ async def get_next_questions(
         )
         if module_id:
             fallback = fallback.where(Question.module_id == module_id)
+        if allowed_question_ids is not None:
+            if not allowed_question_ids:
+                return questions
+            fallback = fallback.where(Question.id.in_(allowed_question_ids))
         more = (await db.execute(fallback)).scalars().all()
         questions.extend(more)
 
@@ -554,12 +567,29 @@ async def get_next_question_for_activity(
     if not activity:
         return None
 
+    # Parse activity-linked question IDs (authoritative question pool for launched activity).
+    qids = activity.question_ids or []
+    activity_question_ids: list[uuid.UUID] = []
+    for qid in qids:
+        try:
+            activity_question_ids.append(uuid.UUID(str(qid)))
+        except (ValueError, TypeError):
+            continue
+
     # Collect primary target competency IDs only
     comp_ids = []
     for comp in (activity.primary_competencies or []):
         cid = comp.get("competency_id") or comp.get("competencyId")
         if cid:
             comp_ids.append(cid)
+
+    # Fallback: some activities are wired with questions but missing primary_competencies.
+    # Derive competency IDs from the activity.question_ids so students can still get questions.
+    if not comp_ids:
+        if activity_question_ids:
+            q_rows = await db.execute(select(Question.competency_id).where(Question.id.in_(activity_question_ids)))
+            derived = [r[0] for r in q_rows.all() if r[0]]
+            comp_ids = list(dict.fromkeys(derived))  # preserve order, unique
 
     if not comp_ids:
         return None
@@ -604,13 +634,25 @@ async def get_next_question_for_activity(
         best_cid = min(comp_ids, key=lambda c: (states[c].p_learned if c in states else 0.10))
 
     # 5. Pick a ZPD question for this competency
-    questions = await get_next_questions(db, student_id, best_cid, count=1)
+    questions = await get_next_questions(
+        db,
+        student_id,
+        best_cid,
+        count=1,
+        allowed_question_ids=activity_question_ids,
+    )
     if not questions:
         # Try other competencies as fallback
         for cid in comp_ids:
             if cid == best_cid:
                 continue
-            questions = await get_next_questions(db, student_id, cid, count=1)
+            questions = await get_next_questions(
+                db,
+                student_id,
+                cid,
+                count=1,
+                allowed_question_ids=activity_question_ids,
+            )
             if questions:
                 best_cid = cid
                 break
