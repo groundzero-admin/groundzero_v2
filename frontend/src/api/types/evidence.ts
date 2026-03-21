@@ -24,7 +24,8 @@ export interface EvidenceOut {
   session_id: string | null;
   outcome: number;
   weight: number;
-  meta: Record<string, unknown> | null;
+  /** Server JSONB — usually an object, but may be other JSON shapes */
+  meta: unknown | null;
   is_propagated: boolean;
   source_event_id: string | null;
   created_at: string;

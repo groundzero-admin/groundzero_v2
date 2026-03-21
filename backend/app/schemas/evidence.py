@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -34,7 +34,8 @@ class EvidenceOut(BaseModel):
     session_id: uuid.UUID | None = None
     outcome: float
     weight: float
-    meta: dict | None = None
+    # JSONB — must not assume object shape (legacy or hand-edited rows can be arrays)
+    meta: Any | None = None
     is_propagated: bool
     source_event_id: uuid.UUID | None = None
     created_at: datetime

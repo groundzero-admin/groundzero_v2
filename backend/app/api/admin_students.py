@@ -9,12 +9,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import require_role
 from app.database import get_db
+from app.models.batch_enrollment import CohortEnrollment
+from app.models.session import Cohort
 from app.models.student import Student
 from app.models.user import User
 from app.services.invite_service import (
     build_invite_link,
     create_invite,
-    get_invite_status,
+    get_invite_status_and_link,
 )
 
 router = APIRouter(prefix="/admin/students", tags=["admin-students"])
@@ -28,6 +30,8 @@ class AdminStudentCreate(BaseModel):
     board: str = Field(pattern=r"^(cbse|icse|ib)$")
     grade: int = Field(ge=4, le=9)
     grade_band: str = Field(pattern=r"^(4-5|6-7|8-9)$")
+    # Enroll in one transaction with user+student — avoids flaky parallel POSTs from the client
+    cohort_ids: list[uuid.UUID] = Field(default_factory=list, max_length=50)
 
 
 class AdminStudentOut(BaseModel):
@@ -42,6 +46,7 @@ class AdminStudentOut(BaseModel):
     invite_status: str  # "pending", "accepted", "expired", "none"
     invite_link: str | None = None
     created_at: str
+    enrolled_cohort_ids: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -93,7 +98,7 @@ async def list_students(
 
     students = []
     for user, student in rows:
-        status = await get_invite_status(db, user.id)
+        status, invite_link = await get_invite_status_and_link(db, user.id)
         students.append(
             AdminStudentOut(
                 id=str(user.id),
@@ -105,7 +110,9 @@ async def list_students(
                 grade_band=student.grade_band if student else None,
                 is_active=user.is_active,
                 invite_status=status,
+                invite_link=invite_link,
                 created_at=user.created_at.isoformat(),
+                enrolled_cohort_ids=[],
             )
         )
 
@@ -149,6 +156,27 @@ async def create_student(
 
     # Generate invite token
     raw_token = await create_invite(db, user.id)
+
+    enrolled_cohort_ids: list[str] = []
+    seen: set[uuid.UUID] = set()
+    for cohort_id in data.cohort_ids:
+        if cohort_id in seen:
+            continue
+        seen.add(cohort_id)
+        cohort = await db.get(Cohort, cohort_id)
+        if not cohort:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cohort not found: {cohort_id}",
+            )
+        db.add(
+            CohortEnrollment(
+                student_id=student.id,
+                cohort_id=cohort_id,
+            )
+        )
+        enrolled_cohort_ids.append(str(cohort_id))
+
     await db.commit()
     await db.refresh(user)
     await db.refresh(student)
@@ -165,6 +193,7 @@ async def create_student(
         invite_status="pending",
         invite_link=build_invite_link(raw_token),
         created_at=user.created_at.isoformat(),
+        enrolled_cohort_ids=enrolled_cohort_ids,
     )
 
 
