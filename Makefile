@@ -1,16 +1,4 @@
-EC2_IP      := 13.127.212.180
-EC2_USER    := ubuntu
-S3_BUCKET   := groundzero-frontend-607416643912
-CF_DIST_ID  := E3UB1MMSAZCO69
-KEY_PATH    := ~/.ssh/id_ed25519_gz
-SSH         := ssh -i $(KEY_PATH) -o StrictHostKeyChecking=no $(EC2_USER)@$(EC2_IP)
-
-# Load AWS credentials from .env.aws if it exists (export KEY=VALUE lines)
--include .env.aws
-export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_DEFAULT_REGION
-
-.PHONY: backend frontend dev stop db seed-questions generate-images generate-characters generate-audios \
-        deploy-backend deploy-frontend deploy ssh-connect backfill-hints simulate-class
+.PHONY: backend frontend dev stop db seed-questions generate-images generate-characters generate-audios regenerate-audios
 
 # ─── Individual services ───
 
@@ -61,6 +49,7 @@ generate-audios:
 	@echo "Generating question TTS audio and uploading to S3..."
 	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.generate_question_audios
 
+<<<<<<< HEAD
 backfill-correct-answers:
 	@echo "Backfilling correct answers for all deterministic questions..."
 	cd backend && source .venv/bin/activate && python -m app.scripts.backfill_correct_answers
@@ -108,3 +97,8 @@ deploy-frontend:
 
 deploy: deploy-backend deploy-frontend
 	@echo "=== Full deployment complete ==="
+=======
+regenerate-audios:
+	@echo "Regenerating ALL question TTS audio (overwriting existing)..."
+	cd backend && source .venv/bin/activate && python -m app.plugins.benchmark.generate_question_audios --force
+>>>>>>> 512f3eb (Enhance benchmark service with evidence-based BKT seeding)

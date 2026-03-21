@@ -831,7 +831,7 @@ export default function ConversationRoomPage() {
               onClick={!typingDone ? skipTyping : undefined}
             >
               <div className="cr-q-badge" style={{ backgroundColor: character.color + "18", color: character.color }}>
-                Question {currentQuestion.question_number}
+                Question {currentIndex + 1}
               </div>
               <div className="cr-q-text">
                 {typedWords.map((word, i) => (

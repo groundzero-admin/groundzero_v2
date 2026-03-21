@@ -6,7 +6,7 @@ Generates 5 characters x 60 questions = 300 audio files (WAV) using the
 configured TTS provider, then uploads to S3 for static serving.
 
 S3 path:  question-audio/{character_id}/{grade_band}_{question_number}.wav
-Public URL: https://groundzero-static-assets.s3.us-east-1.amazonaws.com/question-audio/...
+Public URL: https://groundzero-static.s3.ap-southeast-2.amazonaws.com/question-audio/...
 
 Requires:
   - AWS credentials (default profile)
@@ -31,7 +31,7 @@ from app.plugins.benchmark.services.voice_service import text_to_speech, get_def
 
 logger = logging.getLogger(__name__)
 
-S3_BUCKET = "groundzero-static-ap"
+S3_BUCKET = "groundzero-static"
 S3_REGION = "ap-southeast-2"
 S3_PREFIX = "question-audio"
 S3_BASE_URL = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com"
@@ -57,8 +57,12 @@ def _s3_key_exists(s3_client, key: str) -> bool:
         return False
 
 
-async def generate_all_audios():
-    """Load questions from DB, generate TTS audio for each character, upload to S3."""
+async def generate_all_audios(force: bool = False):
+    """Load questions from DB, generate TTS audio for each character, upload to S3.
+
+    Args:
+        force: If True, regenerate and overwrite all audio files even if they exist in S3.
+    """
     import app.models  # noqa: F401
 
     LOCAL_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -75,8 +79,9 @@ async def generate_all_audios():
         questions = result.scalars().all()
 
     total = len(questions) * len(CHARACTERS)
-    logger.info("Generating %d audio files (%d questions x %d characters) using %s",
-                total, len(questions), len(CHARACTERS), provider)
+    logger.info("Generating %d audio files (%d questions x %d characters) using %s%s",
+                total, len(questions), len(CHARACTERS), provider,
+                " [FORCE mode — overwriting existing]" if force else "")
 
     audio_cache: dict[str, bytes] = {}
     count = 0
@@ -88,14 +93,15 @@ async def generate_all_audios():
             count += 1
             key = _s3_key(char_id, q.grade_band, q.question_number)
 
-            if _s3_key_exists(s3, key):
+            if not force and _s3_key_exists(s3, key):
                 skipped += 1
                 logger.info("[%d/%d] Skipping %s/%s_%d — exists in S3",
                             count, total, char_id, q.grade_band, q.question_number)
                 continue
 
-            logger.info("[%d/%d] Generating %s/%s_%d...",
-                        count, total, char_id, q.grade_band, q.question_number)
+            logger.info("[%d/%d] %s %s/%s_%d...",
+                        count, total, "Regenerating" if force else "Generating",
+                        char_id, q.grade_band, q.question_number)
 
             cache_key = f"{provider}:{char_id}:{q.id}" if provider == "elevenlabs" else f"{provider}:{q.id}"
             try:
@@ -128,9 +134,16 @@ async def generate_all_audios():
 
 
 async def _main():
+    import argparse
     import app.models  # noqa: F401
+
+    parser = argparse.ArgumentParser(description="Generate TTS audio for benchmark questions")
+    parser.add_argument("--force", action="store_true",
+                        help="Regenerate all audio files, overwriting existing ones in S3")
+    args = parser.parse_args()
+
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    await generate_all_audios()
+    await generate_all_audios(force=args.force)
 
 
 if __name__ == "__main__":

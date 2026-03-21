@@ -48,15 +48,17 @@ QUESTIONS = [
     {
         "grade_band": "4-5",
         "question_number": 2,
-        "text": "Your friend says 3/8 is bigger than 1/2 because 3 is bigger than 1. How would you convince them they're wrong?",
-        "curriculum_anchor": "Fraction comparison (Gr 3-4)",
+        "text": "Your friend says a pizza cut into 8 slices gives you more pizza than one cut into 4 slices — because 8 is bigger than 4. What would you say to them?",
+        "curriculum_anchor": "Fraction comparison, part-whole reasoning (Gr 3-4)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Uses 'of the whole' language, draws picture, converts to common denominator, or uses pizza/pie analogy",
-            "Addresses why the friend is wrong, not just that they are"
+            "Explains it's the same pizza just cut differently — the slices are smaller",
+            "Uses 'part of the whole' reasoning spontaneously",
+            "May draw on real experience: 'cutting a roti into more pieces doesn't give you more roti'"
         ],
         "watchout_signals": [
-            "'You're just wrong' or restates the correct answer without an explanation the friend could follow"
+            "Agrees with the friend — 8 is more so you get more",
+            "Says the friend is wrong but can't explain why in a way the friend would understand"
         ],
     },
     {
@@ -136,15 +138,17 @@ QUESTIONS = [
     {
         "grade_band": "4-5",
         "question_number": 8,
-        "text": "A square and a rectangle both have 4 right angles. But we say they're different shapes. Why?",
-        "curriculum_anchor": "Geometry definitions: properties of quadrilaterals (Gr 3-4)",
+        "text": "Every square is also a rectangle — but not every rectangle is a square. Does that sound right to you, or does it sound weird? Can you explain why?",
+        "curriculum_anchor": "Geometry: classification of quadrilaterals (Gr 3-4)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "'A square has all sides equal; a rectangle only needs opposite sides to match'",
-            "Shows definitional precision — knowing which property is the distinguishing one"
+            "Explains that a square meets all rectangle rules (4 right angles, opposite sides equal) plus an extra rule (all sides equal)",
+            "Uses a 'special case' or 'family' metaphor — 'it's like how all dogs are animals but not all animals are dogs'",
+            "Shows classification reasoning"
         ],
         "watchout_signals": [
-            "'They look different' or 'a square is more even' — correct intuition but no precise property identified"
+            "'They're different shapes' — treats names as exclusive categories without seeing the inclusion relationship",
+            "'A square is more even' — correct intuition but no precise reasoning"
         ],
     },
     {
@@ -222,15 +226,17 @@ QUESTIONS = [
     {
         "grade_band": "4-5",
         "question_number": 14,
-        "text": "Look at this: 2, 4, 8, 16, ___. What comes next? Now — can you make a different sequence that also starts with 2, 4? What's the rule for yours?",
-        "curriculum_anchor": "Number patterns, doubling (Gr 4)",
+        "text": "If you tell a secret to 2 friends, and each of them tells 2 more friends, and each of those tells 2 more — after just 10 rounds of telling, do you think more people or fewer than your whole school would know? Why?",
+        "curriculum_anchor": "Exponential growth, doubling patterns (Gr 4)",
         "pillars": ["math_logic", "creativity"],
         "strong_signals": [
-            "Gets 32, then successfully generates an alternative sequence starting 2, 4 with a different rule",
-            "Shows that rules, not memorisation, govern sequences"
+            "Recognizes the number grows very fast — 'it doubles each time so it gets huge quickly'",
+            "Attempts to reason about the size even roughly ('after 10 rounds it's like a thousand? More?')",
+            "Connects to real-world experience ('that's why gossip spreads so fast')"
         ],
         "watchout_signals": [
-            "Gets 32 but can't construct an alternative — treats the sequence as a fixed fact, not an instance of a rule"
+            "'About 20 people' — adds instead of multiplying, treats it as linear growth",
+            "Can't engage with why the number grows fast — treats it as a fixed count"
         ],
     },
     {
@@ -250,15 +256,17 @@ QUESTIONS = [
     {
         "grade_band": "4-5",
         "question_number": 16,
-        "text": "Is it possible for a shape to have exactly 3 sides but NOT be a triangle? Why or why not?",
-        "curriculum_anchor": "Geometry definitions (Gr 3-5)",
+        "text": "Every triangle has 3 straight sides. But what if I drew 3 curved lines that meet at 3 points — would you still call it a triangle? What makes something a 'real' triangle?",
+        "curriculum_anchor": "Geometry: definitions and properties (Gr 3-5)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Explores the definition of 'triangle' precisely — either confirms no (because triangle IS defined as 3 sides) or asks whether curved sides count",
-            "Shows definitional reasoning"
+            "Engages with the definition — 'a triangle needs straight sides, not just 3 sides'",
+            "Reasons about what counts as a 'side' — shows definitional thinking",
+            "May propose a name for the curved version ('a curvy triangle? a blob with 3 corners?')"
         ],
         "watchout_signals": [
-            "'No' stated with confidence but no reasoning, or 'yes' with a vague non-answer"
+            "'Yes it's still a triangle because it has 3 sides' — doesn't question what counts as a 'side'",
+            "'No' but can't articulate what rule it breaks"
         ],
     },
     {
@@ -327,47 +335,49 @@ QUESTIONS = [
     {
         "grade_band": "6-7",
         "question_number": 1,
-        "text": "Explain how you'd add 2/3 + 4/7 to a student two years younger. Not just the steps — explain why the method works.",
+        "text": "Your friend says you can't add halves and thirds together — because they're different kinds of pieces. How would you convince them that you actually can?",
         "curriculum_anchor": "Fraction addition, unlike denominators (Gr 5-6)",
-        "pillars": ["math_logic", "communication", "ai_systems"],
+        "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Explains the 'same size pieces' logic behind LCM",
-            "Uses an analogy (slices of pizza of different sizes)",
-            "The explanation is genuinely simpler than a textbook"
+            "Explains you need to cut both into the same size pieces first — 'make them sixths'",
+            "Uses a concrete analogy: pizza slices, chocolate bars, measuring cups",
+            "The explanation is genuinely clear enough for a younger student to follow"
         ],
         "watchout_signals": [
-            "Lists the procedure correctly but can't explain why you need common denominators — procedural knowledge without conceptual depth"
+            "Lists the LCM procedure without explaining why it works — 'just find the common denominator'",
+            "Can't explain the reasoning at all, only the steps"
         ],
     },
     {
         "grade_band": "6-7",
         "question_number": 2,
-        "text": "A store is offering 20% off. Your friend says that's the same as multiplying the original price by 0.8. Are they right? How do you know?",
-        "curriculum_anchor": "Percentages and decimals (Gr 6)",
+        "text": "One shop says 'Buy 2, get 1 free.' Another shop says '30% off everything.' You want to buy 3 of the same thing. Without calculating exactly — which deal feels better to you, and can you explain your thinking?",
+        "curriculum_anchor": "Percentages, proportional reasoning (Gr 6)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "'Yes, because 100% - 20% = 80%, and 80% = 0.8'",
-            "Connects percentage to decimal conceptually",
-            "Can generalise: 'a 30% discount would be x0.7'"
+            "Recognizes 'buy 2 get 1 free' on 3 items is like 33% off, which beats 30%",
+            "Thinks about what happens with different quantities — 'but if I only want 1 item, the 30% off is better'",
+            "Shows proportional reasoning and deal comparison without needing a calculator"
         ],
         "watchout_signals": [
-            "'I think so' without reasoning, or confirms by plugging in one number only — can't explain the general principle"
+            "Picks one without any reasoning — 'the free one sounds better'",
+            "Can't compare the deals even roughly — no proportional intuition"
         ],
     },
     {
         "grade_band": "6-7",
         "question_number": 3,
-        "text": "World War 1 didn't start because of one thing. What do you think were the two most important causes — and why those, not the others?",
-        "curriculum_anchor": "History: WWI causes (Gr 6-7)",
+        "text": "Think about a time when a small argument between two people ended up pulling in a whole group — in class, in your family, or in a story you know. Why do small disagreements sometimes blow up into big conflicts? What makes them spread?",
+        "curriculum_anchor": "Social reasoning, cause and effect, conflict analysis",
         "pillars": ["communication", "math_logic"],
         "strong_signals": [
-            "Prioritises with reasons (not just lists facts)",
-            "Distinguishes long-term causes from triggering event",
-            "Acknowledges other valid causes while defending their priority choice"
+            "Identifies escalation mechanisms: loyalty and sides forming, miscommunication, pride",
+            "Distinguishes the trigger from the underlying tensions — 'it was about the seat, but really about...'",
+            "Shows multi-factor causal reasoning, not just 'they were angry'"
         ],
         "watchout_signals": [
-            "Recites all causes without ranking or connecting them",
-            "Treats the assassination of Franz Ferdinand as 'the' cause without explaining the preconditions"
+            "Describes an event without analyzing why it escalated — narrates but doesn't reason",
+            "Single-cause explanation: 'because people get angry' without exploring the structure"
         ],
     },
     {
@@ -402,17 +412,17 @@ QUESTIONS = [
     {
         "grade_band": "6-7",
         "question_number": 6,
-        "text": "What does it mean for two things to be 'directly proportional'? Give one real-life example — then give a case where things look proportional but aren't.",
-        "curriculum_anchor": "Ratios and proportionality (Gr 6-7)",
+        "text": "If 3 friends can finish a large pizza in 10 minutes, could 6 friends finish it in 5 minutes? What about 100 friends — could they finish it in a few seconds? At what point does adding more people stop helping, and why?",
+        "curriculum_anchor": "Ratios, inverse proportionality, limits of scaling (Gr 6-7)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Correct definition (as one doubles, other doubles)",
-            "Real example (speed x time = distance)",
-            "Counter-example shows genuine nonlinear relationship (studying more hours != proportionally better grades)"
+            "Recognizes that doubling people roughly halves the time — proportional reasoning",
+            "Identifies a limit: 'at some point there are more people than slices' or 'they'd be fighting over the last piece'",
+            "Shows that proportional reasoning has real-world boundaries — not everything scales"
         ],
         "watchout_signals": [
-            "Gives only an example without being able to define the concept",
-            "Can't find a non-proportional counter-example"
+            "Accepts the scaling without limit — '100 friends means almost instant'",
+            "Can't reason about why the pattern breaks down"
         ],
     },
     {
@@ -433,17 +443,17 @@ QUESTIONS = [
     {
         "grade_band": "6-7",
         "question_number": 8,
-        "text": "You have a bag with 3 red, 4 blue, and 5 green marbles. You pick one — it's red, and you keep it. What's the probability your next pick is green?",
+        "text": "You have a bag of 10 candies — 7 are mango flavor and 3 are lemon. You pick one without looking and it's lemon. You eat it and pick again. Are you now more likely or less likely to get mango than before? Why?",
         "curriculum_anchor": "Conditional probability basics (Gr 6-7)",
         "pillars": ["math_logic"],
         "strong_signals": [
-            "5/11 — correctly adjusts denominator for the marble removed",
-            "Can explain why the denominator changed",
-            "Spontaneously notes this is different from independent probability"
+            "More likely — 'there are now 7 mango out of 9 left, before it was 7 out of 10'",
+            "Explains that removing a lemon changes the mix in favor of mango",
+            "Spontaneously notes this is different from coin flips where each time is independent"
         ],
         "watchout_signals": [
-            "5/12 — ignores the removal",
-            "Treats each draw as independent without noticing the sample space changed"
+            "'Same chance' — ignores that the total changed",
+            "'Less likely because I already got a bad one' — emotional reasoning replacing probabilistic"
         ],
     },
     {
@@ -477,32 +487,34 @@ QUESTIONS = [
     {
         "grade_band": "6-7",
         "question_number": 11,
-        "text": "If a = 3 and b = 5, write three different equations that are true. Now deliberately write one that is false — and explain why it's false.",
-        "curriculum_anchor": "Introduction to algebra (Gr 6)",
+        "text": "I'm thinking of a mystery number. If I double it and add 3, I get 11. What's my number? Now — make up your own mystery number puzzle for me to solve.",
+        "curriculum_anchor": "Introduction to algebra, equations (Gr 6)",
         "pillars": ["math_logic", "creativity"],
         "strong_signals": [
-            "Three genuinely varied equations (not just a+b, a*b, b-a)",
-            "Deliberately constructs a false equation and explains the violation",
-            "Shows understanding of equality as a condition, not just a calculation"
+            "Solves correctly (4) by working backwards: 11 minus 3 is 8, 8 divided by 2 is 4",
+            "Creates their own puzzle that's solvable and uses at least two operations",
+            "Shows understanding of equations as puzzles — not just procedures to memorize"
         ],
         "watchout_signals": [
-            "Can write true equations but struggles to deliberately construct a false one",
-            "Treats equations as things to solve rather than conditions to evaluate"
+            "Guesses randomly without a strategy for working backwards",
+            "Can solve but can't construct their own — understands procedure but not structure",
+            "Creates a trivially easy puzzle ('my number plus 1 is 3')"
         ],
     },
     {
         "grade_band": "6-7",
         "question_number": 12,
-        "text": "Redesign the periodic table for someone who has never studied chemistry and finds it confusing. What would you keep, change, or add?",
-        "curriculum_anchor": "Chemistry: periodic table (Gr 7)",
+        "text": "Pick any system you use every day — like your school timetable, the way a library organises books, or how apps are arranged on your phone. What's one thing about its design that frustrates you? How would you redesign it?",
+        "curriculum_anchor": "Systems design, information architecture",
         "pillars": ["creativity", "ai_systems"],
         "strong_signals": [
-            "Identifies what specifically is confusing about the current design",
-            "Proposes a reorganisation around a user's actual mental model",
-            "Shows systems redesign thinking"
+            "Identifies a specific frustration, not just 'it's annoying'",
+            "Proposes a redesign that addresses the root cause, not just the symptom",
+            "Considers who else uses the system and how the change affects them"
         ],
         "watchout_signals": [
-            "'Make it colourful' — addresses aesthetic without engaging with the underlying informational challenge"
+            "'Make it more colourful' or 'make it an app' — addresses aesthetics without engaging with the underlying structure",
+            "Can't articulate what specifically is wrong — vague complaint without diagnosis"
         ],
     },
     {
@@ -537,15 +549,17 @@ QUESTIONS = [
     {
         "grade_band": "6-7",
         "question_number": 15,
-        "text": "Why is the area of a circle πr²? Don't just state the formula — explain why it has to be that shape of formula.",
-        "curriculum_anchor": "Circle area (Gr 6-7)",
+        "text": "If you doubled the radius of a pizza — made it twice as wide — would you get exactly double the amount of pizza, more than double, or less than double? What's your gut feeling, and can you convince me?",
+        "curriculum_anchor": "Area scaling, circle area intuition (Gr 6-7)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Any reference to cutting into wedges and rearranging (visual proof), or to the relationship between circumference (2πr) and area",
-            "Shows conceptual understanding vs rote formula application"
+            "More than double — 'because it grows in all directions, not just one'",
+            "Intuition about area growing faster than length, even without knowing the formula",
+            "May reason: 'if I double the side of a square, I get 4 times the area, so it must be like that for circles too'"
         ],
         "watchout_signals": [
-            "'That's just the formula' or restates the formula — reveals it's memorised as a fact, not understood as geometric logic"
+            "'Exactly double — double the size means double the pizza' — linear thinking about area",
+            "Correct answer but no reasoning — 'I think more but I don't know why'"
         ],
     },
     {
@@ -630,15 +644,17 @@ QUESTIONS = [
     {
         "grade_band": "8-9",
         "question_number": 1,
-        "text": "Explain the difference between mean, median, and mode to someone who thinks they're all the same — and tell me when you'd use each one.",
-        "curriculum_anchor": "Statistics: central tendency (Gr 7-8)",
+        "text": "A school tells parents that their 'average student score' is 85%. But when you talk to students, half of them scored below 60%. How is that possible — and what would be a more honest way to describe the scores?",
+        "curriculum_anchor": "Statistics: mean vs median, misleading averages (Gr 7-8)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Explains use cases: mean for symmetric data, median when there are outliers (income distribution), mode for categorical data",
-            "Gives concrete example of when mean is misleading"
+            "A few very high scorers pull the mean up — 'if 5 students scored 100% and 5 scored 50%, the average is 75% but half are below'",
+            "Suggests median or range as a better summary",
+            "Shows understanding that a single number can misrepresent a distribution"
         ],
         "watchout_signals": [
-            "Correctly defines all three but can't explain when each is appropriate — procedural knowledge without applied judgment"
+            "'That's impossible' or 'the school must be lying' — can't see how a mean can be correct but misleading",
+            "Defines mean correctly but can't explain how it hides information"
         ],
     },
     {
@@ -673,16 +689,17 @@ QUESTIONS = [
     {
         "grade_band": "8-9",
         "question_number": 4,
-        "text": "A square has a diagonal of 10cm. Without a calculator — can you figure out the exact side length? Walk me through your thinking.",
-        "curriculum_anchor": "Pythagoras theorem (Gr 8)",
+        "text": "When you cut a square piece of paper diagonally, the cut is longer than the side of the square. Is it always longer? Is it a little bit longer or a lot longer? And does the relationship change depending on how big the square is?",
+        "curriculum_anchor": "Pythagoras theorem, geometric intuition (Gr 8)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "a² + a² = 100 -> 2a² = 100 -> a = √50 = 5√2",
-            "Sets up the equation clearly, works algebraically, is comfortable leaving the answer as a surd"
+            "'Always longer — the diagonal goes corner to corner, which is farther than straight across'",
+            "Recognizes the ratio is constant regardless of size — 'whether the square is tiny or huge, it's always the same proportion more'",
+            "May reference Pythagoras or estimate 'about 1.4 times the side'"
         ],
         "watchout_signals": [
-            "Tries to estimate ('about 7') or says 'I need a calculator'",
-            "Reveals that procedural application requires computational support and isn't yet algebra-fluent"
+            "'It depends on the size of the square' — doesn't see the constant ratio",
+            "'A little longer' without reasoning — pure guess, no geometric thinking"
         ],
     },
     {
@@ -750,16 +767,17 @@ QUESTIONS = [
     {
         "grade_band": "8-9",
         "question_number": 9,
-        "text": "Why does multiplying two negative numbers give a positive result? Most people just memorise the rule. Can you explain why it has to be that way?",
-        "curriculum_anchor": "Directed numbers, algebra (Gr 7-8)",
+        "text": "Imagine 'negative' means 'reverse the direction.' If you're walking forward and someone says 'reverse,' you walk backward. If they say 'reverse' again, you're walking forward. Does this help explain why negative times negative equals positive? Can you come up with a better example from your own life?",
+        "curriculum_anchor": "Directed numbers, signed arithmetic (Gr 7-8)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Pattern argument: 3x-2=-6, 2x-2=-4, 1x-2=-2, 0x-2=0, so -1x-2 must follow the pattern = +2",
-            "Or direction-reversal argument",
-            "Any coherent logical argument, not just 'that's the rule'"
+            "Engages with the metaphor — 'yes, reversing a reversal brings you back'",
+            "Creates their own analogy: rewinding a rewind, undoing an undo, flipping a flipped image",
+            "Shows they understand the logical structure, not just the rule"
         ],
         "watchout_signals": [
-            "'That's just the rule' or 'I remember it from class' — reveals mathematical rules are accepted without proof"
+            "'That's just the rule' or 'that's what they taught us' — accepted without understanding",
+            "Can follow the metaphor but can't create their own — passive understanding"
         ],
     },
     {
@@ -825,17 +843,18 @@ QUESTIONS = [
     {
         "grade_band": "8-9",
         "question_number": 14,
-        "text": "Is 0.999... (repeating forever) actually equal to 1? What do you think — and what kind of argument would genuinely convince you either way?",
-        "curriculum_anchor": "Number theory: limits, infinity (Gr 8-9)",
+        "text": "If you keep adding 9s after the decimal — 0.9, 0.99, 0.999, 0.9999 and so on forever — does this number ever actually become 1? Or is there always a tiny gap? What would you say to someone who disagrees with you?",
+        "curriculum_anchor": "Limits, infinity, number theory (Gr 8-9)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "Engages with the question seriously",
-            "If yes: 1/3 = 0.333... so 3x(1/3) = 0.999... = 1; or 1 - 0.999... = 0",
-            "If no: articulates why ('it never quite reaches 1') — this misconception reveals interesting mathematical intuition",
-            "What matters is they engage with the argument, not just state an opinion"
+            "Engages seriously: either argues 'the gap gets infinitely small so it IS 1' or 'there's always a gap'",
+            "If yes: can reason with 1/3 = 0.333..., so 3 times 1/3 = 0.999... = 1",
+            "If no: articulates a coherent intuition about infinite processes — still valuable",
+            "Quality of argument matters more than the answer"
         ],
         "watchout_signals": [
-            "'Obviously yes' or 'obviously no' with no engagement with proof or argument — tests comfort with mathematical reasoning under uncertainty"
+            "'Obviously yes' or 'obviously no' with no reasoning — doesn't engage with why it's a genuinely puzzling question",
+            "No attempt to argue or convince — just states an opinion"
         ],
     },
     {
@@ -903,16 +922,18 @@ QUESTIONS = [
     {
         "grade_band": "8-9",
         "question_number": 19,
-        "text": "Without using the word 'average', explain what the mean of a dataset tells you. Then tell me what important information it hides.",
-        "curriculum_anchor": "Statistics: mean and distribution (Gr 8)",
+        "text": "If a billionaire moved to a small village of 100 families, the village's 'average income' would skyrocket — even though nobody else got richer. What does this tell you about how averages can be misleading? When would you trust an average, and when wouldn't you?",
+        "curriculum_anchor": "Statistics: mean, outliers, distribution (Gr 8)",
         "pillars": ["math_logic", "communication"],
         "strong_signals": [
-            "'A single number that represents where the middle of the data is'",
-            "Hides: spread, distribution shape, outliers, bimodality",
-            "Gives concrete example of when mean is misleading (Bill Gates walks into a bar; the average income in the room shoots up, but no one is richer)"
+            "Explains the billionaire's income pulls the mean away from everyone else's reality",
+            "Proposes median or removing outliers as alternatives",
+            "Gives criteria for when mean is useful ('when the data is spread evenly') vs misleading ('when there are extremes')",
+            "Shows applied statistical judgment, not just definitions"
         ],
         "watchout_signals": [
-            "Can define mean by procedure only (add and divide) and can't articulate what conceptual information it hides"
+            "'Averages are always misleading' — overcorrects without nuance",
+            "Can explain the problem but can't propose when averages would work — black-and-white thinking"
         ],
     },
     {
