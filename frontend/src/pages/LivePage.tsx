@@ -232,11 +232,10 @@ export default function LivePage() {
         {/* ── Left: Video (full height) ── */}
         <div className={s.leftCol}>
           <VideoArea
-            confidence={null}
-            onConfidenceChange={() => {}}
-            questionActive={!!activityQuestion && !submitted}
-            roomCode={activeLiveSession?.room_code_guest}
-            userName={activeLiveSession?.student_name ?? student?.name ?? "Student"}
+            tiles={[]}
+            pinnedId={null}
+            setPinnedId={() => {}}
+            onMute={() => undefined}
           />
         </div>
 

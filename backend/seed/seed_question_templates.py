@@ -115,7 +115,7 @@ Include 2-4 categories and 6-10 items distributed across them. Return ONLY JSON.
         "input_schema": {
             "fields": [
                 {"key": "instruction", "type": "text", "label": "Instruction text", "required": True},
-                {"key": "image_url", "type": "text", "label": "Image URL (paste a direct image link)", "required": False},
+                {"key": "image_url", "type": "image_upload", "label": "Image", "required": False},
                 {"key": "label_options", "type": "list", "label": "Labels to choose from", "required": True},
             ]
         },
@@ -196,7 +196,7 @@ Keep sample_answer concise. rubric should describe what earns full marks. Return
         "sort_order": 8,
         "input_schema": {
             "fields": [
-                {"key": "image_url", "type": "text", "label": "Image URL", "required": True},
+                {"key": "image_url", "type": "image_upload", "label": "Image", "required": True},
                 {"key": "prompt", "type": "text", "label": "Question about the image", "required": True},
                 {"key": "rubric", "type": "text", "label": "Grading rubric", "required": False},
                 {"key": "sample_answer", "type": "text", "label": "Sample answer", "required": False},
@@ -267,7 +267,7 @@ Return ONLY JSON.""",
         "input_schema": {
             "fields": [
                 {"key": "prompt", "type": "text", "label": "Question text", "required": True},
-                {"key": "image_url", "type": "text", "label": "Diagram image URL (optional — paste image link)", "required": False},
+                {"key": "image_url", "type": "image_upload", "label": "Diagram image (optional)", "required": False},
                 {"key": "min_value", "type": "number", "label": "Minimum value", "required": True},
                 {"key": "max_value", "type": "number", "label": "Maximum value", "required": True},
                 {"key": "correct_value", "type": "number", "label": "Correct value", "required": True},
@@ -333,7 +333,7 @@ system_prompt should guide Spark to stay on topic and age-appropriate. Return ON
         "input_schema": {
             "fields": [
                 {"key": "prompt", "type": "text", "label": "Drawing prompt / instruction", "required": True},
-                {"key": "reference_image_url", "type": "text", "label": "Reference image (optional)", "required": False},
+                {"key": "reference_image_url", "type": "image_upload", "label": "Reference image (optional)", "required": False},
                 {"key": "rubric", "type": "text", "label": "Evaluation criteria", "required": False},
             ]
         },
