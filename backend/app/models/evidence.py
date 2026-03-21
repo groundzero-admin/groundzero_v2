@@ -26,6 +26,9 @@ class EvidenceEvent(Base):
     meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     # meta may contain: responseTimeMs, confidence, attempts, aiInteraction, evidenceText
 
+    response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # raw student answer — shape depends on question type (mcq: {selected_option}, short_answer: {text}, etc.)
+
     misconception: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=None)
 
     is_propagated: Mapped[bool] = mapped_column(Boolean, server_default="false")

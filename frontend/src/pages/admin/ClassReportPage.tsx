@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { api } from "@/api/client";
 import * as s from "./admin.css";
-
-// ── Types ──
 
 interface StudentMasteryRow {
     student_id: string;
@@ -13,8 +11,14 @@ interface StudentMasteryRow {
     p_learned: number;
     stage: number;
     total_evidence: number;
+    consecutive_failures: number;
     is_stuck: boolean;
-    dominant_misconception_type: "conceptual" | "procedural" | "careless" | "guessing" | null;
+    avg_response_time_ms: number | null;
+    p_learned_before: number | null;
+    stage_before: number | null;
+    session_correct: number;
+    session_total: number;
+    dominant_misconception_type: string | null;
     dominant_misconception: string | null;
 }
 
@@ -26,199 +30,245 @@ interface CompetencyClassReport {
     mastered_count: number;
     struggling_count: number;
     not_started_count: number;
+    avg_p_learned: number;
+    stage_distribution: Record<number, number>;
+    session_correct_total: number;
+    session_attempts_total: number;
     misconception_breakdown: Record<string, number>;
 }
 
-// ── Helpers ──
-
-const MISC_COLORS: Record<string, string> = {
-    conceptual: "#e53e3e",
-    procedural: "#ed8936",
-    careless: "#d69e2e",
-    guessing: "#718096",
-};
-
-function masteryColor(p: number): string {
-    if (p >= 0.8) return "#38a169";
-    if (p >= 0.6) return "#68d391";
-    if (p >= 0.3) return "#ed8936";
-    if (p > 0) return "#e53e3e";
-    return "#e2e8f0";
+interface StudentCompetencyEntry {
+    competency_id: string;
+    competency_name: string;
+    p_learned: number;
+    p_learned_before: number | null;
+    session_correct: number;
+    session_total: number;
+    is_stuck: boolean;
 }
 
-function MasteryBar({ p, evidence }: { p: number; evidence: number }) {
-    if (evidence === 0) return <span style={{ fontSize: 11, color: "#a0aec0", fontStyle: "italic" }}>Not started</span>;
-    const pct = Math.round(p * 100);
-    return (
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 60, height: 6, borderRadius: 3, background: "#e2e8f0", overflow: "hidden" }}>
-                <div style={{ width: `${pct}%`, height: "100%", background: masteryColor(p), borderRadius: 3 }} />
-            </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: masteryColor(p) }}>{pct}%</span>
-        </div>
-    );
+interface StudentView {
+    student_id: string;
+    student_name: string;
+    competencies: StudentCompetencyEntry[];
 }
 
-function MiscBadge({ type }: { type: string | null }) {
-    if (!type) return <span style={{ fontSize: 10, color: "#a0aec0" }}>—</span>;
+function pivotToStudents(reports: CompetencyClassReport[]): StudentView[] {
+    const map = new Map<string, StudentView>();
+    for (const report of reports) {
+        for (const st of report.students) {
+            if (!map.has(st.student_id)) {
+                map.set(st.student_id, { student_id: st.student_id, student_name: st.student_name, competencies: [] });
+            }
+            const existing = map.get(st.student_id)!;
+            if (!existing.competencies.find(c => c.competency_id === report.competency_id)) {
+                existing.competencies.push({
+                    competency_id: report.competency_id,
+                    competency_name: report.competency_name,
+                    p_learned: st.p_learned,
+                    p_learned_before: st.p_learned_before,
+                    session_correct: st.session_correct,
+                    session_total: st.session_total,
+                    is_stuck: st.is_stuck,
+                });
+            }
+        }
+    }
+    return Array.from(map.values());
+}
+
+function masteryColor(p: number) {
+    if (p >= 0.8) return "#16a34a";
+    if (p >= 0.6) return "#2563eb";
+    if (p >= 0.4) return "#d97706";
+    return "#dc2626";
+}
+
+function MasteryPill({ p }: { p: number }) {
+    const color = masteryColor(p);
     return (
-        <span style={{
-            display: "inline-block",
-            padding: "1px 8px",
-            borderRadius: 10,
-            fontSize: 10,
-            fontWeight: 700,
-            backgroundColor: (MISC_COLORS[type] ?? "#718096") + "20",
-            color: MISC_COLORS[type] ?? "#718096",
-        }}>
-            {type}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 99, background: color + "12", fontSize: 12, fontWeight: 800, color }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, display: "inline-block" }} />
+            {Math.round(p * 100)}%
         </span>
     );
 }
 
-// ── Main component ──
+function DeltaTag({ delta }: { delta: number }) {
+    const abs = Math.abs(Math.round(delta * 100));
+    if (abs < 1) return <span style={{ fontSize: 12, color: "#94a3b8", fontWeight: 700 }}>→ no change</span>;
+    const up = delta > 0;
+    return (
+        <span style={{ fontSize: 13, fontWeight: 800, color: up ? "#16a34a" : "#dc2626" }}>
+            {up ? "↑" : "↓"} {abs}pp
+        </span>
+    );
+}
+
+function initials(name: string) {
+    return name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+}
 
 export default function ClassReportPage() {
     const { sessionId } = useParams<{ sessionId: string }>();
     const navigate = useNavigate();
-    const [expandedComp, setExpandedComp] = useState<string | null>(null);
+    const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
 
     const { data: reports, isLoading } = useQuery<CompetencyClassReport[]>({
         queryKey: ["class-report", sessionId],
         queryFn: () => api.get(`/admin/diagnostics/sessions/${sessionId}/class-report`).then(r => r.data),
         enabled: !!sessionId,
+        refetchInterval: 15_000,
     });
+
+    const allStudents = reports ? pivotToStudents(reports) : [];
+    const active = allStudents
+        .filter(st => st.competencies.some(c => c.session_total > 0))
+        .sort((a, b) => {
+            const avgP = (sv: StudentView) => {
+                const cs = sv.competencies.filter(c => c.session_total > 0);
+                return cs.length ? cs.reduce((sum, c) => sum + c.p_learned, 0) / cs.length : 0;
+            };
+            return avgP(b) - avgP(a);
+        });
+    const notStarted = allStudents.filter(st => st.competencies.every(c => c.session_total === 0));
 
     return (
         <div className={s.page}>
             <div className={s.header}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#718096", fontSize: 13 }}
-                    >
+                    <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, color: "#718096", fontSize: 13 }}>
                         <ArrowLeft size={16} /> Back
                     </button>
                     <div>
                         <h1 className={s.title}>Class Report</h1>
-                        <p className={s.subtitle}>Misconception analysis by competency</p>
+                        <p className={s.subtitle}>Student mastery · before → after session</p>
                     </div>
                 </div>
             </div>
 
-            {isLoading && <p className={s.emptyState}>Loading class report...</p>}
-            {!isLoading && (!reports || reports.length === 0) && (
-                <p className={s.emptyState}>No data yet. Session may not have an active activity, or no students have answered.</p>
+            {isLoading && <p className={s.emptyState}>Loading...</p>}
+            {!isLoading && allStudents.length === 0 && (
+                <p className={s.emptyState}>No data yet — students need to answer at least one question.</p>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {reports?.map((report) => (
-                    <div key={report.competency_id} style={{
-                        background: "white",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: 12,
-                        overflow: "hidden",
-                    }}>
-                        {/* Competency header */}
-                        <div
-                            style={{ padding: "14px 20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                            onClick={() => setExpandedComp(expandedComp === report.competency_id ? null : report.competency_id)}
-                        >
-                            <div>
-                                <div style={{ fontWeight: 700, fontSize: 14, color: "#1a1a2e" }}>{report.competency_name}</div>
-                                <div style={{ fontSize: 11, color: "#718096", marginTop: 2 }}>{report.competency_id}</div>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                                {/* Stats */}
-                                <div style={{ display: "flex", gap: 12 }}>
-                                    <StatPill label="Mastered" count={report.mastered_count} color="#38a169" />
-                                    <StatPill label="Struggling" count={report.struggling_count} color="#e53e3e" />
-                                    <StatPill label="Not started" count={report.not_started_count} color="#a0aec0" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {active.map(student => {
+                    const isOpen = expandedStudent === student.student_id;
+                    const practiced = student.competencies.filter(c => c.session_total > 0);
+                    const isStuck = practiced.some(c => c.is_stuck);
+                    const avgP = practiced.reduce((sum, c) => sum + c.p_learned, 0) / (practiced.length || 1);
+                    const withDelta = practiced.filter(c => c.p_learned_before != null);
+                    const avgDelta = withDelta.length
+                        ? withDelta.reduce((sum, c) => sum + (c.p_learned - c.p_learned_before!), 0) / withDelta.length
+                        : null;
+                    const avatarColor = isStuck ? "#ef4444" : masteryColor(avgP);
+
+                    return (
+                        <div key={student.student_id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                            {/* Student header */}
+                            <div
+                                onClick={() => setExpandedStudent(isOpen ? null : student.student_id)}
+                                style={{ padding: "14px 18px", cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}
+                            >
+                                <div style={{ width: 36, height: 36, borderRadius: "50%", flexShrink: 0, background: avatarColor + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: avatarColor }}>
+                                    {isStuck ? "⚠" : initials(student.student_name)}
                                 </div>
-                                {expandedComp === report.competency_id ? <ChevronDown size={16} color="#718096" /> : <ChevronRight size={16} color="#718096" />}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{student.student_name}</div>
+                                    <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>{practiced.length} skill{practiced.length !== 1 ? "s" : ""} practiced today</div>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                                    <MasteryPill p={avgP} />
+                                    {avgDelta !== null && <DeltaTag delta={avgDelta} />}
+                                    <div style={{ color: "#cbd5e1" }}>
+                                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* Expanded rows */}
+                            {isOpen && (
+                                <div style={{ borderTop: "1px solid #f1f5f9" }}>
+                                    {practiced.map((c, idx) => {
+                                        const delta = c.p_learned_before != null ? c.p_learned - c.p_learned_before : null;
+                                        const up = delta != null && delta > 0.005;
+                                        const down = delta != null && delta < -0.005;
+                                        const rowAccent = up ? "#f0fdf4" : down ? "#fff5f5" : "#fafafa";
+                                        const pColor = masteryColor(c.p_learned);
+
+                                        return (
+                                            <div key={c.competency_id} style={{ display: "flex", alignItems: "center", padding: "11px 18px 11px 24px", borderTop: idx > 0 ? "1px solid #f1f5f9" : "none", background: rowAccent, gap: 12 }}>
+                                                {/* Left accent bar */}
+                                                <div style={{ width: 3, height: 32, borderRadius: 99, background: up ? "#22c55e" : down ? "#ef4444" : "#e2e8f0", flexShrink: 0 }} />
+
+                                                {/* Name + sub */}
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                        {c.competency_name}
+                                                        {c.is_stuck && <span style={{ marginLeft: 6, fontSize: 10, color: "#ef4444", fontWeight: 700 }}>⚠ stuck</span>}
+                                                    </div>
+                                                    <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>{c.competency_id}</div>
+                                                </div>
+
+                                                {/* Labelled stats */}
+                                                <div style={{ display: "flex", gap: 20, flexShrink: 0, alignItems: "center" }}>
+                                                    {c.session_total > 0 && (
+                                                        <div style={{ textAlign: "center" }}>
+                                                            <div style={{ fontSize: 13, fontWeight: 800, display: "flex", gap: 8 }}>
+                                                                <span style={{ color: "#16a34a" }}>✓ {c.session_correct}</span>
+                                                                <span style={{ color: "#dc2626" }}>✗ {c.session_total - c.session_correct}</span>
+                                                            </div>
+                                                            <div style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em" }}>Today</div>
+                                                        </div>
+                                                    )}
+                                                    <div style={{ textAlign: "center" }}>
+                                                        {c.p_learned_before != null ? (
+                                                            <>
+                                                                <div style={{ fontSize: 14, fontWeight: 800, color: pColor }}>
+                                                                    {Math.round(c.p_learned_before * 100)}% → {Math.round(c.p_learned * 100)}%
+                                                                </div>
+                                                                <div style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em" }}>Mastery</div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <div style={{ fontSize: 14, fontWeight: 800, color: pColor }}>{Math.round(c.p_learned * 100)}%</div>
+                                                                <div style={{ fontSize: 9, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.04em" }}>Mastery</div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                    <div style={{ width: 60, textAlign: "right" }}>
+                                                        {delta !== null ? <DeltaTag delta={delta} /> : null}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
+                    );
+                })}
 
-                        {/* Misconception breakdown bar */}
-                        {Object.keys(report.misconception_breakdown).length > 0 && (
-                            <div style={{ padding: "0 20px 12px" }}>
-                                <div style={{ fontSize: 11, fontWeight: 600, color: "#718096", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                                    Misconception Breakdown
-                                </div>
-                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                    {Object.entries(report.misconception_breakdown).map(([type, count]) => (
-                                        <div key={type} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 8, background: (MISC_COLORS[type] ?? "#718096") + "12" }}>
-                                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: MISC_COLORS[type] ?? "#718096", display: "inline-block" }} />
-                                            <span style={{ fontSize: 12, fontWeight: 600, color: MISC_COLORS[type] ?? "#718096" }}>{count} {type}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Expanded student table */}
-                        {expandedComp === report.competency_id && (
-                            <div style={{ borderTop: "1px solid #f7fafc" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                    <thead>
-                                        <tr style={{ background: "#f7fafc" }}>
-                                            <th style={TH}>Student</th>
-                                            <th style={TH}>Mastery</th>
-                                            <th style={TH}>Attempts</th>
-                                            <th style={TH}>Stage</th>
-                                            <th style={TH}>Misconception type</th>
-                                            <th style={TH}>Misconception</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {report.students.map((st) => (
-                                            <tr key={st.student_id} style={{ borderTop: "1px solid #f0f4f8" }}>
-                                                <td style={TD}>
-                                                    <div style={{ fontWeight: 600, fontSize: 13 }}>{st.student_name}</div>
-                                                    {st.is_stuck && <div style={{ fontSize: 10, color: "#c05621", fontWeight: 600 }}>⚠ Stuck</div>}
-                                                </td>
-                                                <td style={TD}><MasteryBar p={st.p_learned} evidence={st.total_evidence} /></td>
-                                                <td style={TD}><span style={{ fontSize: 12, color: "#4a5568" }}>{st.total_evidence}</span></td>
-                                                <td style={TD}><span style={{ fontSize: 12, color: "#4a5568" }}>{st.stage}</span></td>
-                                                <td style={TD}><MiscBadge type={st.dominant_misconception_type} /></td>
-                                                <td style={TD}>
-                                                    <span style={{ fontSize: 11, color: "#4a5568" }}>
-                                                        {st.dominant_misconception ?? "—"}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                {/* Not started — compact */}
+                {notStarted.length > 0 && (
+                    <div style={{ marginTop: 8, padding: "12px 16px", borderRadius: 12, border: "1px solid #f1f5f9", background: "#fafafa" }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                            Did not answer today ({notStarted.length})
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {notStarted.filter((st, i, arr) => arr.findIndex(x => x.student_name === st.student_name) === i).map(st => (
+                                <span key={st.student_id} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 99, background: "#f1f5f9", fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>
+                                    <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#e2e8f0", fontSize: 9, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>
+                                        {initials(st.student_name)}
+                                    </span>
+                                    {st.student_name}
+                                </span>
+                            ))}
+                        </div>
                     </div>
-                ))}
+                )}
             </div>
-        </div>
-    );
-}
-
-const TH: React.CSSProperties = {
-    padding: "8px 16px",
-    textAlign: "left",
-    fontSize: 11,
-    fontWeight: 700,
-    color: "#718096",
-    textTransform: "uppercase",
-    letterSpacing: "0.04em",
-};
-
-const TD: React.CSSProperties = {
-    padding: "10px 16px",
-    verticalAlign: "middle",
-};
-
-function StatPill({ label, count, color }: { label: string; count: number; color: string }) {
-    return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color }}>{count}</span>
-            <span style={{ fontSize: 9, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</span>
         </div>
     );
 }

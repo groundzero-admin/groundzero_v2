@@ -649,19 +649,78 @@ async def get_next_activity_question(
     activity_id: str,
 ) -> "NextActivityQuestionResult | None":
     """
-    ZPD-based selection from activity_questions table for a given activity.
+    Serve the next activity question for a student.
 
-    Same competency selection logic as get_next_question_for_activity,
-    but queries activity_questions instead of questions.
+    If activity.question_ids is set (ordered list), serve in order — first unanswered.
+    Otherwise fall back to ZPD-based random selection.
     """
     from app.models.evidence import EvidenceEvent
 
-    # Load activity + target competencies
+    # Load activity
     result = await db.execute(select(Activity).where(Activity.id == activity_id))
     activity = result.scalar_one_or_none()
     if not activity:
         return None
 
+    # ── Ordered mode: activity has an explicit question list ──
+    if activity.question_ids:
+        from app.models.student import StudentActivityProgress
+
+        # Load or create progress record
+        prog_result = await db.execute(
+            select(StudentActivityProgress).where(
+                StudentActivityProgress.student_id == student_id,
+                StudentActivityProgress.activity_id == activity_id,
+            )
+        )
+        progress = prog_result.scalar_one_or_none()
+        if progress is None:
+            progress = StudentActivityProgress(
+                student_id=student_id,
+                activity_id=activity_id,
+                current_index=0,
+            )
+            db.add(progress)
+            await db.flush()
+
+        idx = progress.current_index
+        if idx >= len(activity.question_ids):
+            return None  # all questions done
+
+        qid_str = str(activity.question_ids[idx])
+        aq_result = await db.execute(
+            select(ActivityQuestion, QuestionTemplate.slug.label("slug"))
+            .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
+            .where(ActivityQuestion.id == uuid.UUID(qid_str), ActivityQuestion.is_published == True)
+        )
+        row = aq_result.first()
+        if not row:
+            return None
+
+        aq, slug = row
+        state_result = await db.execute(
+            select(StudentCompetencyState).where(
+                StudentCompetencyState.student_id == student_id,
+                StudentCompetencyState.competency_id == aq.competency_id,
+            )
+        )
+        state = state_result.scalar_one_or_none()
+        comp_result = await db.execute(select(Competency).where(Competency.id == aq.competency_id))
+        comp = comp_result.scalar_one_or_none()
+        await db.commit()
+        return NextActivityQuestionResult(
+            activity_question_id=aq.id,
+            template_slug=slug or "mcq_single",
+            title=aq.title,
+            data=aq.data,
+            competency_id=aq.competency_id,
+            competency_name=comp.name if comp else aq.competency_id,
+            difficulty=aq.difficulty,
+            p_learned=round(state.p_learned, 4) if state else 0.10,
+            stage=state.stage if state else 1,
+        )
+
+    # ── ZPD mode: no fixed order, pick by difficulty ──
     comp_ids = []
     for comp in (activity.primary_competencies or []):
         cid = comp.get("competency_id") or comp.get("competencyId")

@@ -13,7 +13,7 @@ from app.models.activity_question import ActivityQuestion
 from app.models.evidence import EvidenceEvent
 from app.models.question_template import QuestionTemplate
 from app.models.skill_graph import PrerequisiteEdge
-from app.models.student import StudentCompetencyState
+from app.models.student import SessionCompetencySnapshot, StudentActivityProgress, StudentCompetencyState
 from app.schemas.evidence import EvidenceCreate
 from app.services import question_evaluator
 
@@ -73,6 +73,17 @@ async def process_evidence(
     _activity_question: ActivityQuestion | None = None
     _template_slug: str = "mcq_single"
 
+    # ── Idempotency: if this activity_question was already answered, return existing event ──
+    if data.activity_question_id:
+        existing = (await db.execute(
+            select(EvidenceEvent).where(
+                EvidenceEvent.student_id == data.student_id,
+                EvidenceEvent.meta["activityQuestionId"].astext == str(data.activity_question_id),
+            ).limit(1)
+        )).scalar_one_or_none()
+        if existing:
+            return existing, [], None
+
     # ── Evaluate activity question response if provided ──
     if data.activity_question_id and data.response is not None:
         aq = await db.get(ActivityQuestion, data.activity_question_id)
@@ -126,6 +137,7 @@ async def process_evidence(
         outcome=data.outcome,
         weight=weight,
         meta=meta or None,
+        response=data.response,
     )
     db.add(event)
     await db.flush()
@@ -174,6 +186,31 @@ async def process_evidence(
         linked_db_states = {s.competency_id: s for s in linked_result.scalars().all()}
         all_states_engine = {cid: _db_state_to_engine(s) for cid, s in linked_db_states.items()}
 
+    # 3b. Capture snapshot before BKT runs (first evidence for this session+student+competency)
+    snapshot: SessionCompetencySnapshot | None = None
+    if data.session_id:
+        snap_result = await db.execute(
+            select(SessionCompetencySnapshot).where(
+                SessionCompetencySnapshot.session_id == data.session_id,
+                SessionCompetencySnapshot.student_id == data.student_id,
+                SessionCompetencySnapshot.competency_id == data.competency_id,
+            )
+        )
+        snapshot = snap_result.scalar_one_or_none()
+        if snapshot is None:
+            snapshot = SessionCompetencySnapshot(
+                id=uuid.uuid4(),
+                session_id=data.session_id,
+                student_id=data.student_id,
+                competency_id=data.competency_id,
+                p_learned_before=primary_state_db.p_learned,
+                stage_before=primary_state_db.stage,
+                p_learned_after=primary_state_db.p_learned,
+                stage_after=primary_state_db.stage,
+            )
+            db.add(snapshot)
+            await db.flush()
+
     # 4. Run BKT engine
     evidence_input = EvidenceInput(
         student_id=str(data.student_id),
@@ -198,6 +235,11 @@ async def process_evidence(
     # 5. Persist updated primary state
     _apply_engine_state_to_db(primary_state_db, updated_state)
 
+    # 5b. Update snapshot p_learned_after with latest BKT result
+    if snapshot is not None:
+        snapshot.p_learned_after = updated_state.p_learned
+        snapshot.stage_after = updated_state.stage
+
     # 6. Persist FIRe decay clock resets for ancestors
     fire_refreshed = update_results[0].fire_refreshed if update_results else []
     if fire_refreshed:
@@ -211,6 +253,30 @@ async def process_evidence(
             engine_st = all_states_engine.get(db_st.competency_id)
             if engine_st:
                 db_st.last_evidence_at = engine_st.last_evidence_at
+
+    # 7. Advance activity progress if this answers the current question
+    if _activity_question is not None:
+        from app.models.curriculum import Activity
+        act_result = await db.execute(
+            select(Activity).where(Activity.question_ids.contains([str(_activity_question.id)]))
+        )
+        activity = act_result.scalar_one_or_none()
+        if activity:
+            prog_result = await db.execute(
+                select(StudentActivityProgress).where(
+                    StudentActivityProgress.student_id == data.student_id,
+                    StudentActivityProgress.activity_id == activity.id,
+                )
+            )
+            progress = prog_result.scalar_one_or_none()
+            if progress is not None:
+                question_ids = activity.question_ids or []
+                expected_id = str(question_ids[progress.current_index]) if progress.current_index < len(question_ids) else None
+                if expected_id == str(_activity_question.id):
+                    progress.current_index += 1
+                    if progress.current_index >= len(question_ids):
+                        from datetime import datetime, timezone
+                        progress.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(event)

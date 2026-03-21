@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import type { Cohort, Session, SessionActivity, LivePulseEvent, StudentScore } from "@/api/types";
+import type { Cohort, Session, SessionActivity, LivePulseEvent, StudentScore, StudentActivityScores } from "@/api/types";
 import type { Student } from "@/api/types";
 import type { SessionViewOut } from "@/api/types/admin";
 
@@ -63,6 +63,18 @@ export function useSessionScores(cohortId: string | null | undefined, sessionId?
     queryKey: ["session-scores", cohortId, sessionId],
     queryFn: async () =>
       (await api.get(`/teacher/cohorts/${cohortId}/session-scores`, {
+        params: { session_id: sessionId },
+      })).data,
+    enabled: !!cohortId && !!sessionId,
+    refetchInterval: 5_000,
+  });
+}
+
+export function useSessionActivityScores(cohortId: string | null | undefined, sessionId?: string | null) {
+  return useQuery<StudentActivityScores[]>({
+    queryKey: ["session-activity-scores", cohortId, sessionId],
+    queryFn: async () =>
+      (await api.get(`/teacher/cohorts/${cohortId}/session-activity-scores`, {
         params: { session_id: sessionId },
       })).data,
     enabled: !!cohortId && !!sessionId,

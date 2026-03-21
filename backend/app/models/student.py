@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Float, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import Boolean, Float, ForeignKey, Index, Integer, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,4 +53,49 @@ class StudentCompetencyState(Base):
     stage: Mapped[int] = mapped_column(Integer, server_default="1")  # 1-5
     confidence: Mapped[float] = mapped_column(Float, server_default="0.0")  # 0-1
 
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+
+
+class StudentActivityProgress(Base):
+    """Tracks where a student is in an ordered activity (question_ids list).
+
+    current_index = index of the next question to serve (0-based).
+    Incremented after each answer. completed_at set when all questions done.
+    """
+    __tablename__ = "student_activity_progress"
+    __table_args__ = (UniqueConstraint("student_id", "activity_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"))
+    activity_id: Mapped[str] = mapped_column(String(50))
+    current_index: Mapped[int] = mapped_column(Integer, server_default="0")
+    completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+
+
+class SessionCompetencySnapshot(Base):
+    """BKT state captured at start and end of each session per (student, competency).
+
+    Written when the first evidence event fires for a (session, student, competency) triple.
+    p_learned_before = p_learned snapshot taken before BKT processes that first event.
+    p_learned_after / stage_after = updated live after every subsequent event in the session.
+    """
+    __tablename__ = "session_competency_snapshots"
+    __table_args__ = (
+        UniqueConstraint("session_id", "student_id", "competency_id"),
+        Index("ix_scs_session_competency", "session_id", "competency_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"))
+    competency_id: Mapped[str] = mapped_column(String(10))
+
+    p_learned_before: Mapped[float] = mapped_column(Float)
+    stage_before: Mapped[int] = mapped_column(Integer)
+    p_learned_after: Mapped[float] = mapped_column(Float)
+    stage_after: Mapped[int] = mapped_column(Integer)
+
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())

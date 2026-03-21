@@ -27,6 +27,20 @@ export interface StudentScore {
   total: number;
 }
 
+export interface ActivityScore {
+  activity_id: string;
+  activity_name: string;
+  order: number;
+  correct: number;
+  total: number;
+}
+
+export interface StudentActivityScores {
+  student_id: string;
+  student_name: string;
+  activity_scores: ActivityScore[];
+}
+
 export interface LivePulseEvent {
   id: string;
   student_id: string;

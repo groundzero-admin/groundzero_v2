@@ -90,12 +90,22 @@ async def get_competency_drilldown(
 class StudentMasteryRow(BaseModel):
     student_id: uuid.UUID
     student_name: str
+    # BKT state (lifetime, current)
     p_learned: float
-    stage: int
-    total_evidence: int
+    stage: int                          # 1-5: Novice→Mastered
+    total_evidence: int                 # lifetime attempts
+    consecutive_failures: int
     is_stuck: bool
-    dominant_misconception_type: str | None  # conceptual/procedural/careless/guessing
-    dominant_misconception: str | None  # the actual text
+    avg_response_time_ms: float | None
+    # Session BKT delta
+    p_learned_before: float | None      # p_learned at session start
+    stage_before: int | None
+    # Session-scoped performance
+    session_correct: int
+    session_total: int
+    # Misconception
+    dominant_misconception_type: str | None
+    dominant_misconception: str | None
 
 class CompetencyClassReport(BaseModel):
     competency_id: str
@@ -103,10 +113,14 @@ class CompetencyClassReport(BaseModel):
     students: list[StudentMasteryRow]
     # Aggregates
     attempted_count: int
-    mastered_count: int  # p_learned >= 0.8
-    struggling_count: int  # p_learned < 0.4 and total_evidence > 0
+    mastered_count: int
+    struggling_count: int
     not_started_count: int
-    misconception_breakdown: dict  # {type: count}
+    avg_p_learned: float                # across attempted students only
+    stage_distribution: dict            # {1: N, 2: N, 3: N, 4: N, 5: N}
+    session_correct_total: int
+    session_attempts_total: int
+    misconception_breakdown: dict
 
 @router.get("/sessions/{session_id}/class-report")
 async def get_class_report(
@@ -118,21 +132,42 @@ async def get_class_report(
     from app.models.batch_enrollment import CohortEnrollment
     from app.models.competency import Competency
     from app.models.curriculum import Activity
+    from app.models.student import SessionCompetencySnapshot
 
-    # Get session + its current activity's competencies
+    # Get session
     session = await db.get(Session, session_id)
-    if not session or not session.current_activity_id:
+    if not session:
         return []
 
-    activity = await db.get(Activity, session.current_activity_id)
-    if not activity:
+    # Gather competencies from all launched activities (active, paused, or completed)
+    from app.models.session import SessionActivity
+    launched = (await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.status.in_(["active", "paused", "completed"]),
+        )
+    )).scalars().all()
+
+    # Also include current_activity_id in case it's pending but already set
+    activity_ids_to_check = {sa.activity_id for sa in launched}
+    if session.current_activity_id:
+        activity_ids_to_check.add(session.current_activity_id)
+
+    if not activity_ids_to_check:
         return []
 
-    primary_competencies = activity.primary_competencies or []
-    competency_ids = [c["competency_id"] for c in primary_competencies if "competency_id" in c]
-    if not competency_ids:
-        # Try alternate key
-        competency_ids = [c["competencyId"] for c in primary_competencies if "competencyId" in c]
+    competency_ids_set: set[str] = set()
+    for act_id in activity_ids_to_check:
+        activity = await db.get(Activity, act_id)
+        if not activity:
+            continue
+        primary_competencies = activity.primary_competencies or []
+        for c in primary_competencies:
+            cid = c.get("competency_id") or c.get("competencyId")
+            if cid:
+                competency_ids_set.add(cid)
+
+    competency_ids = list(competency_ids_set)
     if not competency_ids:
         return []
 
@@ -160,9 +195,11 @@ async def get_class_report(
     )).scalars().all()
     comp_name_map = {c.id: c.name for c in comps}
 
+    from sqlalchemy import case as sa_case
+
     reports = []
     for comp_id in competency_ids:
-        # Get all states for this competency across students
+        # BKT states (lifetime)
         states = (await db.execute(
             select(StudentCompetencyState).where(
                 StudentCompetencyState.competency_id == comp_id,
@@ -171,21 +208,56 @@ async def get_class_report(
         )).scalars().all()
         state_map = {s.student_id: s for s in states}
 
-        # Get latest misconception per student for this competency
-        recent_evidence = (await db.execute(
+        # Session BKT snapshots (before/after)
+        snapshots = (await db.execute(
+            select(SessionCompetencySnapshot).where(
+                SessionCompetencySnapshot.session_id == session_id,
+                SessionCompetencySnapshot.competency_id == comp_id,
+                SessionCompetencySnapshot.student_id.in_(student_ids),
+            )
+        )).scalars().all()
+        snapshot_map = {s.student_id: s for s in snapshots}
+
+        # Session-scoped MCQ evidence: correct + total per student
+        # Deduplicate by activity_question_id — only count the last attempt per question.
+        from sqlalchemy import text
+        session_ev_rows = (await db.execute(
+            text("""
+                SELECT student_id, count(*) AS total,
+                       sum(CASE WHEN outcome >= 0.5 THEN 1 ELSE 0 END) AS correct
+                FROM (
+                    SELECT DISTINCT ON (student_id, meta->>'activityQuestionId')
+                           student_id, outcome
+                    FROM evidence_events
+                    WHERE competency_id = :comp_id
+                      AND student_id = ANY(:student_ids)
+                      AND session_id = :session_id
+                      AND source = 'mcq'
+                      AND meta->>'activityQuestionId' IS NOT NULL
+                    ORDER BY student_id, meta->>'activityQuestionId', created_at DESC
+                ) latest
+                GROUP BY student_id
+            """),
+            {"comp_id": comp_id, "student_ids": student_ids, "session_id": session_id},
+        )).all()
+        session_score_map: dict[uuid.UUID, tuple[int, int]] = {
+            row.student_id: (int(row.correct), int(row.total)) for row in session_ev_rows
+        }
+
+        # Latest misconception per student (session-scoped wrong answers)
+        misc_events = (await db.execute(
             select(EvidenceEvent)
             .where(
                 EvidenceEvent.competency_id == comp_id,
                 EvidenceEvent.student_id.in_(student_ids),
+                EvidenceEvent.session_id == session_id,
                 EvidenceEvent.outcome < 0.5,
                 EvidenceEvent.misconception.isnot(None),
             )
             .order_by(EvidenceEvent.created_at.desc())
         )).scalars().all()
-
-        # Latest misconception per student
         student_misconception: dict[uuid.UUID, dict] = {}
-        for ev in recent_evidence:
+        for ev in misc_events:
             if ev.student_id not in student_misconception:
                 student_misconception[ev.student_id] = ev.misconception
 
@@ -194,9 +266,11 @@ async def get_class_report(
 
         for sid in student_ids:
             state = state_map.get(sid)
+            snap = snapshot_map.get(sid)
             misc = student_misconception.get(sid)
             misc_type = misc.get("type") if misc else None
             misc_text = misc.get("misconception") if misc else None
+            sess_correct, sess_total = session_score_map.get(sid, (0, 0))
 
             if misc_type:
                 misconception_counts[misc_type] = misconception_counts.get(misc_type, 0) + 1
@@ -205,17 +279,28 @@ async def get_class_report(
                 student_id=sid,
                 student_name=student_name_map.get(sid, "Unknown"),
                 p_learned=state.p_learned if state else 0.0,
-                stage=state.stage if state else 0,
+                stage=state.stage if state else 1,
                 total_evidence=state.total_evidence if state else 0,
+                consecutive_failures=state.consecutive_failures if state else 0,
                 is_stuck=state.is_stuck if state else False,
+                avg_response_time_ms=state.avg_response_time_ms if state else None,
+                p_learned_before=snap.p_learned_before if snap else None,
+                stage_before=snap.stage_before if snap else None,
+                session_correct=sess_correct,
+                session_total=sess_total,
                 dominant_misconception_type=misc_type,
                 dominant_misconception=misc_text,
             ))
 
-        attempted = sum(1 for r in student_rows if r.total_evidence > 0)
-        mastered = sum(1 for r in student_rows if r.p_learned >= 0.8)
-        struggling = sum(1 for r in student_rows if r.p_learned < 0.4 and r.total_evidence > 0)
-        not_started = sum(1 for r in student_rows if r.total_evidence == 0)
+        attempted = sum(1 for r in student_rows if r.session_total > 0)
+        mastered = sum(1 for r in student_rows if r.p_learned >= 0.85)
+        struggling = sum(1 for r in student_rows if r.p_learned < 0.4 and r.session_total > 0)
+        not_started = sum(1 for r in student_rows if r.session_total == 0)
+        attempted_students = [r for r in student_rows if r.session_total > 0]
+        avg_p = sum(r.p_learned for r in attempted_students) / len(attempted_students) if attempted_students else 0.0
+        stage_dist = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        for r in attempted_students:
+            stage_dist[max(1, min(5, r.stage))] += 1
 
         reports.append(CompetencyClassReport(
             competency_id=comp_id,
@@ -225,6 +310,10 @@ async def get_class_report(
             mastered_count=mastered,
             struggling_count=struggling,
             not_started_count=not_started,
+            avg_p_learned=round(avg_p, 3),
+            stage_distribution=stage_dist,
+            session_correct_total=sum(r.session_correct for r in student_rows),
+            session_attempts_total=sum(r.session_total for r in student_rows),
             misconception_breakdown=misconception_counts,
         ))
 

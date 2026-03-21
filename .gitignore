@@ -36,4 +36,4 @@ docker-compose.override.yml
 deploy/.aws-env.sh
 
 
-100ms_docs
+100ms_docs.env.aws

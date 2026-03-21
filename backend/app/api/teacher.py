@@ -304,6 +304,94 @@ async def get_session_scores(
     ]
 
 
+@router.get(
+    "/cohorts/{cohort_id}/session-activity-scores",
+    summary="Per-Student Per-Activity Scores",
+    description="Correct/total per student per activity for a session, using activityQuestionId in evidence meta.",
+)
+async def get_session_activity_scores(
+    cohort_id: uuid.UUID,
+    session_id: uuid.UUID = Query(...),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role("teacher", "admin")),
+):
+    from sqlalchemy import text
+
+    # Get ordered activities for this session
+    act_result = await db.execute(
+        select(SessionActivity.activity_id, SessionActivity.order, Activity.name)
+        .outerjoin(Activity, Activity.id == SessionActivity.activity_id)
+        .where(SessionActivity.session_id == session_id)
+        .order_by(SessionActivity.order)
+    )
+    activities = act_result.all()
+    if not activities:
+        return []
+
+    # Get enrolled student ids + names
+    student_result = await db.execute(
+        select(Student.id, Student.name)
+        .join(CohortEnrollment, CohortEnrollment.student_id == Student.id)
+        .where(CohortEnrollment.cohort_id == cohort_id)
+        .order_by(Student.name)
+    )
+    students = student_result.all()
+
+    # Per-student per-activity scores via activityQuestionId → activities.question_ids
+    rows = await db.execute(text("""
+        SELECT
+            student_id::text,
+            activity_id,
+            "order",
+            COUNT(*)::int AS total,
+            SUM(CASE WHEN outcome >= 0.5 THEN 1 ELSE 0 END)::int AS correct
+        FROM (
+            SELECT DISTINCT ON (ee.student_id, ee.meta->>'activityQuestionId')
+                ee.student_id,
+                sa.activity_id,
+                sa."order",
+                ee.outcome
+            FROM evidence_events ee
+            JOIN session_activities sa ON sa.session_id = ee.session_id
+            JOIN activities a ON a.id = sa.activity_id
+            WHERE ee.session_id = :session_id
+              AND (ee.meta->>'activityQuestionId') = ANY(
+                  SELECT jsonb_array_elements_text(a.question_ids)
+              )
+            ORDER BY ee.student_id, ee.meta->>'activityQuestionId', ee.created_at DESC
+        ) latest
+        GROUP BY student_id, activity_id, "order"
+        ORDER BY "order"
+    """), {"session_id": str(session_id)})
+    score_data = rows.fetchall()
+
+    # Build lookup: (student_id_str, activity_id) → (correct, total)
+    score_map: dict[tuple[str, str], dict] = {}
+    for student_id_str, activity_id, order, total, correct in score_data:
+        score_map[(student_id_str, activity_id)] = {"correct": correct, "total": total, "order": order}
+
+    activity_list = [
+        {"activity_id": a_id, "activity_name": name or a_id, "order": order}
+        for a_id, order, name in activities
+    ]
+
+    return [
+        {
+            "student_id": str(sid),
+            "student_name": sname,
+            "activity_scores": [
+                {
+                    **act,
+                    "correct": score_map.get((str(sid), act["activity_id"]), {}).get("correct", 0),
+                    "total": score_map.get((str(sid), act["activity_id"]), {}).get("total", 0),
+                }
+                for act in activity_list
+            ],
+        }
+        for sid, sname in students
+    ]
+
+
 # ── Class Analytics ──────────────────────────────────────────────
 
 
