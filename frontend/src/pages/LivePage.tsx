@@ -1,7 +1,17 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, PhoneOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useHMSActions, useHMSStore, selectHMSMessages } from "@100mslive/react-sdk";
+import { useNavigate } from "react-router";
+import {
+  useHMSActions,
+  useHMSStore,
+  selectHMSMessages,
+  selectPeers,
+  selectIsConnectedToRoom,
+  selectIsLocalAudioEnabled,
+  selectIsLocalVideoEnabled,
+  selectIsLocalScreenShared,
+} from "@100mslive/react-sdk";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentState } from "@/api/hooks/useStudentState";
 import { useActiveSession } from "@/api/hooks/useActiveSession";
@@ -14,18 +24,24 @@ import { api } from "@/api/client";
 import type { BKTUpdate, EvidenceCreate } from "@/api/types";
 import type { SparkTriggerData } from "@/components/live/AICompanionShell";
 import { AICompanionShell } from "@/components/live/AICompanionShell";
-import { VideoArea } from "@/components/live/VideoArea";
+import { VideoArea, type TileData } from "@/components/live/VideoArea";
 import { ActivityPanel } from "@/components/live/ActivityPanel";
 import { BKTUpdateToast } from "@/components/live/BKTUpdateToast";
 import * as s from "./LivePage.css";
 
 export default function LivePage() {
+  const navigate = useNavigate();
   const { studentId } = useStudent();
   const { data: studentState, isLoading: loadingState } = useStudentState(studentId);
   const student = studentState?.student ?? null;
 
-  // HMS chat
+  // HMS — video + chat (must join room; tiles come from peers)
   const hmsActions = useHMSActions();
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
+  const isAudioOn = useHMSStore(selectIsLocalAudioEnabled);
+  const isVideoOn = useHMSStore(selectIsLocalVideoEnabled);
+  const isScreenShared = useHMSStore(selectIsLocalScreenShared);
+  const peers: any[] = (useHMSStore(selectPeers) as any[]) || [];
   const rawMessages: any[] = (useHMSStore(selectHMSMessages) as any[]) || [];
   const chatMessages = rawMessages.filter((m: any) => {
     try { return !JSON.parse(m.message)?.type; } catch { return true; }
@@ -35,6 +51,8 @@ export default function LivePage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(420);
   const [isResizing, setIsResizing] = useState(false);
+  const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages.length]);
 
@@ -65,13 +83,49 @@ export default function LivePage() {
   }, [chatText, hmsActions]);
 
   // Fetch student's live sessions to get HMS room code
-  const { data: liveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean }[]>({
+  const { data: liveSessions, isLoading: loadingLiveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean }[]>({
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
     refetchInterval: 15_000,
   });
   const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
+  const roomCode = activeLiveSession?.room_code_guest ?? "";
+  const displayName = activeLiveSession?.student_name ?? student?.name ?? "Student";
+
+  // Join 100ms room as guest (same pattern as admin/LiveClassPage)
+  useEffect(() => {
+    if (!roomCode) return;
+    (async () => {
+      try {
+        setJoinError(null);
+        const authToken = await hmsActions.getAuthTokenByRoomCode({ roomCode });
+        await hmsActions.join({
+          userName: displayName,
+          authToken,
+          settings: { isAudioMuted: false, isVideoMuted: false },
+        });
+      } catch (err: unknown) {
+        const msg = err && typeof err === "object" && "message" in err ? String((err as { message?: string }).message) : String(err);
+        const desc = err && typeof err === "object" && "description" in err ? String((err as { description?: string }).description) : "";
+        const combined = msg || desc;
+        setJoinError(
+          combined.includes("not active") || combined.includes("403")
+            ? "This class has not started yet."
+            : `Failed to join: ${combined}`,
+        );
+      }
+    })();
+    return () => {
+      hmsActions.leave();
+    };
+  }, [roomCode, displayName, hmsActions]);
+
+  useEffect(() => {
+    const h = () => hmsActions.leave();
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [hmsActions]);
 
   // Session-driven flow: find active session for student's cohort
   const { data: session, isLoading: loadingSession } = useActiveSession(student?.cohort_id);
@@ -216,6 +270,15 @@ export default function LivePage() {
 
   const dismissToast = useCallback(() => setToastUpdates(null), []);
 
+  const handleLeaveClass = useCallback(async () => {
+    try {
+      await hmsActions.leave();
+    } catch {
+      /* ignore */
+    }
+    navigate("/home");
+  }, [hmsActions, navigate]);
+
   // Loading state
   if (loadingState || loadingSession) {
     return (
@@ -225,18 +288,164 @@ export default function LivePage() {
     );
   }
 
+  const tiles: TileData[] = [];
+  for (const p of peers) {
+    if (p.auxiliaryTracks?.length) {
+      tiles.push({
+        id: `screen-${p.id}`,
+        trackId: p.auxiliaryTracks[0],
+        label: `🖥️ ${p.name || "?"}`,
+        isScreen: true,
+        peerId: p.id,
+        isLocal: p.isLocal,
+      });
+    }
+  }
+  for (const p of peers) {
+    tiles.push({
+      id: p.id,
+      trackId: p.videoTrack,
+      label: `${p.name || "?"}${p.isLocal ? " (You)" : ""}`,
+      isScreen: false,
+      peerId: p.id,
+      isLocal: p.isLocal,
+      audioTrack: p.audioTrack,
+    });
+  }
+
+  function makeMuteHandler(tile: TileData) {
+    if (tile.isLocal || tile.isScreen || !tile.audioTrack) return undefined;
+    return async () => {
+      try {
+        await hmsActions.setRemoteTrackEnabled(tile.audioTrack!, false);
+      } catch {
+        /* ignore */
+      }
+    };
+  }
 
   return (
     <>
       <div className={s.page}>
         {/* ── Left: Video (full height) ── */}
         <div className={s.leftCol}>
-          <VideoArea
-            tiles={[]}
-            pinnedId={null}
-            setPinnedId={() => {}}
-            onMute={() => undefined}
-          />
+          {joinError ? (
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              padding: 24, textAlign: "center", color: "#fca5a5", fontSize: 14, background: "#0b0b1a",
+            }}>
+              {joinError}
+            </div>
+          ) : loadingLiveSessions ? (
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              color: "#94a3b8", fontSize: 14, background: "#0b0b1a",
+            }}>
+              <Loader2 size={22} style={{ animation: "spin 1s linear infinite", color: "#6366f1" }} />
+              Loading live session…
+            </div>
+          ) : !roomCode ? (
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 24, textAlign: "center", color: "#64748b", fontSize: 14, background: "#0b0b1a",
+            }}>
+              No live class right now. Join from your dashboard when your teacher starts the session.
+            </div>
+          ) : !isConnected ? (
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              color: "#94a3b8", fontSize: 14, background: "#0b0b1a",
+            }}>
+              <Loader2 size={22} style={{ animation: "spin 1s linear infinite", color: "#6366f1" }} />
+              Joining video…
+            </div>
+          ) : (
+            <>
+              <VideoArea
+                tiles={tiles}
+                pinnedId={pinnedId}
+                setPinnedId={setPinnedId}
+                onMute={makeMuteHandler}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 14px",
+                  background: "#101020",
+                  borderTop: "1px solid #1c1c30",
+                  flexShrink: 0,
+                }}
+              >
+                {[
+                  {
+                    icon: isAudioOn ? <Mic size={16} /> : <MicOff size={16} />,
+                    label: "Mic",
+                    on: isAudioOn as boolean,
+                    danger: !isAudioOn,
+                    fn: () => hmsActions.setLocalAudioEnabled(!isAudioOn),
+                  },
+                  {
+                    icon: isVideoOn ? <Camera size={16} /> : <CameraOff size={16} />,
+                    label: "Cam",
+                    on: isVideoOn as boolean,
+                    danger: !isVideoOn,
+                    fn: () => hmsActions.setLocalVideoEnabled(!isVideoOn),
+                  },
+                  {
+                    icon: isScreenShared ? <MonitorOff size={16} /> : <Monitor size={16} />,
+                    label: isScreenShared ? "Stop" : "Share",
+                    on: isScreenShared as boolean,
+                    warn: isScreenShared,
+                    fn: () => hmsActions.setScreenShareEnabled(!isScreenShared),
+                  },
+                ].map((b, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={b.fn}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      padding: "7px 14px",
+                      borderRadius: 10,
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      color: "#fff",
+                      background: b.danger ? "#ef4444" : (b as { warn?: boolean }).warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
+                    }}
+                  >
+                    {b.icon} {b.label}
+                  </button>
+                ))}
+                <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
+                <button
+                  type="button"
+                  onClick={handleLeaveClass}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    padding: "7px 14px",
+                    borderRadius: 10,
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    fontSize: 12,
+                    color: "#fff",
+                    background: "#64748b",
+                  }}
+                >
+                  <PhoneOff size={16} /> Leave
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* ── Drag resizer (desktop only) ── */}

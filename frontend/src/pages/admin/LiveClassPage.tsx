@@ -93,6 +93,16 @@ export default function LiveClassPage() {
         </div>
     );
 
+    if (!roomCode) return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0b0b1a", color: "#cbd5e1", fontFamily: "'Inter',sans-serif", gap: 16, padding: 24 }}>
+            <div style={{ fontSize: 48 }}>🔗</div>
+            <div style={{ fontSize: 16, fontWeight: 600, textAlign: "center", maxWidth: 420 }}>
+                Missing room link. Open Live Class from the teacher dashboard (Go Live or Rejoin) so the video room code is included.
+            </div>
+            <button type="button" onClick={() => window.close()} style={{ padding: "8px 20px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontWeight: 600, cursor: "pointer" }}>Close Tab</button>
+        </div>
+    );
+
     if (!isConnected && roomCode) return (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#0b0b1a", color: "#fff", fontFamily: "'Inter',sans-serif", fontSize: 16 }}>
             <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>

@@ -17,10 +17,13 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute }: {
     onMute: (tile: TileData) => (() => void) | undefined;
 }) {
     const hasScreenShare = tiles.some(t => t.isScreen);
+    // If pinnedId points at a peer who left (or stale id), fall back — otherwise spotlight stays null while tiles exist.
     let spotlightTile: TileData | null = null;
-    if (pinnedId) spotlightTile = tiles.find(t => t.id === pinnedId) || null;
-    else if (hasScreenShare) spotlightTile = tiles.find(t => t.isScreen) || null;
-    else spotlightTile = tiles.find(t => !t.isScreen && !t.isLocal) ?? tiles[0] ?? null;
+    if (pinnedId) spotlightTile = tiles.find(t => t.id === pinnedId) ?? null;
+    if (!spotlightTile) {
+        if (hasScreenShare) spotlightTile = tiles.find(t => t.isScreen) || null;
+        else spotlightTile = tiles.find(t => !t.isScreen && !t.isLocal) ?? tiles[0] ?? null;
+    }
 
     const peerScreenTile = spotlightTile ? tiles.find(t => t.isScreen && t.peerId === spotlightTile!.peerId) : null;
     const peerCamTile = spotlightTile ? tiles.find(t => !t.isScreen && t.peerId === spotlightTile!.peerId) : null;
@@ -46,7 +49,7 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute }: {
                     )
                 ) : (
                     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 14, background: "#0d0d1a", borderRadius: 12 }}>
-                        Waiting for participants…
+                        {tiles.length === 0 ? "Connecting video…" : "Waiting for participants…"}
                     </div>
                 )}
             </div>
