@@ -9,7 +9,7 @@ import {
   useCohortStudents,
 } from "@/api/hooks/useTeacher";
 import { api } from "@/api/client";
-import { Users, Calendar, CheckCircle2, Video, Square, RotateCcw, Flag, Eye } from "lucide-react";
+import { Users, Calendar, CheckCircle2, Video, Square, RotateCcw, Flag, Eye, Clapperboard } from "lucide-react";
 import * as s from "./TeacherDashboardPage.css";
 
 const AVATAR_COLORS = [
@@ -169,11 +169,27 @@ export default function TeacherDashboardPage() {
                   Activity Preview
                 </button>
                 {isDone ? (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-tertiary)", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <CheckCircle2 size={14} /> Done
-                  </span>
+                  <>
+                    <button
+                      type="button"
+                      className={s.actionBtnPreviewBlue}
+                      onClick={() => window.open(`/teacher/sessions/${ses.id}/recordings`, "_blank")}
+                    >
+                      <Clapperboard size={14} /> Recording
+                    </button>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-tertiary)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <CheckCircle2 size={14} /> Done
+                    </span>
+                  </>
                 ) : isEnded ? (
                   <>
+                    <button
+                      type="button"
+                      className={s.actionBtnPreviewBlue}
+                      onClick={() => window.open(`/teacher/sessions/${ses.id}/recordings`, "_blank")}
+                    >
+                      <Clapperboard size={14} /> Recording
+                    </button>
                     <button
                       type="button"
                       className={s.actionBtnWarning}

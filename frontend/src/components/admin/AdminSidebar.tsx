@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
-import { LayoutTemplate, Rocket, Users, MonitorPlay, Blocks, BookOpen } from "lucide-react";
+import { LayoutTemplate, Rocket, Users, MonitorPlay, Blocks, BookOpen, Video } from "lucide-react";
 import * as s from "./AdminSidebar.css";
 
 const NAV_ITEMS = [
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
     { label: "Question Bank", path: "/admin/question-bank", icon: BookOpen },
     { label: "Cohorts", path: "/admin/cohorts", icon: Rocket },
     { label: "All Students", path: "/admin/students", icon: Users },
+    { label: "Class Recordings", path: "/admin/class-recordings", icon: Video },
 ];
 
 export default function AdminSidebar() {
