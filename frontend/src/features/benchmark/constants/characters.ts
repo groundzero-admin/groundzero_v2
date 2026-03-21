@@ -144,6 +144,7 @@ export const CHARACTERS: Character[] = [
       10: "Halfway through the savanna! Keep going! \u{1F305}",
       15: "Almost at Pride Rock! Just 5 more! \u{1F3D4}",
     },
+    runVideo: "/characters/simba_run.mp4",
   },
   {
     id: "dora",

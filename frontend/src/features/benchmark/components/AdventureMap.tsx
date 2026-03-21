@@ -3,6 +3,8 @@ import { ArrowRight } from "lucide-react";
 import type { Character } from "../constants/characters";
 import type { BenchmarkQuestion } from "../api";
 
+const ZOOM_FACTOR = 1.4;
+
 const ChromaVideo = memo(function ChromaVideo({ src, size = 90 }: { src: string; size?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -16,8 +18,10 @@ const ChromaVideo = memo(function ChromaVideo({ src, size = 90 }: { src: string;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
-    canvas.width = size;
-    canvas.height = size;
+    const dpr = window.devicePixelRatio || 1;
+    const renderSize = Math.ceil(size * dpr * ZOOM_FACTOR);
+    canvas.width = renderSize;
+    canvas.height = renderSize;
 
     const draw = () => {
       if (video.paused || video.ended) {
@@ -25,18 +29,18 @@ const ChromaVideo = memo(function ChromaVideo({ src, size = 90 }: { src: string;
         return;
       }
 
-      const vw = video.videoWidth || size;
-      const vh = video.videoHeight || size;
-      const scale = Math.min(size / vw, size / vh);
+      const vw = video.videoWidth || renderSize;
+      const vh = video.videoHeight || renderSize;
+      const scale = Math.min(renderSize / vw, renderSize / vh);
       const dw = vw * scale;
       const dh = vh * scale;
-      const dx = (size - dw) / 2;
-      const dy = (size - dh) / 2;
+      const dx = (renderSize - dw) / 2;
+      const dy = (renderSize - dh) / 2;
 
-      ctx.clearRect(0, 0, size, size);
+      ctx.clearRect(0, 0, renderSize, renderSize);
       ctx.drawImage(video, dx, dy, dw, dh);
 
-      const imageData = ctx.getImageData(0, 0, size, size);
+      const imageData = ctx.getImageData(0, 0, renderSize, renderSize);
       const d = imageData.data;
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], g = d[i + 1], b = d[i + 2];
@@ -204,7 +208,17 @@ export default function AdventureMap({
       const toY = Y_START + toIdx * Y_SPACING;
       const my = (fromY + toY) / 2;
       const charTopOffset = ACTIVE_SIZE / 2 + 10 + CHAR_SIZE;
-      const ZOOM = 1.8;
+
+      const clampTranslate = (tx: number, ty: number) => {
+        const maxTx = 0;
+        const minTx = viewW - w * ZOOM_FACTOR;
+        const maxTy = 0;
+        const minTy = viewH - totalH * ZOOM_FACTOR;
+        return {
+          tx: Math.min(maxTx, Math.max(minTx, tx)),
+          ty: Math.min(maxTy, Math.max(minTy, ty)),
+        };
+      };
 
       if (charRef.current) {
         charRef.current.style.left = `${fromX}px`;
@@ -216,7 +230,8 @@ export default function AdventureMap({
       scrollEl.style.overflow = "hidden";
       mapEl.style.transformOrigin = "0 0";
       const charCY = fromY - charTopOffset + CHAR_SIZE / 2;
-      mapEl.style.transform = `translate(${viewW / 2 - fromX * ZOOM}px, ${viewH / 2 - charCY * ZOOM}px) scale(${ZOOM})`;
+      const initT = clampTranslate(viewW / 2 - fromX * ZOOM_FACTOR, viewH / 2 - charCY * ZOOM_FACTOR);
+      mapEl.style.transform = `translate(${initT.tx}px, ${initT.ty}px) scale(${ZOOM_FACTOR})`;
 
       setIsRunning(true);
 
@@ -247,7 +262,8 @@ export default function AdventureMap({
           }
 
           const ccy = y - charTopOffset + CHAR_SIZE / 2;
-          mapEl.style.transform = `translate(${viewW / 2 - x * ZOOM}px, ${viewH / 2 - ccy * ZOOM}px) scale(${ZOOM})`;
+          const ct = clampTranslate(viewW / 2 - x * ZOOM_FACTOR, viewH / 2 - ccy * ZOOM_FACTOR);
+          mapEl.style.transform = `translate(${ct.tx}px, ${ct.ty}px) scale(${ZOOM_FACTOR})`;
 
           if (t < 1) {
             runAnimRef.current = requestAnimationFrame(animate);
@@ -613,7 +629,7 @@ const advCSS = `
 .adv-scroll::-webkit-scrollbar { display: none; }
 
 /* ── Map canvas ── */
-.adv-map { position: relative; width: 100%; min-height: 100%; }
+.adv-map { position: relative; width: 100%; min-height: 100%; will-change: transform; }
 
 .adv-map-glow {
   position: absolute; top: 0; left: 0; right: 0;
@@ -654,6 +670,7 @@ const advCSS = `
   border-radius: 50%; border: 3px solid;
   display: flex; align-items: center; justify-content: center;
   transition: all 300ms ease; flex-shrink: 0;
+  will-change: transform;
 }
 .adv-node-active {
   cursor: pointer;
@@ -701,6 +718,9 @@ const advCSS = `
   width: 56px; height: 56px;
   border-radius: 50%; border: 3px solid;
   background: #fff; object-fit: cover; display: block;
+  will-change: transform;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 .adv-run-canvas {
   display: block;
