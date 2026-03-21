@@ -7,9 +7,8 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
   const instruction = str(data.instruction);
   const items = arr(data.items);
   const zones = arr(data.zones);
-  if (!instruction) return null;
-
   const zoneList = zones.length > 0 ? zones : items.map((_, i) => `Zone ${i + 1}`);
+
   const [placed, setPlaced] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
@@ -20,6 +19,8 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
     setDragOver(null);
     setChecked(false);
   }, [resetKey]);
+
+  if (!instruction) return null;
 
   const usedItems = new Set(Object.values(placed));
 

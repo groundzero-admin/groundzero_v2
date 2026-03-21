@@ -4,7 +4,6 @@ import { CARD, HEADING, BTN, str } from "./shared";
 
 export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
-  if (!prompt) return null;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
@@ -24,6 +23,8 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
       ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
   }, [resetKey]);
+
+  if (!prompt) return null;
 
   const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const r = canvasRef.current!.getBoundingClientRect();

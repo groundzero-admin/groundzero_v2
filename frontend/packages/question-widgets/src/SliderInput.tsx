@@ -10,8 +10,6 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
   const tolerance = num(data.tolerance, 0);
   const unit = str(data.unit);
   const imageUrl = str(data.image_url);
-  if (!prompt) return null;
-
   const fmt = (v: number) => unit ? `${v} ${unit}` : `${v}`;
 
   const [val, setVal] = useState(Math.round((min + max) / 2));
@@ -23,6 +21,8 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
     setChecked(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
+
+  if (!prompt) return null;
   const isCorrect = Math.abs(val - correct) <= tolerance;
 
   return (

@@ -24,8 +24,6 @@ export default function DragDropClassifier({ data, onAnswer, resetKey }: Questio
   const instruction = str(data.instruction);
   const categories = arr(data.categories);
   const classifierItems = parseClassifierItems(data.items);
-  if (!instruction) return null;
-
   const itemLabels = classifierItems.map((it) => it.label).filter(Boolean);
   const correctMap = new Map(classifierItems.map((it) => [it.label, it.correct_category]));
   const cats = categories.length > 0 ? categories : ["Category A", "Category B"];
@@ -42,6 +40,8 @@ export default function DragDropClassifier({ data, onAnswer, resetKey }: Questio
     setDragging(null);
     setChecked(false);
   }, [resetKey]);
+
+  if (!instruction) return null;
 
   const placedItems = new Set(Object.values(buckets).flat());
   const allPlaced = itemLabels.length > 0 && placedItems.size === itemLabels.length;

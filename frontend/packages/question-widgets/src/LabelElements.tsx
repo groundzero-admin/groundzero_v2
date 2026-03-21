@@ -5,7 +5,6 @@ import { CARD, HEADING, TAG, BTN, FEEDBACK_OK, str, arr } from "./shared";
 export default function LabelElements({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.instruction);
   const labels = arr(data.label_options);
-  if (!instruction) return null;
 
   const [placed, setPlaced] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -15,6 +14,8 @@ export default function LabelElements({ data, onAnswer, resetKey }: QuestionProp
     setPlaced([]);
     setSubmitted(false);
   }, [resetKey]);
+
+  if (!instruction) return null;
   const usedLabels = new Set(placed);
 
   const toggle = (l: string) => {

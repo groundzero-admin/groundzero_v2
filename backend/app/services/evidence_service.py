@@ -275,8 +275,8 @@ async def process_evidence(
                 if expected_id == str(_activity_question.id):
                     progress.current_index += 1
                     if progress.current_index >= len(question_ids):
-                        from datetime import datetime, timezone
-                        progress.completed_at = datetime.now(timezone.utc)
+                        from datetime import datetime
+                        progress.completed_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(event)

@@ -6,8 +6,6 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
   const sentence = str(data.sentence);
   const answers = arr(data.answers);
   const distractors = arr(data.distractors);
-  if (!sentence) return null;
-
   const allWords = [...answers, ...distractors];
   const parts = sentence.split(/\{\{blank\}\}/gi);
   const blankCount = parts.length - 1;
@@ -21,6 +19,8 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
     setChecked(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
+
+  if (!sentence) return null;
 
   const usedWords = new Set(filled.filter(Boolean));
 

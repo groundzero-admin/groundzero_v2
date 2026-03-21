@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   useQuestionTemplates,
@@ -9,6 +9,7 @@ import {
   useGenerateQuestion,
 } from "@/api/hooks/useAdmin";
 import { useSkillGraph } from "@/api/hooks/useCompetencies";
+import { api } from "@/api/client";
 import type { QuestionTemplate, InputField, ActivityQuestion } from "@/api/types/admin";
 import {
   ArrowLeft, ChevronRight, Eye, Trash2, Plus, Pencil,
@@ -304,7 +305,13 @@ export default function CreateQuestionPage() {
                       { templateId: selected.id, description: desc, gradeBand },
                       {
                         onSuccess: (data) => {
-                          setFormData((prev) => ({ ...prev, ...data }));
+                          setFormData((prev) => {
+                            const merged = { ...prev };
+                            for (const [k, v] of Object.entries(data)) {
+                              if (v !== null && v !== undefined && v !== "") merged[k] = v;
+                            }
+                            return merged;
+                          });
                           if (!title.trim() && typeof data.instruction === "string") {
                             setTitle(data.instruction.slice(0, 80));
                           }
@@ -770,6 +777,54 @@ function CompetencyPicker({
   );
 }
 
+// ─── Image upload field ───────────────────────────────────────────────────────
+
+function ImageUploadField({ field, value, onChange }: { field: InputField; value: unknown; onChange: (v: unknown) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const url = typeof value === "string" ? value : "";
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const { data } = await api.post("/admin/media/presigned-upload", { file_name: file.name, content_type: file.type });
+      const uploadRes = await fetch(data.upload_url, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+      if (!uploadRes.ok) throw new Error(`s3 ${uploadRes.status}`);
+      onChange(data.public_url);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setError("Upload failed. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div className={s.label}>
+        {field.label} {field.required && <span style={{ color: "#E53E3E" }}>*</span>}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={handleFile} />
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          style={{ padding: "8px 16px", borderRadius: 8, background: "#6366f1", color: "#fff", fontWeight: 600, fontSize: 13, border: "none", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}
+        >
+          {uploading ? "Uploading..." : url ? "Replace" : "↑ Upload Image"}
+        </button>
+        {error && <span style={{ fontSize: 12, color: "#dc2626" }}>{error}</span>}
+      </div>
+      {url && <img src={url} alt="preview" style={{ marginTop: 8, maxHeight: 120, maxWidth: "100%", borderRadius: 8, border: "1px solid #e2e8f0", objectFit: "contain" }} />}
+    </div>
+  );
+}
+
 // ─── Field input ──────────────────────────────────────────────────────────────
 
 function FieldInput({
@@ -873,6 +928,10 @@ function FieldInput({
 
   if (field.type === "list") {
     return <ListFieldInput field={field} value={value} onChange={onChange} />;
+  }
+
+  if (field.type === "image_upload") {
+    return <ImageUploadField field={field} value={value} onChange={onChange} />;
   }
 
   return (

@@ -6,8 +6,6 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
   const prompt = str(data.prompt);
   const scaleType = str(data.scale_type) || "emoji";
   const followUpPrompt = str(data.follow_up_prompt);
-  if (!prompt) return null;
-
   const emojis = scaleType === "emoji" ? ["😟", "😐", "🙂", "😊", "🤩"]
     : scaleType === "stars" ? ["⭐", "⭐", "⭐", "⭐", "⭐"]
     : scaleType === "thumbs" ? ["👎", "👍"] : ["1", "2", "3", "4", "5"];
@@ -23,6 +21,8 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
     setFollowUp("");
     setSubmitted(false);
   }, [resetKey]);
+
+  if (!prompt) return null;
 
   const handleSubmit = () => {
     setSubmitted(true);

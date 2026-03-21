@@ -5,8 +5,6 @@ import { CARD, HEADING, BTN, BUBBLE, BUBBLE_USER, str, arr } from "./shared";
 export default function DebateOpinion({ data, onAnswer, resetKey }: QuestionProps) {
   const topic = str(data.topic);
   const stances = arr(data.stances);
-  if (!topic) return null;
-
   const stanceList = stances.length > 0 ? stances : ["For", "Against", "Neutral"];
   const colors = ["#38A169", "#E53E3E", "#718096", "#3182CE"];
   const bgs = ["#F0FFF4", "#FFF5F5", "#F7FAFC", "#EBF8FF"];
@@ -21,6 +19,8 @@ export default function DebateOpinion({ data, onAnswer, resetKey }: QuestionProp
     setMsgs([]);
     setInput("");
   }, [resetKey]);
+
+  if (!topic) return null;
 
   const send = () => {
     if (!input.trim()) return;

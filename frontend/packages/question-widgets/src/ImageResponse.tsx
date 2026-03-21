@@ -4,13 +4,13 @@ import { CARD, HEADING, BTN, TEXT_INPUT, str } from "./shared";
 
 export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
-  if (!prompt) return null;
   const [text, setText] = useState("");
 
   useEffect(() => {
     if (resetKey === undefined) return;
     setText("");
   }, [resetKey]);
+  if (!prompt) return null;
   return (
     <div style={CARD}>
       <div style={HEADING}>{prompt}</div>

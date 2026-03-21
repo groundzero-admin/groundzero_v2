@@ -6,7 +6,6 @@ export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProp
   const prompt = str(data.prompt);
   const audioUrl = str(data.audio_url);
   const allowReplay = data.allow_replay !== false;
-  if (!prompt) return null;
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -22,6 +21,8 @@ export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProp
     setText("");
     setSubmitted(false);
   }, [resetKey]);
+
+  if (!prompt) return null;
 
   const togglePlay = () => {
     if (!audioRef.current) return;

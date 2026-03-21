@@ -5,7 +5,6 @@ import { CARD, HEADING, BTN, TEXT_INPUT, str, num } from "./shared";
 export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const maxWords = num(data.max_words, 50);
-  if (!prompt) return null;
 
   const [text, setText] = useState("");
 
@@ -13,6 +12,8 @@ export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps)
     if (resetKey === undefined) return;
     setText("");
   }, [resetKey]);
+
+  if (!prompt) return null;
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (

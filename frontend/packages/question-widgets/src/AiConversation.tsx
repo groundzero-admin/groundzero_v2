@@ -4,7 +4,6 @@ import { CARD, HEADING, BTN, BUBBLE, BUBBLE_USER, str } from "./shared";
 
 export default function AiConversation({ data, onAnswer, resetKey }: QuestionProps) {
   const opening = str(data.opening_message);
-  if (!opening && !str(data.system_prompt)) return null;
 
   const [msgs, setMsgs] = useState<{ role: "ai" | "user"; text: string }[]>([
     { role: "ai", text: opening || "Hi! Let's explore this topic together." },
@@ -17,6 +16,8 @@ export default function AiConversation({ data, onAnswer, resetKey }: QuestionPro
     setInput("");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
+
+  if (!opening && !str(data.system_prompt)) return null;
 
   const send = () => {
     if (!input.trim()) return;

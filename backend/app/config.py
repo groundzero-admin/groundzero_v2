@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     HMS_ACCESS_KEY: str = ""  # from 100ms dashboard
     HMS_APP_SECRET: str = ""  # from 100ms dashboard
 
+    # AWS S3 media uploads
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_SESSION_TOKEN: str = ""
+    AWS_REGION: str = "ap-south-1"
+    MEDIA_BUCKET: str = "gz-media-assets"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 

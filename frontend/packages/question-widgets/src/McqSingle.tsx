@@ -11,7 +11,6 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
   const question = str(data.question);
   const options = arr(data.options);
   const timeLimit = num(data.time_limit_seconds, 0);
-  if (!question) return null;
 
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -42,6 +41,8 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
     return () => clearInterval(timerRef.current!);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timed, timeLimit]);
+
+  if (!question) return null;
 
   const getOptionInfo = (opt: string) => {
     try { const p = JSON.parse(opt); return { label: p.text || opt, correct: !!p.is_correct }; } catch { return { label: opt, correct: false }; }
