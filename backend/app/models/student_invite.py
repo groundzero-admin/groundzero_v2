@@ -19,6 +19,8 @@ class StudentInvite(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
     )
     token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    # Same value as sent in the invite URL; allows admin to re-copy without rotating the link.
+    raw_token: Mapped[str | None] = mapped_column(String(128), nullable=True)
     expires_at: Mapped[datetime] = mapped_column()
     used_at: Mapped[datetime | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

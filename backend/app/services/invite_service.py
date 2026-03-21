@@ -32,6 +32,7 @@ async def create_invite(db: AsyncSession, user_id: uuid.UUID) -> str:
     invite = StudentInvite(
         user_id=user_id,
         token_hash=_hash_token(raw),
+        raw_token=raw,
         expires_at=datetime.utcnow() + timedelta(days=INVITE_EXPIRY_DAYS),
     )
     db.add(invite)
@@ -77,14 +78,14 @@ async def redeem_invite(
     return user
 
 
-async def get_invite_status(db: AsyncSession, user_id: uuid.UUID) -> str:
-    """Return invite status: 'accepted', 'pending', 'expired', or 'none'."""
-    # If user already has a password, they've accepted
+async def get_invite_status_and_link(
+    db: AsyncSession, user_id: uuid.UUID
+) -> tuple[str, str | None]:
+    """Return (status, invite_link). Link is set only for pending invites with stored raw_token."""
     user = await db.get(User, user_id)
     if user and user.hashed_password:
-        return "accepted"
+        return "accepted", None
 
-    # Check latest invite
     result = await db.execute(
         select(StudentInvite)
         .where(StudentInvite.user_id == user_id)
@@ -93,9 +94,16 @@ async def get_invite_status(db: AsyncSession, user_id: uuid.UUID) -> str:
     )
     invite = result.scalar_one_or_none()
     if not invite:
-        return "none"
+        return "none", None
     if invite.used_at is not None:
-        return "accepted"
+        return "accepted", None
     if invite.expires_at < datetime.utcnow():
-        return "expired"
-    return "pending"
+        return "expired", None
+    link = build_invite_link(invite.raw_token) if invite.raw_token else None
+    return "pending", link
+
+
+async def get_invite_status(db: AsyncSession, user_id: uuid.UUID) -> str:
+    """Return invite status: 'accepted', 'pending', 'expired', or 'none'."""
+    status, _ = await get_invite_status_and_link(db, user_id)
+    return status

@@ -17,8 +17,11 @@ interface AdminStudent {
     grade_band: string | null;
     is_active: boolean;
     invite_status: "pending" | "accepted" | "expired" | "none";
+    /** Present for pending invites when server can rebuild the link (see backend). */
     invite_link: string | null;
     created_at: string;
+    /** Cohorts enrolled at create time (list API may omit) */
+    enrolled_cohort_ids?: string[];
 }
 
 interface PaginatedStudents {
@@ -38,7 +41,6 @@ export default function AdminStudentsPage() {
     const [showModal, setShowModal] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [formError, setFormError] = useState("");
-    const [inviteLinkModal, setInviteLinkModal] = useState<{ name: string; link: string } | null>(null);
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -67,25 +69,20 @@ export default function AdminStudentsPage() {
             board: string;
             grade: number;
             grade_band: string;
+            cohort_ids: string[];
         }) => api.post<AdminStudent>("/admin/students", payload).then((r) => r.data),
-        onSuccess: (newStudent) => {
+        onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["admin-students"] });
             setShowModal(false);
             resetForm();
-            // Show invite link modal
-            if (newStudent.invite_link) {
-                setInviteLinkModal({ name: newStudent.full_name, link: newStudent.invite_link });
-            }
         },
     });
 
     const regenerateInvite = useMutation({
         mutationFn: (userId: string) =>
             api.post<{ invite_link: string }>(`/admin/students/${userId}/regenerate-invite`).then((r) => r.data),
-        onSuccess: (data, userId) => {
+        onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["admin-students"] });
-            const student = (qc.getQueryData<PaginatedStudents>(["admin-students", page, pageSize, search]))?.students.find(s => s.id === userId);
-            setInviteLinkModal({ name: student?.full_name ?? "Student", link: data.invite_link });
         },
     });
 
@@ -109,23 +106,14 @@ export default function AdminStudentsPage() {
         e.preventDefault();
         setFormError("");
         try {
-            const newStudent = await createStudent.mutateAsync({
+            await createStudent.mutateAsync({
                 email: formEmail,
                 full_name: formName,
                 board: formBoard,
                 grade: formGrade,
                 grade_band: formGradeBand,
+                cohort_ids: selectedCohortIds,
             });
-            // Auto-enroll in selected batches
-            if (selectedCohortIds.length && newStudent.student_id) {
-                await Promise.all(
-                    selectedCohortIds.map((cohortId) =>
-                        api.post(`/cohorts/${cohortId}/students`, {
-                            student_id: newStudent.student_id,
-                        }).catch(() => { })
-                    )
-                );
-            }
         } catch (err: unknown) {
             const msg =
                 (err as { response?: { data?: { detail?: string } } })?.response?.data
@@ -220,24 +208,40 @@ export default function AdminStudentsPage() {
                         <div className={s.sessionActions}>
                             {st.invite_status === "pending" && st.invite_link && (
                                 <button
+                                    type="button"
+                                    title="Copy invite link"
                                     className={copiedId === st.id ? s.addBtn : s.editBtn}
-                                    style={copiedId === st.id ? { padding: "4px 12px", fontSize: 12 } : {}}
+                                    style={copiedId === st.id ? { padding: "4px 12px", fontSize: 12 } : { padding: "4px 12px", fontSize: 12 }}
                                     onClick={() => copyInviteLink(st.invite_link!, st.id)}
                                 >
                                     {copiedId === st.id ? (
-                                        <><Check size={12} /> Copied!</>
+                                        <><Check size={12} /> Copied</>
                                     ) : (
-                                        <><Copy size={12} /> Copy Link</>
+                                        <><Copy size={12} /> Copy invite link</>
                                     )}
+                                </button>
+                            )}
+                            {st.invite_status === "pending" && !st.invite_link && (
+                                <button
+                                    type="button"
+                                    className={s.editBtn}
+                                    style={{ padding: "4px 12px", fontSize: 12 }}
+                                    onClick={() => regenerateInvite.mutate(st.id)}
+                                    disabled={regenerateInvite.isPending}
+                                    title="Creates a new link (needed for invites created before link storage)"
+                                >
+                                    <RefreshCw size={12} /> Regenerate link
                                 </button>
                             )}
                             {(st.invite_status === "expired" || st.invite_status === "none") && (
                                 <button
+                                    type="button"
                                     className={s.editBtn}
+                                    style={{ padding: "4px 12px", fontSize: 12 }}
                                     onClick={() => regenerateInvite.mutate(st.id)}
                                     disabled={regenerateInvite.isPending}
                                 >
-                                    <RefreshCw size={12} /> {st.invite_status === "none" ? "Send Invite" : "Regenerate"}
+                                    <RefreshCw size={12} /> {st.invite_status === "none" ? "Send invite" : "Regenerate"}
                                 </button>
                             )}
                         </div>
@@ -273,7 +277,7 @@ export default function AdminStudentsPage() {
                     <div className={s.modal} onClick={(e) => e.stopPropagation()}>
                         <h2 className={s.modalTitle}>Add New Student</h2>
                         <p style={{ fontSize: 13, color: "#718096", marginBottom: 12 }}>
-                            An invite link will be generated for the student to set their own password.
+                            An invite link will be generated. You can copy it anytime from the student row (Copy invite link) — it stays available until they join.
                         </p>
                         {formError && (
                             <div style={{
@@ -363,7 +367,7 @@ export default function AdminStudentsPage() {
                                     Cancel
                                 </button>
                                 <button type="submit" className={s.submitBtn} disabled={createStudent.isPending}>
-                                    {createStudent.isPending ? "Creating..." : "Create & Get Invite Link"}
+                                    {createStudent.isPending ? "Creating..." : "Create student"}
                                 </button>
                             </div>
                         </form>
@@ -371,45 +375,6 @@ export default function AdminStudentsPage() {
                 </div>
             )}
 
-            {/* Invite Link Modal */}
-            {inviteLinkModal && (
-                <div className={s.overlay} onClick={() => setInviteLinkModal(null)}>
-                    <div className={s.modal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-                        <h2 className={s.modalTitle}>Invite Link Ready</h2>
-                        <p style={{ fontSize: 13, color: "#718096", marginBottom: 12 }}>
-                            Share this link with <strong>{inviteLinkModal.name}</strong> so they can set their password and log in.
-                        </p>
-                        <div style={{
-                            padding: "12px 16px",
-                            borderRadius: 8,
-                            backgroundColor: "rgba(66,153,225,0.08)",
-                            border: "1px solid rgba(66,153,225,0.2)",
-                            fontSize: 13,
-                            wordBreak: "break-all",
-                            marginBottom: 16,
-                        }}>
-                            {inviteLinkModal.link}
-                        </div>
-                        <div className={s.formActions}>
-                            <button
-                                className={s.cancelBtn}
-                                onClick={() => setInviteLinkModal(null)}
-                            >
-                                Close
-                            </button>
-                            <button
-                                className={s.submitBtn}
-                                onClick={async () => {
-                                    await navigator.clipboard.writeText(inviteLinkModal.link);
-                                    setInviteLinkModal(null);
-                                }}
-                            >
-                                <Copy size={14} /> Copy Link
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
