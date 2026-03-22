@@ -7,7 +7,9 @@ export const shell = style({
 });
 
 export const main = style({
-  maxWidth: "1280px",
+  width: "70%",
+  maxWidth: "70%",
   margin: "0 auto",
-  padding: `${vars.space[6]} ${vars.space[4]}`,
+  padding: `${vars.space[6]} 0`,
+  boxSizing: "border-box",
 });

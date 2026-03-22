@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Card } from "@/components/ui";
-import { MessageSquare, Send } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import * as s from "./MessageBox.css";
 
 export function MessageBox() {
@@ -13,29 +12,34 @@ export function MessageBox() {
   }
 
   return (
-    <Card elevation="flat">
+    <div className={s.surface}>
       <div className={s.root}>
         <div className={s.header}>
-          <MessageSquare size={16} /> Share your thoughts
+          <Mail size={16} /> Share your thoughts
         </div>
         <div className={s.subtitle}>
-          Stuck on a concept? Have a cool idea? Send a message to your
-          facilitator.
+        Stuck on something or have a great idea? Message your teacher directly.
         </div>
         <div className={s.inputRow}>
-          <input
+          <textarea
             className={s.input}
             placeholder="Type your message here..."
             value={message}
+            rows={3}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
           />
           <button className={s.sendBtn} onClick={handleSend}>
             <Send size={16} />
           </button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 

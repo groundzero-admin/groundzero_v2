@@ -18,7 +18,7 @@ export default function TopBar() {
   return (
     <header className={s.header}>
       <div className={s.inner}>
-        <div className={s.brand} style={{ cursor: "pointer" }} onClick={() => navigate("/home")}>
+        <div className={s.brand} style={{ cursor: "pointer" }} onClick={() => navigate("/dashboard")}>
           <Zap size={24} color="#38A169" />
           <span className={s.brandName}>Ground Zero</span>
         </div>

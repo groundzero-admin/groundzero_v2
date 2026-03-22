@@ -58,7 +58,7 @@ export default function SetPasswordPage() {
     setSubmitting(true);
     try {
       await acceptInvite(token!, password);
-      navigate("/home", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       setError(
         err?.response?.data?.detail || "Something went wrong. The link may have expired."

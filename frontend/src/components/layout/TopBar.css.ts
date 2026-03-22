@@ -11,13 +11,15 @@ export const header = style({
 });
 
 export const inner = style({
-  maxWidth: "1280px",
+  width: "70%",
+  maxWidth: "70%",
   margin: "0 auto",
-  padding: `0 ${vars.space[4]}`,
+  padding: 0,
   height: "56px",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
+  boxSizing: "border-box",
 });
 
 export const brand = style({

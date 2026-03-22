@@ -8,10 +8,10 @@ import AppShell from "@/components/layout/AppShell";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
+import SessionReviewPage from "@/pages/SessionReviewPage";
 import LivePage from "@/pages/LivePage";
 import PracticePage from "@/pages/PracticePage";
 import FunPage from "@/pages/FunPage";
-import HomePage from "@/pages/HomePage";
 import StudioLayout from "@/components/studio/StudioLayout";
 import StudioPage from "@/pages/StudioPage";
 import StudioPlayerPage from "@/pages/StudioPlayerPage";
@@ -56,7 +56,7 @@ const queryClient = new QueryClient({
 function RequireStudent({ children }: { children: React.ReactNode }) {
   const { studentId, isLoading } = useStudent();
   if (isLoading) return null;
-  if (!studentId) return <Navigate to="/home" replace />;
+  if (!studentId) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -68,7 +68,7 @@ function RootRedirect() {
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role === "teacher") return <Navigate to="/teacher" replace />;
   if (user?.role === "admin") return <Navigate to="/admin" replace />;
-  return <Navigate to="/home" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 export default function App() {
@@ -94,7 +94,7 @@ export default function App() {
                   </RequireAuth>
                 }
               >
-                <Route path="/home" element={<HomePage />} />
+                <Route path="/home" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/practice" element={<PracticePage />} />
               </Route>
@@ -116,6 +116,17 @@ export default function App() {
                   <RequireAuth allowedRoles={["student"]}>
                     <StudentProvider>
                       <LivePage />
+                    </StudentProvider>
+                  </RequireAuth>
+                }
+              />
+
+              <Route
+                path="/session-review/:sessionId"
+                element={
+                  <RequireAuth allowedRoles={["student"]}>
+                    <StudentProvider>
+                      <SessionReviewPage />
                     </StudentProvider>
                   </RequireAuth>
                 }

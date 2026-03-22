@@ -1,6 +1,21 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "@/styles/theme.css";
 
+export const cardWrap = style({
+  padding: vars.space[6],
+  borderRadius: "22px",
+  background: "rgba(255, 255, 255, 0.4)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(255, 255, 255, 0.55)",
+  borderTopWidth: "4px",
+  borderTopColor: "#3b82f6",
+  boxShadow:
+    "0 10px 40px rgba(59, 130, 246, 0.08), 0 2px 12px rgba(15, 23, 42, 0.04)",
+});
+
 export const root = style({
   display: "flex",
   alignItems: "center",
@@ -13,13 +28,30 @@ export const avatarArea = style({
   flexShrink: 0,
 });
 
+export const avatarFrame = style({
+  width: "64px",
+  height: "64px",
+  borderRadius: "50%",
+  background: "linear-gradient(145deg, #fef3c7 0%, #fde68a 100%)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  border: "3px solid #fff",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+});
+
+export const avatarEmoji = style({
+  fontSize: "28px",
+  lineHeight: 1,
+});
+
 export const levelBadge = style({
   position: "absolute",
   bottom: "-4px",
   right: "-4px",
-  backgroundColor: vars.color.accent.gold,
-  color: vars.color.text.inverse,
-  fontSize: vars.font.size.xs,
+  backgroundColor: "#22c55e",
+  color: "#fff",
+  fontSize: "10px",
   fontFamily: vars.font.family.display,
   fontWeight: vars.font.weight.extrabold,
   borderRadius: vars.radius.full,
@@ -30,105 +62,69 @@ export const levelBadge = style({
 
 export const info = style({
   flex: 1,
-  minWidth: "200px",
+  minWidth: "220px",
 });
 
 export const greeting = style({
   fontSize: vars.font.size["2xl"],
-  fontFamily: vars.font.family.display,
+  fontFamily: "'Nunito', 'Inter', sans-serif",
   fontWeight: vars.font.weight.bold,
   color: vars.color.text.primary,
   lineHeight: vars.font.lineHeight.tight,
 });
 
 export const name = style({
-  color: vars.color.pillar.creativity,
+  color: "#2563eb",
 });
 
 export const message = style({
   fontSize: vars.font.size.sm,
   color: vars.color.text.secondary,
-  marginTop: vars.space[1],
+  marginTop: vars.space[2],
+  lineHeight: 1.5,
+  maxWidth: "520px",
 });
 
-export const stats = style({
+/* Vertical pillar pills */
+export const pillarPills = style({
   display: "flex",
-  alignItems: "center",
-  gap: vars.space[4],
-  marginTop: vars.space[3],
-});
-
-export const xpSection = style({
-  flex: 1,
-  maxWidth: "240px",
-});
-
-export const xpLabel = style({
-  fontSize: vars.font.size.xs,
-  fontWeight: vars.font.weight.semibold,
-  fontFamily: vars.font.family.display,
-  color: vars.color.accent.gold,
-  marginBottom: vars.space[1],
-});
-
-export const streakBox = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.space[1],
-  padding: `${vars.space[1]} ${vars.space[3]}`,
-  borderRadius: vars.radius.full,
-  backgroundColor: `${vars.color.accent.orange}15`,
-  fontSize: vars.font.size.sm,
-  fontFamily: vars.font.family.display,
-  fontWeight: vars.font.weight.bold,
-  color: vars.color.accent.orange,
-});
-
-/* ── Pillar score area (right side) ── */
-export const scoreArea = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.space[3],
+  alignItems: "flex-end",
+  justifyContent: "center",
+  gap: "14px",
   marginLeft: "auto",
   flexShrink: 0,
-  width: "240px",
+  padding: "4px 8px",
 });
 
-export const pillarRow = style({
+export const pillarCol = style({
   display: "flex",
+  flexDirection: "column",
   alignItems: "center",
-  gap: vars.space[3],
+  gap: "8px",
 });
 
-export const pillarLabel = style({
-  fontSize: vars.font.size.xs,
-  fontFamily: vars.font.family.display,
-  fontWeight: vars.font.weight.semibold,
-  color: vars.color.text.secondary,
-  width: "100px",
-  flexShrink: 0,
-  textAlign: "right",
-});
-
-export const pillarBarTrack = style({
-  flex: 1,
-  height: "8px",
-  borderRadius: vars.radius.full,
-  backgroundColor: vars.color.surface.inset,
+export const pillarTrack = style({
+  width: "24px",
+  height: "92px",
+  borderRadius: "999px",
+  background: "rgba(15, 23, 42, 0.12)",
+  border: "1px solid rgba(15, 23, 42, 0.18)",
+  boxShadow: "inset 0 2px 6px rgba(15, 23, 42, 0.12)",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "flex-end",
   overflow: "hidden",
+  boxSizing: "border-box",
 });
 
-export const pillarBarFill = style({
-  height: "100%",
-  borderRadius: vars.radius.full,
-  transition: "width 800ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+export const pillarFill = style({
+  width: "100%",
+  borderRadius: "999px",
+  minHeight: "10px",
+  transition: "height 800ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+  boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.35) inset",
 });
 
-export const pillarPct = style({
-  fontSize: vars.font.size.xs,
-  fontFamily: vars.font.family.display,
-  fontWeight: vars.font.weight.bold,
-  width: "32px",
-  flexShrink: 0,
-  textAlign: "right",
+export const pillarIcon = style({
+  opacity: 0.9,
 });

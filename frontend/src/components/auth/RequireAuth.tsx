@@ -20,7 +20,7 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     // Wrong role — send them to their own home
-    const redirect = user.role === "teacher" ? "/teacher" : user.role === "admin" ? "/admin" : "/home";
+    const redirect = user.role === "teacher" ? "/teacher" : user.role === "admin" ? "/admin" : "/dashboard";
     return <Navigate to={redirect} replace />;
   }
 

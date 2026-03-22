@@ -1,344 +1,369 @@
 /**
- * LiveSessionCards — "Next Session" card + "Your Journey" timeline for student dashboard.
- *
- * Fetches sessions from the student's enrolled live batch and shows:
- * 1. The next upcoming session as a hero card (live/locked state)
- * 2. A vertical timeline of all sessions (past = completed, future = upcoming)
+ * LiveSessionCards — "Next Session" hero + "Your Journey" timeline for student dashboard.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
+import { CalendarClock, Loader2, Lock, Zap, ChevronRight } from "lucide-react";
+import { useStudent } from "@/context/StudentContext";
 import { api } from "@/api/client";
+import * as s from "./LiveSessionCards.css";
 
 interface LiveSession {
-    id: string;
-    title: string | null;
-    description: string | null;
-    order: number | null;
-    scheduled_at: string | null;
-    is_live: boolean;
-    room_code_guest: string | null;
-    cohort_name: string;
-    cohort_id: string;
-    student_name: string;
+  id: string;
+  title: string | null;
+  description: string | null;
+  order: number | null;
+  scheduled_at: string | null;
+  started_at: string | null;
+  ended_at: string | null;
+  is_live: boolean;
+  room_code_guest: string | null;
+  cohort_name: string;
+  cohort_id: string;
+  student_name: string;
 }
 
 function useMyLiveSessions() {
-    const [sessions, setSessions] = useState<LiveSession[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        let active = true;
-        const fetchSessions = () => {
-            api.get("/students/me/live-sessions")
-                .then(({ data }) => { if (active) setSessions(data); })
-                .catch(() => { if (active) setSessions([]); })
-                .finally(() => { if (active) setLoading(false); });
-        };
-        fetchSessions();
-        const interval = setInterval(fetchSessions, 10_000); // poll every 10s
-        return () => { active = false; clearInterval(interval); };
-    }, []);
-
-    return { sessions, loading };
+  const { studentId } = useStudent();
+  return useQuery<LiveSession[]>({
+    queryKey: ["my-live-sessions"],
+    queryFn: () => api.get("/students/me/live-sessions").then((r) => r.data),
+    enabled: !!studentId,
+  });
 }
 
-// ─── Helpers ───
-
-/** Parse "2026-03-06" as a LOCAL date (not UTC) */
-function parseLocalDate(dateStr: string): Date {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d); // months are 0-indexed
+function parseScheduleDate(iso: string | null): Date | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function formatDate(dateStr: string | null): string {
-    if (!dateStr) return "";
-    const target = parseLocalDate(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Tomorrow";
-    if (diffDays === -1) return "Yesterday";
-    if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
-    return target.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" });
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
 }
 
-function formatTime(timing: string | null): string {
-    if (!timing) return "";
-    const start = timing.split("-")[0]?.trim();
-    if (!start) return timing;
-    const [h, m] = start.split(":").map(Number);
-    const ampm = h >= 12 ? "PM" : "AM";
-    const hour12 = h % 12 || 12;
-    return `${hour12}:${String(m).padStart(2, "0")} ${ampm}`;
+function isSessionPast(sess: LiveSession): boolean {
+  if (sess.ended_at) return true;
+  const d = parseScheduleDate(sess.scheduled_at);
+  if (!d) return false;
+  return startOfDay(d) < startOfDay(new Date());
 }
 
-function isPast(dateStr: string | null): boolean {
-    if (!dateStr) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return parseLocalDate(dateStr) < today;
+function formatDateLabel(iso: string | null): string {
+  if (!iso) return "";
+  const target = parseScheduleDate(iso);
+  if (!target) return "";
+  const today = startOfDay(new Date());
+  const day = startOfDay(target);
+  const diffDays = Math.round((day.getTime() - today.getTime()) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays === -1) return "Yesterday";
+  if (diffDays < -1) return `${Math.abs(diffDays)} days ago`;
+  return target.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" });
 }
 
-function timeUntil(dateStr: string | null, timing: string | null): string {
-    if (!dateStr) return "";
-    const now = new Date();
-    const target = new Date(dateStr);
-    if (timing) {
-        const start = timing.split("-")[0]?.trim();
-        if (start) {
-            const [h, m] = start.split(":").map(Number);
-            target.setHours(h, m, 0, 0);
-        }
-    }
-    const diffMs = target.getTime() - now.getTime();
-    if (diffMs <= 0) return "";
-    const hours = Math.floor(diffMs / 3600000);
-    if (hours < 1) return `${Math.ceil(diffMs / 60000)} min`;
-    if (hours < 24) return `${hours} hours`;
-    const days = Math.floor(hours / 24);
-    return `${days} day${days > 1 ? "s" : ""}`;
+function formatRelativeCompleted(iso: string | null): string {
+  if (!iso) return "";
+  const target = parseScheduleDate(iso);
+  if (!target) return "";
+  const today = startOfDay(new Date());
+  const day = startOfDay(target);
+  const diffDays = Math.round((today.getTime() - day.getTime()) / 86400000);
+  if (diffDays === 0) return "Completed today";
+  if (diffDays === 1) return "Completed yesterday";
+  if (diffDays < 7) return `Completed ${diffDays} days ago`;
+  if (diffDays < 14) return "Completed 1 week ago";
+  return `Completed ${Math.floor(diffDays / 7)} weeks ago`;
 }
 
-// ─── Styles ───
-const cardBase: React.CSSProperties = {
-    borderRadius: 16,
-    padding: "20px 24px",
-    fontFamily: "'Inter', sans-serif",
-};
+function formatTimeLabel(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true });
+}
 
-// ─── Next Session Card ───
+function timeUntil(iso: string | null): string {
+  if (!iso) return "";
+  const target = new Date(iso);
+  if (Number.isNaN(target.getTime())) return "";
+  const diffMs = target.getTime() - Date.now();
+  if (diffMs <= 0) return "";
+  const hours = Math.floor(diffMs / 3600000);
+  if (hours < 1) return `${Math.ceil(diffMs / 60000)} min`;
+  if (hours < 24) return `${hours} hours`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""}`;
+}
+
+function sessionDisplayTitle(sess: LiveSession): string {
+  return sess.title?.trim() || `Session ${sess.order ?? ""}`;
+}
+
 export function NextSessionCard() {
-    const navigate = useNavigate();
-    const { sessions, loading } = useMyLiveSessions();
+  const navigate = useNavigate();
+  const { data: sessions = [], isLoading } = useMyLiveSessions();
 
-    if (loading) return null;
-    if (!sessions.length) return null;
-
-    // Find the next upcoming session (not past)
-    const upcoming = sessions.filter((s) => !isPast(s.scheduled_at));
-    const next = upcoming[0];
-    if (!next) return null;
-
-    const dateLabel = formatDate(next.scheduled_at);
-    // Extract time from scheduled_at ISO string
-    const timingFromSchedule = next.scheduled_at ? next.scheduled_at.slice(11, 16) : null;
-    const timeLabel = formatTime(timingFromSchedule);
-    const unlockIn = timeUntil(next.scheduled_at, timingFromSchedule);
-
-    return (
-        <div
-            style={{
-                ...cardBase,
-                background: next.is_live
-                    ? "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"
-                    : "linear-gradient(135deg, #fef2f2 0%, #fce4e4 100%)",
-                border: next.is_live ? "1px solid #86efac" : "1px solid #fca5a5",
-            }}
-        >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                        <div
-                            style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: "50%",
-                                background: next.is_live ? "#dcfce7" : "#fee2e2",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 18,
-                            }}
-                        >
-                            ⚡
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "#6b7280", letterSpacing: 1 }}>
-                            Live Session
-                        </span>
-                    </div>
-                    <h3 style={{ fontSize: 17, fontWeight: 700, color: "#1f2937", margin: "0 0 4px" }}>
-                        {next.title ?? `Session ${next.order ?? ""}`}
-                    </h3>
-                    {next.description && (
-                        <p style={{ fontSize: 13, color: "#6b7280", margin: "0 0 12px", lineHeight: 1.4 }}>
-                            {next.description}
-                        </p>
-                    )}
-
-                    {next.is_live ? (
-                        <button
-                            onClick={() => navigate("/live")}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "8px 18px",
-                                borderRadius: 8,
-                                border: "none",
-                                background: "#16a34a",
-                                color: "#fff",
-                                fontWeight: 600,
-                                fontSize: 13,
-                                cursor: "pointer",
-                            }}
-                        >
-                            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff", display: "inline-block" }} />
-                            Join Live Class
-                        </button>
-                    ) : (
-                        <div
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "8px 14px",
-                                borderRadius: 8,
-                                background: "#f3f4f6",
-                                color: "#9ca3af",
-                                fontSize: 12,
-                                fontWeight: 500,
-                            }}
-                        >
-                            🔒 {unlockIn ? `Class unlocks in ${unlockIn}` : "Class not started yet"}
-                        </div>
-                    )}
-                </div>
-
-                <div
-                    style={{
-                        textAlign: "center",
-                        padding: "10px 16px",
-                        borderRadius: 12,
-                        background: "rgba(255,255,255,0.7)",
-                        minWidth: 80,
-                    }}
-                >
-                    <div style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", textTransform: "uppercase" }}>
-                        {dateLabel}
-                    </div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: "#1f2937" }}>{timeLabel}</div>
-                </div>
-            </div>
-        </div>
+  const upcoming = sessions
+    .filter((s) => !isSessionPast(s))
+    .sort(
+      (a, b) =>
+        (parseScheduleDate(a.scheduled_at)?.getTime() ?? 0) -
+        (parseScheduleDate(b.scheduled_at)?.getTime() ?? 0),
     );
+  const next = upcoming[0];
+
+  if (isLoading) {
+    return (
+      <div className={s.liveCard}>
+        <div className={s.loadingRow}>
+          <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} />
+          Loading your class schedule…
+        </div>
+      </div>
+    );
+  }
+
+  if (!next) {
+    const hasSessions = sessions.length > 0;
+    return (
+      <div className={s.liveCard}>
+        <div className={s.liveHeaderRow}>
+          <div className={s.liveLeft}>
+            <div className={s.liveTitleRow}>
+              <div className={s.liveIconWrap}>
+                <Zap size={20} color="#f87171" fill="#fee2e2" />
+              </div>
+              <span className={s.liveLabel}>LIVE SESSION</span>
+            </div>
+            <h3 className={s.liveTitle}>{hasSessions ? "No upcoming class" : "No class on your schedule"}</h3>
+            <p className={s.liveEmptyDesc}>
+              {hasSessions
+                ? "There isn’t a future session scheduled right now. Check back later for the next class."
+                : "We don’t have any live sessions to show yet. When your cohort schedule is ready, it will appear here—check back later."}
+            </p>
+            <div className={s.lockRow}>
+              <CalendarClock size={14} />
+              Check back later
+            </div>
+          </div>
+
+          <div className={s.timeBoxMuted}>
+            <div className={s.timeBoxLabel}>Next class</div>
+            <div className={s.timeBoxPlaceholder}>—</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const dateLabel = formatDateLabel(next.scheduled_at);
+  const timeLabel = formatTimeLabel(next.scheduled_at);
+  const unlockIn = timeUntil(next.scheduled_at);
+
+  return (
+    <div className={s.liveCard}>
+      <div className={s.liveHeaderRow}>
+        <div className={s.liveLeft}>
+          <div className={s.liveTitleRow}>
+            <div className={s.liveIconWrap}>
+              <Zap size={20} color="#e11d48" fill="#fecaca" />
+            </div>
+            <span className={s.liveLabel}>LIVE SESSION</span>
+          </div>
+          {next.cohort_name && <p className={s.liveCohort}>{next.cohort_name}</p>}
+          <h3 className={s.liveTitle}>{sessionDisplayTitle(next)}</h3>
+          {next.description && <p className={s.liveDesc}>{next.description}</p>}
+
+          {next.is_live ? (
+            <button type="button" className={s.joinBtn} onClick={() => navigate("/live")}>
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: "#fff",
+                  display: "inline-block",
+                }}
+              />
+              Join Live Class
+            </button>
+          ) : (
+            <div className={s.lockRow}>
+              <Lock size={14} />
+              {unlockIn ? `Class unlocks in ${unlockIn}` : "Class not started yet"}
+            </div>
+          )}
+        </div>
+
+        <div className={s.timeBox}>
+          <div className={s.timeBoxLabel}>{dateLabel}</div>
+          <div className={s.timeBoxTime}>{timeLabel}</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// ─── Your Journey Card ───
 export function YourJourneyCard() {
-    const { sessions } = useMyLiveSessions();
+  const { data: sessions = [], isLoading } = useMyLiveSessions();
+  const [filterCohortId, setFilterCohortId] = useState<string | "all">("all");
 
-    // Split into past + at most 2 upcoming, then reverse (newest first)
-    const pastSessions = sessions.filter((s) => isPast(s.scheduled_at));
-    const upcomingSessions = sessions.filter((s) => !isPast(s.scheduled_at)).slice(0, 2);
-    const sorted = [...pastSessions, ...upcomingSessions].reverse();
+  const cohorts = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const x of sessions) {
+      if (x.cohort_id) m.set(x.cohort_id, x.cohort_name?.trim() || "Cohort");
+    }
+    return Array.from(m.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [sessions]);
 
+  const visibleSessions = useMemo(() => {
+    if (filterCohortId === "all") return sessions;
+    return sessions.filter((x) => x.cohort_id === filterCohortId);
+  }, [sessions, filterCohortId]);
+
+  useEffect(() => {
+    if (
+      filterCohortId !== "all" &&
+      !cohorts.some((c) => c.id === filterCohortId)
+    ) {
+      setFilterCohortId("all");
+    }
+  }, [cohorts, filterCohortId]);
+
+  if (isLoading) return null;
+
+  if (!sessions.length) {
     return (
-        <div
-            style={{
-                ...cardBase,
-                background: "#faf9f6",
-                border: "1px solid #e5e7eb",
-            }}
-        >
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 18 }}>🕐</span>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1f2937", margin: 0 }}>Your Journey</h3>
-            </div>
-
-            <div style={{ position: "relative", paddingLeft: 20 }}>
-                {/* Vertical line */}
-                <div
-                    style={{
-                        position: "absolute",
-                        left: 6,
-                        top: 8,
-                        bottom: 8,
-                        width: 2,
-                        background: "#e5e7eb",
-                    }}
-                />
-
-                {sorted.map((sess, i) => {
-                    const past = isPast(sess.scheduled_at);
-                    const isNext = !past && (i === sorted.length - 1 || isPast(sorted[i + 1]?.scheduled_at));
-
-                    // Dot color: blue for next/current, green for past, gray for future
-                    let dotColor = "#d1d5db"; // gray — future
-                    if (isNext || sess.is_live) dotColor = "#6366f1"; // indigo — current
-                    else if (past) dotColor = "#10b981"; // green — done
-
-                    return (
-                        <div
-                            key={sess.id}
-                            style={{
-                                position: "relative",
-                                paddingBottom: i < sorted.length - 1 ? 16 : 0,
-                                paddingLeft: 16,
-                            }}
-                        >
-                            {/* Dot */}
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    left: -17,
-                                    top: 4,
-                                    width: 12,
-                                    height: 12,
-                                    borderRadius: "50%",
-                                    background: dotColor,
-                                    border: "2px solid #faf9f6",
-                                }}
-                            />
-
-                            <div style={{ fontWeight: 600, fontSize: 14, color: "#1f2937" }}>
-                                {sess.title ?? `Session ${sess.order ?? ""}`}
-                            </div>
-                            <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
-                                {past
-                                    ? `Completed ${formatDate(sess.scheduled_at)}`
-                                    : `${formatDate(sess.scheduled_at)}${sess.scheduled_at ? ", " + formatTime(sess.scheduled_at.slice(11, 16)) : ""}`}
-                            </div>
-
-                            {/* Action buttons for past sessions */}
-                            {past && (
-                                <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                                    <span
-                                        style={{
-                                            display: "inline-block",
-                                            padding: "3px 10px",
-                                            borderRadius: 6,
-                                            border: "1px solid #e5e7eb",
-                                            fontSize: 11,
-                                            color: "#6b7280",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Review &gt;
-                                    </span>
-                                </div>
-                            )}
-
-                            {/* Live badge */}
-                            {sess.is_live && (
-                                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
-                                    <span
-                                        style={{
-                                            width: 6,
-                                            height: 6,
-                                            borderRadius: "50%",
-                                            background: "#4ade80",
-                                            display: "inline-block",
-                                        }}
-                                    />
-                                    <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 600 }}>LIVE NOW</span>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+      <div className={s.journeyCard}>
+        <div className={s.journeyHead}>
+          <span style={{ fontSize: 18 }} aria-hidden>
+            🕐
+          </span>
+          <h3 className={s.journeyTitle}>Your Journey</h3>
         </div>
+        <p className={s.emptyHint}>Enroll in a cohort to see your session timeline.</p>
+      </div>
     );
+  }
+
+  const showCohortPill =
+    cohorts.length <= 1 || filterCohortId === "all";
+
+  const upcoming = visibleSessions
+    .filter((x) => !isSessionPast(x))
+    .sort(
+      (a, b) =>
+        (parseScheduleDate(a.scheduled_at)?.getTime() ?? 0) -
+        (parseScheduleDate(b.scheduled_at)?.getTime() ?? 0),
+    );
+  const past = visibleSessions
+    .filter((x) => isSessionPast(x))
+    .sort(
+      (a, b) =>
+        (parseScheduleDate(b.scheduled_at)?.getTime() ?? 0) -
+        (parseScheduleDate(a.scheduled_at)?.getTime() ?? 0),
+    );
+  const journey = [...upcoming, ...past];
+
+  return (
+    <div className={s.journeyCard}>
+      <div className={s.journeyHead}>
+        <span style={{ fontSize: 18 }} aria-hidden>
+          🕐
+        </span>
+        <h3 className={s.journeyTitle}>Your Journey</h3>
+      </div>
+
+      {cohorts.length > 1 && (
+        <div className={s.cohortToggleRow} role="tablist" aria-label="Filter by cohort">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filterCohortId === "all"}
+            className={filterCohortId === "all" ? s.cohortToggleActive : s.cohortToggle}
+            onClick={() => setFilterCohortId("all")}
+          >
+            All
+          </button>
+          {cohorts.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              role="tab"
+              aria-selected={filterCohortId === c.id}
+              className={filterCohortId === c.id ? s.cohortToggleActive : s.cohortToggle}
+              onClick={() => setFilterCohortId(c.id)}
+              title={c.name}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className={s.journeyScroll}>
+        {!journey.length ? (
+          <p className={s.filterEmpty}>No sessions for this selection.</p>
+        ) : (
+          <div className={s.timeline}>
+            <div className={s.timelineLine} />
+
+            {journey.map((sess) => {
+              const isPast = isSessionPast(sess);
+              const upcomingIndex = upcoming.findIndex((u) => u.id === sess.id);
+              const isNextUpcoming = !isPast && upcomingIndex === 0;
+              const isFurtherUpcoming = !isPast && upcomingIndex > 0;
+
+              let dotColor = "#a0a0a0";
+              if (isNextUpcoming) dotColor = "#3b82f6";
+              else if (isFurtherUpcoming) dotColor = "#9333ea";
+              else if (isPast) dotColor = "#a0a0a0";
+
+              const titleClass = isPast ? s.sessionTitleMuted : s.sessionTitle;
+              const metaClass = isPast ? s.sessionMetaMuted : s.sessionMeta;
+              const reviewClass = isPast ? s.reviewBtnMuted : s.reviewBtn;
+
+              return (
+                <div key={sess.id} className={s.node}>
+                  <div className={s.dot} style={{ background: dotColor }} />
+
+                  <div className={titleClass}>{sessionDisplayTitle(sess)}</div>
+                  {sess.cohort_name && showCohortPill && (
+                    <div className={isPast ? s.sessionCohortMuted : s.sessionCohort}>
+                      {sess.cohort_name}
+                    </div>
+                  )}
+                  <div className={metaClass}>
+                    {isPast
+                      ? formatRelativeCompleted(sess.scheduled_at)
+                      : `${formatDateLabel(sess.scheduled_at)}${sess.scheduled_at ? ", " + formatTimeLabel(sess.scheduled_at) : ""}`}
+                  </div>
+
+                  {isPast && (
+                    <button
+                      type="button"
+                      className={reviewClass}
+                      onClick={() =>
+                        window.open(`/session-review/${sess.id}`, "_blank", "noopener,noreferrer")
+                      }
+                    >
+                      Review
+                      <ChevronRight size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

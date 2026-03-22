@@ -106,7 +106,7 @@ export default function BenchmarkReportPage() {
     <div className="rp-root">
       {/* Header */}
       <div className="rp-header">
-        <button onClick={() => navigate("/home")} className="rp-back-btn">
+        <button onClick={() => navigate("/dashboard")} className="rp-back-btn">
           <ArrowLeft size={16} /> <span className="rp-back-label">Back</span>
         </button>
         <div className="rp-header-center">
