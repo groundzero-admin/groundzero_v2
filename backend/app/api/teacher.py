@@ -16,8 +16,10 @@ from app.auth import require_role
 from app.database import get_db
 from app.models.batch_enrollment import CohortEnrollment
 from app.models.competency import Competency
+from app.models.activity_question import ActivityQuestion
 from app.models.curriculum import Activity
 from app.models.evidence import EvidenceEvent
+from app.models.question_template import QuestionTemplate
 from app.models.session import Cohort, Session, SessionActivity
 from app.models.student import Student, StudentCompetencyState
 from app.models.user import User
@@ -390,6 +392,103 @@ async def get_session_activity_scores(
         }
         for sid, sname in students
     ]
+
+
+@router.get(
+    "/cohorts/{cohort_id}/sessions/{session_id}/activity-question-responses",
+    summary="Per-question student responses for a session activity",
+    description="For each question in the activity (in order), returns enrolled students' submitted answers (response JSON) and outcome. Used in live class to inspect what students answered.",
+)
+async def get_activity_question_responses(
+    cohort_id: uuid.UUID,
+    session_id: uuid.UUID,
+    activity_id: str = Query(..., description="Activity id from the session plan"),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("teacher", "admin")),
+):
+    sess = await db.get(Session, session_id)
+    if not sess or sess.cohort_id != cohort_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    sa_row = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.activity_id == activity_id,
+        )
+    )
+    if sa_row.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Activity is not part of this session")
+
+    activity = await db.get(Activity, activity_id)
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    enr = await db.execute(
+        select(CohortEnrollment.student_id).where(CohortEnrollment.cohort_id == cohort_id)
+    )
+    cohort_student_ids = [row[0] for row in enr.all()]
+
+    qids = [str(x) for x in (activity.question_ids or [])]
+    questions_out: list[dict] = []
+
+    for idx, qid_str in enumerate(qids):
+        try:
+            q_uuid = uuid.UUID(qid_str)
+        except (ValueError, TypeError):
+            continue
+
+        aq = await db.get(ActivityQuestion, q_uuid)
+        if not aq:
+            continue
+
+        tmpl = await db.get(QuestionTemplate, aq.template_id)
+        slug = tmpl.slug if tmpl else None
+
+        responses: list[dict] = []
+        if cohort_student_ids:
+            ev_stmt = (
+                select(EvidenceEvent, Student.name)
+                .join(Student, Student.id == EvidenceEvent.student_id)
+                .where(
+                    EvidenceEvent.session_id == session_id,
+                    EvidenceEvent.meta["activityQuestionId"].astext == qid_str,
+                    EvidenceEvent.student_id.in_(cohort_student_ids),
+                )
+                .order_by(EvidenceEvent.created_at.desc())
+            )
+            ev_rows = (await db.execute(ev_stmt)).all()
+            # Latest event per student (idempotency usually ensures one row)
+            seen: set[uuid.UUID] = set()
+            for e, name in ev_rows:
+                if e.student_id in seen:
+                    continue
+                seen.add(e.student_id)
+                responses.append(
+                    {
+                        "student_id": str(e.student_id),
+                        "student_name": name,
+                        "outcome": e.outcome,
+                        "response": e.response,
+                        "created_at": e.created_at.isoformat(),
+                    }
+                )
+            responses.sort(key=lambda r: r["student_name"].lower())
+
+        questions_out.append(
+            {
+                "activity_question_id": qid_str,
+                "order_index": idx,
+                "title": aq.title,
+                "template_slug": slug,
+                "responses": responses,
+            }
+        )
+
+    return {
+        "activity_id": activity_id,
+        "activity_name": activity.name,
+        "questions": questions_out,
+    }
 
 
 # ── Class Analytics ──────────────────────────────────────────────
