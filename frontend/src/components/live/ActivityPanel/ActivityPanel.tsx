@@ -21,6 +21,8 @@ interface ActivityPanelProps {
   timeLeft?: number | null;
   totalAnswered?: number;
   correctCount?: number;
+  /** Label for the top badge (default: Live Activity). */
+  panelLabel?: string;
 }
 
 export function ActivityPanel({
@@ -39,6 +41,7 @@ export function ActivityPanel({
   timeLeft,
   totalAnswered = 0,
   correctCount = 0,
+  panelLabel = "Live Activity",
 }: ActivityPanelProps) {
   const timerExpired = timeLeft !== null && timeLeft !== undefined && timeLeft <= 0;
 
@@ -74,7 +77,7 @@ export function ActivityPanel({
         <div className={s.header}>
           <span className={s.moduleBadge}>
             <BookOpen size={12} />
-            Live Activity
+            {panelLabel}
           </span>
           {timeLeft != null ? (
             <span className={s.durationTag} style={timeLeft <= 60 ? { color: "#ef4444", fontWeight: 600 } : undefined}>

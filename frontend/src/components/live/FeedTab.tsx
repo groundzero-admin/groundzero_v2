@@ -1,10 +1,26 @@
 import { CheckCircle2 } from "lucide-react";
 import type { SessionActivity, LivePulseEvent, StudentActivityScores } from "@/api/types";
 import type { Student } from "@/api/types";
+import type { ConfidenceMood } from "./StudentConfidenceBar/StudentConfidenceBar";
 
-const MOOD_EMOJI  = { got_it: "🟢", kinda: "🟡", lost: "🔴" };
-const MOOD_LABEL  = { got_it: "Got it!", kinda: "Kinda...", lost: "Lost!" };
-const MOOD_COLOR  = { got_it: "#22c55e", kinda: "#f59e0b", lost: "#ef4444" };
+const MOOD_EMOJI: Record<ConfidenceMood, string> = {
+  got_it: "🟢",
+  confused: "🟣",
+  kinda: "🟡",
+  lost: "🔴",
+};
+const MOOD_LABEL: Record<ConfidenceMood, string> = {
+  got_it: "Got it!",
+  confused: "Confused",
+  kinda: "Kinda…",
+  lost: "Lost",
+};
+const MOOD_COLOR: Record<ConfidenceMood, string> = {
+  got_it: "#22c55e",
+  confused: "#a855f7",
+  kinda: "#f59e0b",
+  lost: "#ef4444",
+};
 
 type StudentRow = { student_id: string; student_name: string; correct: number; total: number };
 
@@ -20,8 +36,22 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
 }) {
     // Confidence pulse messages
     const confidenceMsgs = messages
-        .filter((m: any) => { try { return JSON.parse(m.message)?.type === "confidence_pulse"; } catch { return false; } })
-        .map((m: any) => { const d = JSON.parse(m.message); return { id: m.id as string, studentName: d.studentName, value: d.value as "got_it" | "kinda" | "lost", time: m.time as number }; })
+        .filter((m: any) => {
+            try {
+                return JSON.parse(m.message)?.type === "confidence_pulse";
+            } catch {
+                return false;
+            }
+        })
+        .map((m: any) => {
+            const d = JSON.parse(m.message);
+            return {
+                id: m.id as string,
+                studentName: String(d.studentName ?? "?"),
+                value: String(d.value ?? ""),
+                time: m.time as number,
+            };
+        })
         .reverse();
 
     // Trail per student (session-wide)
@@ -140,9 +170,9 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                             {confidenceMsgs.slice(0, 8).map(msg => (
                                 <div key={msg.id} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10 }}>
-                                    <span>{MOOD_EMOJI[msg.value]}</span>
+                                    <span>{MOOD_EMOJI[msg.value as ConfidenceMood] ?? "💬"}</span>
                                     <span style={{ fontWeight: 600, color: "#334155" }}>{msg.studentName}</span>
-                                    <span style={{ color: MOOD_COLOR[msg.value] }}>{MOOD_LABEL[msg.value]}</span>
+                                    <span style={{ color: MOOD_COLOR[msg.value as ConfidenceMood] ?? "#64748b" }}>{MOOD_LABEL[msg.value as ConfidenceMood] ?? msg.value}</span>
                                     <span style={{ marginLeft: "auto", opacity: 0.4, fontSize: 9 }}>{new Date(msg.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                                 </div>
                             ))}

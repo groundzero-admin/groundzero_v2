@@ -41,7 +41,7 @@ export default function RegisterPage() {
           grade_band: gradeBand(grade),
         }),
       });
-      navigate("/home", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data

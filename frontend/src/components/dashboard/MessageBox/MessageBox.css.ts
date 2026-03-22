@@ -1,6 +1,21 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "@/styles/theme.css";
 
+export const surface = style({
+  padding: vars.space[6],
+  borderRadius: "22px",
+  background: "rgba(255, 255, 255, 0.38)",
+  backdropFilter: "blur(14px)",
+  WebkitBackdropFilter: "blur(14px)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(255, 255, 255, 0.5)",
+  borderTopWidth: "3px",
+  borderTopColor: "#6366f1",
+  boxShadow:
+    "0 8px 36px rgba(99, 102, 241, 0.07), 0 2px 12px rgba(15, 23, 42, 0.035)",
+});
+
 export const root = style({
   display: "flex",
   flexDirection: "column",
@@ -25,14 +40,17 @@ export const subtitle = style({
 export const inputRow = style({
   display: "flex",
   gap: vars.space[2],
+  alignItems: "flex-end",
 });
 
 export const input = style({
   flex: 1,
+  minHeight: "88px",
+  resize: "vertical",
   padding: `${vars.space[3]} ${vars.space[4]}`,
   borderRadius: vars.radius.xl,
   border: `1px solid ${vars.color.border.default}`,
-  backgroundColor: vars.color.surface.card,
+  backgroundColor: "#f1f5f9",
   fontSize: vars.font.size.sm,
   color: vars.color.text.primary,
   fontFamily: vars.font.family.body,

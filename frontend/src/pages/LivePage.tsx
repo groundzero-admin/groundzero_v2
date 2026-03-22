@@ -26,6 +26,7 @@ import type { SparkTriggerData } from "@/components/live/AICompanionShell";
 import { AICompanionShell } from "@/components/live/AICompanionShell";
 import { VideoArea, type TileData } from "@/components/live/VideoArea";
 import { ActivityPanel } from "@/components/live/ActivityPanel";
+import { StudentConfidenceBar } from "@/components/live/StudentConfidenceBar/StudentConfidenceBar";
 import { BKTUpdateToast } from "@/components/live/BKTUpdateToast";
 import * as s from "./LivePage.css";
 
@@ -87,7 +88,6 @@ export default function LivePage() {
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
-    refetchInterval: 15_000,
   });
   const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
   const roomCode = activeLiveSession?.room_code_guest ?? "";
@@ -278,7 +278,7 @@ export default function LivePage() {
     } catch {
       /* ignore */
     }
-    navigate("/home");
+    navigate("/dashboard");
   }, [hmsActions, navigate]);
 
   // Loading state
@@ -372,42 +372,81 @@ export default function LivePage() {
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  gap: 6,
+                  gap: 12,
                   padding: "8px 14px",
                   background: "#101020",
                   borderTop: "1px solid #1c1c30",
                   flexShrink: 0,
+                  flexWrap: "wrap",
+                  rowGap: 10,
                 }}
               >
-                {[
-                  {
-                    icon: isAudioOn ? <Mic size={16} /> : <MicOff size={16} />,
-                    label: "Mic",
-                    on: isAudioOn as boolean,
-                    danger: !isAudioOn,
-                    fn: () => hmsActions.setLocalAudioEnabled(!isAudioOn),
-                  },
-                  {
-                    icon: isVideoOn ? <Camera size={16} /> : <CameraOff size={16} />,
-                    label: "Cam",
-                    on: isVideoOn as boolean,
-                    danger: !isVideoOn,
-                    fn: () => hmsActions.setLocalVideoEnabled(!isVideoOn),
-                  },
-                  {
-                    icon: isScreenShared ? <MonitorOff size={16} /> : <Monitor size={16} />,
-                    label: isScreenShared ? "Stop" : "Share",
-                    on: isScreenShared as boolean,
-                    warn: isScreenShared,
-                    fn: () => hmsActions.setScreenShareEnabled(!isScreenShared),
-                  },
-                ].map((b, i) => (
+                <StudentConfidenceBar
+                  studentName={displayName}
+                  sendBroadcastMessage={(msg) => hmsActions.sendBroadcastMessage(msg)}
+                  disabled={!isConnected}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    flexWrap: "wrap",
+                    justifyContent: "flex-end",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {[
+                    {
+                      icon: isAudioOn ? <Mic size={16} /> : <MicOff size={16} />,
+                      label: "Mic",
+                      on: isAudioOn as boolean,
+                      danger: !isAudioOn,
+                      fn: () => hmsActions.setLocalAudioEnabled(!isAudioOn),
+                    },
+                    {
+                      icon: isVideoOn ? <Camera size={16} /> : <CameraOff size={16} />,
+                      label: "Cam",
+                      on: isVideoOn as boolean,
+                      danger: !isVideoOn,
+                      fn: () => hmsActions.setLocalVideoEnabled(!isVideoOn),
+                    },
+                    {
+                      icon: isScreenShared ? <MonitorOff size={16} /> : <Monitor size={16} />,
+                      label: isScreenShared ? "Stop" : "Share",
+                      on: isScreenShared as boolean,
+                      warn: isScreenShared,
+                      fn: () => hmsActions.setScreenShareEnabled(!isScreenShared),
+                    },
+                  ].map((b, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={b.fn}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5,
+                        padding: "7px 14px",
+                        borderRadius: 10,
+                        border: "none",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                        fontSize: 12,
+                        color: "#fff",
+                        background: b.danger ? "#ef4444" : (b as { warn?: boolean }).warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
+                      }}
+                    >
+                      {b.icon} {b.label}
+                    </button>
+                  ))}
+                  <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
                   <button
-                    key={i}
                     type="button"
-                    onClick={b.fn}
+                    onClick={handleLeaveClass}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -419,32 +458,12 @@ export default function LivePage() {
                       fontWeight: 600,
                       fontSize: 12,
                       color: "#fff",
-                      background: b.danger ? "#ef4444" : (b as { warn?: boolean }).warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
+                      background: "#64748b",
                     }}
                   >
-                    {b.icon} {b.label}
+                    <PhoneOff size={16} /> Leave
                   </button>
-                ))}
-                <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
-                <button
-                  type="button"
-                  onClick={handleLeaveClass}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    padding: "7px 14px",
-                    borderRadius: 10,
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    color: "#fff",
-                    background: "#64748b",
-                  }}
-                >
-                  <PhoneOff size={16} /> Leave
-                </button>
+                </div>
               </div>
             </>
           )}

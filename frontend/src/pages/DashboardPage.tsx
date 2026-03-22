@@ -1,15 +1,9 @@
 import { useStudent } from "@/context/StudentContext";
 import { useStudentState } from "@/api/hooks/useStudentState";
-import { useEvidenceHistory } from "@/api/hooks/useEvidenceHistory";
-
-import { usePillars } from "@/api/hooks/usePillars";
-import { useActivities } from "@/api/hooks/useActivities";
-import { useCompetencies } from "@/api/hooks/useCompetencies";
-import { aggregatePillarProgress, computeStreak } from "@/lib/pillar-helpers";
+import { aggregatePillarProgress } from "@/lib/pillar-helpers";
 import { WelcomeCard } from "@/components/dashboard/WelcomeCard";
-import { SelfServePractice } from "@/components/dashboard/SelfServePractice";
-import { RecommendedTopics } from "@/components/dashboard/RecommendedTopics";
 import { MessageBox } from "@/components/dashboard/MessageBox";
+import { DashboardFeatureCards } from "@/components/dashboard/DashboardFeatureCards";
 import { NextSessionCard, YourJourneyCard } from "@/components/dashboard/LiveSessionCards";
 import { Loader2 } from "lucide-react";
 import * as s from "./DashboardPage.css";
@@ -17,14 +11,6 @@ import * as s from "./DashboardPage.css";
 export default function DashboardPage() {
   const { studentId } = useStudent();
   const { data: studentState, isLoading: loadingState } = useStudentState(studentId);
-  const { data: evidence } = useEvidenceHistory({
-    student_id: studentId,
-    limit: 200,
-  });
-  const { data: _pillars = [] } = usePillars();
-  const { data: _competencies = [] } = useCompetencies();
-  const { data: _allActivities = [] } = useActivities();
-
   const student = studentState?.student ?? null;
 
 
@@ -46,9 +32,6 @@ export default function DashboardPage() {
 
   const { states } = studentState;
   const pillarProgress = aggregatePillarProgress(states);
-  const streak = computeStreak(
-    (evidence ?? []).map((e) => e.created_at)
-  );
 
   return (
     <div className={s.page}>
@@ -56,26 +39,17 @@ export default function DashboardPage() {
         student={student!}
         states={states}
         pillarProgress={pillarProgress}
-        streak={streak}
       />
 
       <div className={s.columns}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          <RecommendedTopics
-            studentId={studentId}
-            board={student?.board ?? "cbse"}
-            grade={student?.grade ?? 6}
-          />
-          <YourJourneyCard />
+        <div className={s.mainCol}>
+          <NextSessionCard />
+          <DashboardFeatureCards />
+          <MessageBox />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          <NextSessionCard />
-          <SelfServePractice
-            board={student?.board ?? "cbse"}
-            grade={student?.grade ?? 6}
-          />
-          <MessageBox />
+        <div className={s.sideCol}>
+          <YourJourneyCard />
         </div>
       </div>
     </div>

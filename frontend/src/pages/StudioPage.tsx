@@ -32,7 +32,7 @@ export default function StudioPage() {
     >
       <div
         className={s.backLink}
-        onClick={() => navigate("/home")}
+        onClick={() => navigate("/dashboard")}
         style={activeTheme ? { color: "rgba(255,255,255,0.5)" } : undefined}
       >
         <ArrowLeft size={14} /> Back

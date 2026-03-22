@@ -1,9 +1,8 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, Radio, Home } from "lucide-react";
+import { LayoutDashboard, Radio } from "lucide-react";
 import * as s from "./TabNav.css";
 
 const tabs = [
-  { to: "/home", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/live", label: "Live", icon: Radio },
 ];

@@ -11,7 +11,7 @@ export default function StudentSelectPage() {
 
   function handleSelect(id: string) {
     setStudentId(id);
-    navigate("/home");
+    navigate("/dashboard");
   }
 
   return (

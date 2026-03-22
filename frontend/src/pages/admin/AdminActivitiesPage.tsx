@@ -82,7 +82,7 @@ export default function AdminActivitiesPage() {
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
     const [showQuestionModal, setShowQuestionModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
-    const [linkGradeFilter, setLinkGradeFilter] = useState("");
+    const [, setLinkGradeFilter] = useState("");
     const [previewQuestion, setPreviewQuestion] = useState<ActivityQuestion | null>(null);
 
     function openManageQuestions(a: Activity) {
@@ -203,6 +203,12 @@ export default function AdminActivitiesPage() {
                                     onClick={(e) => { e.stopPropagation(); openEditActivity(a); }}
                                 >
                                     <Pencil size={12} /> Edit
+                                </button>
+                                <button
+                                    className={s.editBtn}
+                                    onClick={(e) => { e.stopPropagation(); openManageQuestions(a); }}
+                                >
+                                    Questions
                                 </button>
                                 <button
                                     className={s.dangerBtn}

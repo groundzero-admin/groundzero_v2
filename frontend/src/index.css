@@ -1,1 +1,7 @@
 /* Minimal reset — everything else handled by theme.css.ts globalStyle */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
