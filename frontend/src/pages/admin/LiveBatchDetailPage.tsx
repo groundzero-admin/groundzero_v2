@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type FormEventHandler } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,7 +7,9 @@ import {
     useImportTemplates,
     useUpdateCohortSession,
     useSessionView,
+    useActivities,
 } from "@/api/hooks/useAdmin";
+import { useSessionActivities, useAddSessionActivity, useRemoveSessionActivity } from "@/api/hooks/useTeacher";
 import type { ImportTemplateItem } from "@/api/hooks/useAdmin";
 import { api } from "@/api/client";
 import type { CohortSession, SessionViewOut, SessionViewQuestion } from "@/api/types/admin";
@@ -64,14 +66,151 @@ interface PaginatedSearch {
     total_pages: number;
 }
 
+function EditSessionModal({
+    sess, formTitle, setFormTitle, formDesc, setFormDesc,
+    formScheduledAt, setFormScheduledAt, formTeacherId, setFormTeacherId,
+    activitySearch, setActivitySearch,
+    teachers, allActivities, updateSession, addSessionActivity, removeSessionActivity,
+    onSubmit, onClose,
+}: {
+    sess: CohortSession;
+    formTitle: string; setFormTitle: (v: string) => void;
+    formDesc: string; setFormDesc: (v: string) => void;
+    formScheduledAt: string; setFormScheduledAt: (v: string) => void;
+    formTeacherId: string; setFormTeacherId: (v: string) => void;
+    activitySearch: string; setActivitySearch: (v: string) => void;
+    teachers: { id: string; full_name: string; email: string }[];
+    allActivities: { id: string; name: string; type: string; duration_minutes: number | null }[];
+    updateSession: { isPending: boolean };
+    addSessionActivity: { mutate: (p: { sessionId: string; activityId: string }) => void; isPending: boolean };
+    removeSessionActivity: { mutate: (p: { sessionId: string; activityId: string }) => void; isPending: boolean };
+    onSubmit: FormEventHandler;
+    onClose: () => void;
+}) {
+    const { data: sessionActivities } = useSessionActivities(sess.id);
+    const linkedIds = new Set((sessionActivities ?? []).map((a) => a.activity_id));
+    const searchLower = activitySearch.toLowerCase();
+    const availableActivities = allActivities.filter(
+        (a) => !linkedIds.has(a.id) && (!searchLower || a.name.toLowerCase().includes(searchLower) || a.id.toLowerCase().includes(searchLower))
+    );
+
+    return (
+        <div className={s.overlay} onClick={onClose}>
+            <div className={s.modal} style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+                <h2 className={s.modalTitle}>Edit Session</h2>
+                <form onSubmit={onSubmit} className={s.form}>
+                    <div>
+                        <label className={s.label}>Title</label>
+                        <input className={s.input} value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required />
+                    </div>
+                    <div>
+                        <label className={s.label}>Description</label>
+                        <textarea className={s.textarea} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className={s.label}>Scheduled Date & Time</label>
+                        <input className={s.input} type="datetime-local" value={formScheduledAt} onChange={(e) => setFormScheduledAt(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className={s.label}>Assign Teacher</label>
+                        <select className={s.select} value={formTeacherId} onChange={(e) => setFormTeacherId(e.target.value)}>
+                            <option value="">-- No teacher --</option>
+                            {teachers.map(t => (
+                                <option key={t.id} value={t.id}>{t.full_name} ({t.email})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={s.formActions}>
+                        <button type="button" className={s.cancelBtn} onClick={onClose}>Cancel</button>
+                        <button type="submit" className={s.submitBtn} disabled={updateSession.isPending}>
+                            {updateSession.isPending ? "Saving..." : "Save"}
+                        </button>
+                    </div>
+                </form>
+
+                {/* ── Activities ── */}
+                <div style={{ borderTop: "1px solid var(--color-border-subtle)", marginTop: 16, paddingTop: 16 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10 }}>
+                        Activities ({sessionActivities?.length ?? 0})
+                    </div>
+                    {(sessionActivities ?? []).length === 0 && (
+                        <p style={{ fontSize: 13, opacity: 0.5, fontStyle: "italic" }}>No activities yet.</p>
+                    )}
+                    {(sessionActivities ?? []).map((a) => (
+                        <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--color-border-subtle)" }}>
+                            <div style={{ flex: 1, fontSize: 13 }}>
+                                <span style={{ fontWeight: 500 }}>{a.activity_name ?? a.activity_id}</span>
+                                <span style={{ opacity: 0.5, marginLeft: 8, fontSize: 11 }}>{a.activity_type} · {a.duration_minutes ? `${a.duration_minutes}m` : "—"}</span>
+                                <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.4 }}>{a.status}</span>
+                            </div>
+                            {a.status === "pending" && (
+                                <button
+                                    type="button"
+                                    className={s.dangerBtn}
+                                    style={{ padding: "3px 10px", fontSize: 11 }}
+                                    disabled={removeSessionActivity.isPending}
+                                    onClick={() => removeSessionActivity.mutate({ sessionId: sess.id, activityId: a.activity_id })}
+                                >
+                                    Remove
+                                </button>
+                            )}
+                        </div>
+                    ))}
+
+                    <div style={{ marginTop: 14 }}>
+                        <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>Add Activity</div>
+                        <div style={{ position: "relative", marginBottom: 8 }}>
+                            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", opacity: 0.4 }} />
+                            <input
+                                className={s.input}
+                                style={{ paddingLeft: 30, fontSize: 13 }}
+                                placeholder="Search activities..."
+                                value={activitySearch}
+                                onChange={(e) => setActivitySearch(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                            {availableActivities.slice(0, 30).map((a) => (
+                                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0" }}>
+                                    <div style={{ flex: 1, fontSize: 13 }}>
+                                        <span style={{ fontWeight: 500 }}>{a.name}</span>
+                                        <span style={{ opacity: 0.5, marginLeft: 8, fontSize: 11 }}>{a.type} · {a.duration_minutes ? `${a.duration_minutes}m` : "—"}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={s.addBtn}
+                                        style={{ padding: "3px 10px", fontSize: 11 }}
+                                        disabled={addSessionActivity.isPending}
+                                        onClick={() => addSessionActivity.mutate({ sessionId: sess.id, activityId: a.id })}
+                                    >
+                                        + Add
+                                    </button>
+                                </div>
+                            ))}
+                            {availableActivities.length === 0 && (
+                                <p style={{ fontSize: 12, opacity: 0.5, fontStyle: "italic" }}>
+                                    {activitySearch ? "No matches." : "All activities already added."}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function CohortDetailPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const qc = useQueryClient();
     const { data: cohort, isLoading } = useCohort(id);
     const { data: templates } = useTemplates();
+    const { data: allActivities } = useActivities();
     const importTemplates = useImportTemplates();
     const updateSession = useUpdateCohortSession();
+    const addSessionActivity = useAddSessionActivity();
+    const removeSessionActivity = useRemoveSessionActivity();
 
     // Teachers for assignment
     const { data: teachers } = useQuery<{ id: string; full_name: string; email: string }[]>({
@@ -87,6 +226,7 @@ export default function CohortDetailPage() {
     const [formDesc, setFormDesc] = useState("");
     const [formScheduledAt, setFormScheduledAt] = useState("");
     const [formTeacherId, setFormTeacherId] = useState("");
+    const [activitySearch, setActivitySearch] = useState("");
 
     // Session viewer (admin preview)
     const [sessionViewSessionId, setSessionViewSessionId] = useState<string | null>(null);
@@ -579,40 +719,21 @@ export default function CohortDetailPage() {
 
             {/* ── Edit Session Modal ── */}
             {editingSession && (
-                <div className={s.overlay} onClick={() => setEditingSession(null)}>
-                    <div className={s.modal} onClick={(e) => e.stopPropagation()}>
-                        <h2 className={s.modalTitle}>Edit Session</h2>
-                        <form onSubmit={handleUpdateSession} className={s.form}>
-                            <div>
-                                <label className={s.label}>Title</label>
-                                <input className={s.input} value={formTitle} onChange={(e) => setFormTitle(e.target.value)} required />
-                            </div>
-                            <div>
-                                <label className={s.label}>Description</label>
-                                <textarea className={s.textarea} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className={s.label}>Scheduled Date & Time</label>
-                                <input className={s.input} type="datetime-local" value={formScheduledAt} onChange={(e) => setFormScheduledAt(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className={s.label}>Assign Teacher</label>
-                                <select className={s.select} value={formTeacherId} onChange={(e) => setFormTeacherId(e.target.value)}>
-                                    <option value="">-- No teacher --</option>
-                                    {teachers?.map(t => (
-                                        <option key={t.id} value={t.id}>{t.full_name} ({t.email})</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className={s.formActions}>
-                                <button type="button" className={s.cancelBtn} onClick={() => setEditingSession(null)}>Cancel</button>
-                                <button type="submit" className={s.submitBtn} disabled={updateSession.isPending}>
-                                    {updateSession.isPending ? "Saving..." : "Save"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <EditSessionModal
+                    sess={editingSession}
+                    formTitle={formTitle} setFormTitle={setFormTitle}
+                    formDesc={formDesc} setFormDesc={setFormDesc}
+                    formScheduledAt={formScheduledAt} setFormScheduledAt={setFormScheduledAt}
+                    formTeacherId={formTeacherId} setFormTeacherId={setFormTeacherId}
+                    activitySearch={activitySearch} setActivitySearch={setActivitySearch}
+                    teachers={teachers ?? []}
+                    allActivities={(allActivities ?? []) as { id: string; name: string; type: string; duration_minutes: number | null }[]}
+                    updateSession={updateSession}
+                    addSessionActivity={addSessionActivity}
+                    removeSessionActivity={removeSessionActivity}
+                    onSubmit={handleUpdateSession}
+                    onClose={() => { setEditingSession(null); setActivitySearch(""); }}
+                />
             )}
 
             {/* ── Session Viewer Modal (activities + questions) ── */}

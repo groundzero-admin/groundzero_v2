@@ -25,6 +25,7 @@ class Activity(Base):
     primary_competencies: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # [{competencyId, expectedGain}]
     secondary_competencies: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     prerequisites: Mapped[list | None] = mapped_column(JSONB, nullable=True)  # [{competencyId, minStage}]
+    pillar_id: Mapped[str | None] = mapped_column(String(30), ForeignKey("pillars.id"), nullable=True)  # math_logic, communication, creativity, ai_systems
     question_ids: Mapped[list] = mapped_column(JSONB, server_default="[]")  # ["question_uuid_1", "question_uuid_2"]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

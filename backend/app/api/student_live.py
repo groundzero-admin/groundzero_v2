@@ -47,46 +47,44 @@ async def get_my_live_sessions(
     if not student:
         raise HTTPException(404, "Student record not found")
 
-    # Find enrollment(s) — take the most recent one
+    # Find all enrollments
     enr_result = await db.execute(
-        select(CohortEnrollment)
-        .where(CohortEnrollment.student_id == student.id)
-        .order_by(CohortEnrollment.enrolled_at.desc())
-        .limit(1)
+        select(CohortEnrollment).where(CohortEnrollment.student_id == student.id)
     )
-    enrollment = enr_result.scalar_one_or_none()
-    if not enrollment:
+    enrollments = enr_result.scalars().all()
+    if not enrollments:
         return []
 
-    # Get the cohort with sessions + live rooms
-    cohort_result = await db.execute(
+    cohort_ids = [e.cohort_id for e in enrollments]
+
+    # Get all cohorts with sessions + live rooms
+    cohorts_result = await db.execute(
         select(Cohort)
-        .where(Cohort.id == enrollment.cohort_id)
+        .where(Cohort.id.in_(cohort_ids))
         .options(selectinload(Cohort.sessions).selectinload(Session.live_room))
     )
-    cohort = cohort_result.scalar_one_or_none()
-    if not cohort:
-        return []
+    cohorts = cohorts_result.scalars().all()
 
-    # Only return sessions that are currently live (started and not ended)
+    # Return all sessions that are currently live across all enrolled cohorts
     out = []
-    for sess in cohort.sessions:
-        if sess.started_at is None or sess.ended_at is not None:
-            continue
-        room = sess.live_room
-        out.append(
-            StudentLiveSessionOut(
-                id=str(sess.id),
-                title=sess.title,
-                description=sess.description,
-                order=sess.order,
-                scheduled_at=sess.scheduled_at.isoformat() if sess.scheduled_at else None,
-                is_live=True,
-                room_code_guest=room.room_code_guest if room else None,
-                cohort_name=cohort.name,
-                cohort_id=str(cohort.id),
-                student_name=user.full_name,
+    for cohort in cohorts:
+        for sess in cohort.sessions:
+            if sess.started_at is None or sess.ended_at is not None:
+                continue
+            room = sess.live_room
+            out.append(
+                StudentLiveSessionOut(
+                    id=str(sess.id),
+                    title=sess.title,
+                    description=sess.description,
+                    order=sess.order,
+                    scheduled_at=sess.scheduled_at.isoformat() if sess.scheduled_at else None,
+                    is_live=True,
+                    room_code_guest=room.room_code_guest if room else None,
+                    cohort_name=cohort.name,
+                    cohort_id=str(cohort.id),
+                    student_name=user.full_name,
+                )
             )
-        )
 
     return out

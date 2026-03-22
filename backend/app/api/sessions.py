@@ -385,6 +385,94 @@ async def pause_activity(session_id: uuid.UUID, db: AsyncSession = Depends(get_d
     return session
 
 
+# ── Session Activity Management ──
+
+
+@router.post(
+    "/{session_id}/activities",
+    response_model=SessionActivityOut,
+    status_code=201,
+    summary="Add Activity to Session",
+    description="Add an activity to an existing session's lesson plan.",
+)
+async def add_session_activity(
+    session_id: uuid.UUID,
+    body: LaunchActivityRequest,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("teacher", "admin")),
+):
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Check activity exists
+    act_result = await db.execute(select(Activity).where(Activity.id == body.activity_id))
+    activity = act_result.scalar_one_or_none()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Check not already in session
+    existing = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.activity_id == body.activity_id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Activity already in session")
+
+    # Get next order
+    order_result = await db.execute(
+        select(SessionActivity).where(SessionActivity.session_id == session_id).order_by(SessionActivity.order.desc()).limit(1)
+    )
+    last = order_result.scalar_one_or_none()
+    next_order = (last.order + 1) if last else 1
+
+    sa = SessionActivity(session_id=session_id, activity_id=body.activity_id, order=next_order)
+    db.add(sa)
+    await db.commit()
+    await db.refresh(sa)
+    return SessionActivityOut(
+        id=sa.id,
+        session_id=sa.session_id,
+        activity_id=sa.activity_id,
+        order=sa.order,
+        status=sa.status,
+        launched_at=sa.launched_at,
+        activity_name=activity.name,
+        activity_type=activity.type,
+        duration_minutes=activity.duration_minutes,
+    )
+
+
+@router.delete(
+    "/{session_id}/activities/{activity_id}",
+    status_code=204,
+    summary="Remove Activity from Session",
+    description="Remove a pending activity from a session's lesson plan. Cannot remove active or completed activities.",
+)
+async def remove_session_activity(
+    session_id: uuid.UUID,
+    activity_id: str,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("teacher", "admin")),
+):
+    result = await db.execute(
+        select(SessionActivity).where(
+            SessionActivity.session_id == session_id,
+            SessionActivity.activity_id == activity_id,
+        )
+    )
+    sa = result.scalar_one_or_none()
+    if not sa:
+        raise HTTPException(status_code=404, detail="Activity not in session")
+    if sa.status in ("active", "completed"):
+        raise HTTPException(status_code=400, detail=f"Cannot remove a {sa.status} activity")
+    await db.delete(sa)
+    await db.commit()
+
+
 # ── Facilitator Notes ──
 
 

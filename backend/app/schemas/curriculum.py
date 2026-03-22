@@ -22,6 +22,7 @@ class ActivityCreate(BaseModel):
     prerequisites: list[dict] | None = Field(
         None, description='[{"competency_id": "C1.1", "min_stage": 2}]'
     )
+    pillar_id: str | None = Field(None, description="math_logic | communication | creativity | ai_systems")
     question_ids: list[str] | None = Field(None, description='["uuid1", "uuid2"]')
 
 
@@ -39,6 +40,7 @@ class ActivityUpdate(BaseModel):
     primary_competencies: list[dict] | None = None
     secondary_competencies: list[dict] | None = None
     prerequisites: list[dict] | None = None
+    pillar_id: str | None = None
     question_ids: list[str] | None = None
 
 
@@ -57,6 +59,7 @@ class ActivityOut(BaseModel):
     primary_competencies: list[dict] | None = None
     secondary_competencies: list[dict] | None = None
     prerequisites: list[dict] | None = None
+    pillar_id: str | None = None
     question_ids: list[str] | None = None
 
     model_config = {"from_attributes": True}

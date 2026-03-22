@@ -726,6 +726,39 @@ async def get_next_activity_question(
         cid = comp.get("competency_id") or comp.get("competencyId")
         if cid:
             comp_ids.append(cid)
+
+    # ── Grade-band fallback: no primary_competencies set ──
+    # If activity has a pillar_id, find all published questions for that pillar
+    # matching the student's grade, and use their competencies as the pool.
+    if not comp_ids and activity.pillar_id:
+        student_result = await db.execute(select(Student).where(Student.id == student_id))
+        student_obj = student_result.scalar_one_or_none()
+        if student_obj and student_obj.grade_band:
+            from app.models.competency import Capability
+            cap_query = select(Capability.id).where(Capability.pillar_id == activity.pillar_id)
+            # For math_logic, only use "Math Foundations" capability (P)
+            # to avoid logic/reasoning questions in a math curriculum sprint
+            if activity.pillar_id == "math_logic":
+                cap_query = cap_query.where(Capability.name.ilike("%Math Found%"))
+            cap_result = await db.execute(cap_query)
+            cap_ids = [r[0] for r in cap_result.all()]
+            if cap_ids:
+                comp_result = await db.execute(
+                    select(Competency.id).where(Competency.capability_id.in_(cap_ids))
+                )
+                pillar_comp_ids = [r[0] for r in comp_result.all()]
+                if pillar_comp_ids:
+                    q_result = await db.execute(
+                        select(ActivityQuestion.competency_id)
+                        .where(
+                            ActivityQuestion.competency_id.in_(pillar_comp_ids),
+                            ActivityQuestion.grade_band == student_obj.grade_band,
+                            ActivityQuestion.is_published == True,
+                        )
+                        .distinct()
+                    )
+                    comp_ids = [r[0] for r in q_result.all()]
+
     if not comp_ids:
         return None
 

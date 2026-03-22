@@ -89,6 +89,7 @@ async def create_activity(
         primary_competencies=data.primary_competencies,
         secondary_competencies=data.secondary_competencies,
         prerequisites=data.prerequisites,
+        pillar_id=data.pillar_id,
         question_ids=data.question_ids or [],
     )
     db.add(activity)

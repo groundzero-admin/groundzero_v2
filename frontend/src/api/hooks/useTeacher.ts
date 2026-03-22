@@ -93,6 +93,28 @@ export function useSessionActivities(sessionId: string | null | undefined) {
   });
 }
 
+export function useAddSessionActivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, activityId }: { sessionId: string; activityId: string }) =>
+      api.post(`/sessions/${sessionId}/activities`, { activity_id: activityId }).then((r) => r.data),
+    onSuccess: (_data, { sessionId }) => {
+      qc.invalidateQueries({ queryKey: ["session-activities", sessionId] });
+    },
+  });
+}
+
+export function useRemoveSessionActivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, activityId }: { sessionId: string; activityId: string }) =>
+      api.delete(`/sessions/${sessionId}/activities/${activityId}`),
+    onSuccess: (_data, { sessionId }) => {
+      qc.invalidateQueries({ queryKey: ["session-activities", sessionId] });
+    },
+  });
+}
+
 export function useTeacherSessionView(cohortId: string | undefined, sessionId: string | undefined) {
   return useQuery<SessionViewOut>({
     queryKey: ["teacher-session-view", cohortId, sessionId],

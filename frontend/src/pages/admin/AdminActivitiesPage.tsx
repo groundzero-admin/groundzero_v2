@@ -20,6 +20,7 @@ interface Activity {
     week: number | null;
     session_number: number | null;
     duration_minutes: number | null;
+    pillar_id: string | null;
     grade_bands: string[] | null;
     description: string | null;
     learning_outcomes: string[] | null;
@@ -29,6 +30,12 @@ interface Activity {
 
 const ACTIVITY_TYPES = ["warmup", "key_topic", "diy", "ai_lab", "artifact"];
 const ACTIVITY_MODES = ["default", "timed_mcq", "open_ended", "discussion"];
+const PILLARS = [
+    { id: "math_logic", name: "Math & Logic" },
+    { id: "communication", name: "Communication" },
+    { id: "creativity", name: "Creativity" },
+    { id: "ai_systems", name: "AI & Systems" },
+];
 
 const typeColor: Record<string, string> = {
     warmup: "#f59e0b", key_topic: "#6366f1", diy: "#10b981", ai_lab: "#ec4899", artifact: "#8b5cf6",
@@ -69,24 +76,34 @@ export default function AdminActivitiesPage() {
     const [formModuleId, setFormModuleId] = useState("level_1");
     const [formDuration, setFormDuration] = useState<number | "">("");
     const [formDescription, setFormDescription] = useState("");
+    const [formPillarId, setFormPillarId] = useState("");
 
     // Question management modal
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
     const [showQuestionModal, setShowQuestionModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
+    const [linkGradeFilter, setLinkGradeFilter] = useState("");
     const [previewQuestion, setPreviewQuestion] = useState<ActivityQuestion | null>(null);
+
+    function openManageQuestions(a: Activity) {
+        setActiveActivity(a);
+        setShowQuestionModal(true);
+        setPreviewQuestion(null);
+        setLinkSearch("");
+        setLinkGradeFilter("");
+    }
 
     function openCreateActivity() {
         setEditingActivity(null);
         setFormId(""); setFormName(""); setFormType("warmup"); setFormMode("default");
-        setFormModuleId("level_1"); setFormDuration(""); setFormDescription("");
+        setFormModuleId("level_1"); setFormDuration(""); setFormDescription(""); setFormPillarId("");
         setShowActivityModal(true);
     }
 
     function openEditActivity(a: Activity) {
         setEditingActivity(a);
         setFormId(a.id); setFormName(a.name); setFormType(a.type); setFormMode(a.mode);
-        setFormModuleId(a.module_id); setFormDuration(a.duration_minutes ?? ""); setFormDescription(a.description ?? "");
+        setFormModuleId(a.module_id); setFormDuration(a.duration_minutes ?? ""); setFormDescription(a.description ?? ""); setFormPillarId(a.pillar_id ?? "");
         setShowActivityModal(true);
     }
 
@@ -96,6 +113,7 @@ export default function AdminActivitiesPage() {
             name: formName, type: formType, mode: formMode, module_id: formModuleId,
             duration_minutes: formDuration !== "" ? Number(formDuration) : null,
             description: formDescription || null,
+            pillar_id: formPillarId || null,
         };
         if (editingActivity) {
             await updateActivity.mutateAsync({ id: editingActivity.id, ...payload });
@@ -162,6 +180,9 @@ export default function AdminActivitiesPage() {
                                         <span style={{ color: typeColor[a.type], fontWeight: 600 }}>{a.type.replace("_", " ")}</span>
                                         {a.mode !== "default" && (
                                             <span><Layers size={11} style={{ verticalAlign: "middle" }} /> {a.mode.replace("_", " ")}</span>
+                                        )}
+                                        {a.pillar_id && (
+                                            <span style={{ opacity: 0.6 }}>{PILLARS.find((p) => p.id === a.pillar_id)?.name ?? a.pillar_id}</span>
                                         )}
                                     </div>
                                     <div className={s.cardMeta}>
@@ -235,6 +256,14 @@ export default function AdminActivitiesPage() {
                                     <label className={s.label}>Duration (min)</label>
                                     <input className={s.input} type="number" min={1} value={formDuration} onChange={(e) => setFormDuration(e.target.value ? Number(e.target.value) : "")} placeholder="e.g. 15" />
                                 </div>
+                            </div>
+                            <div>
+                                <label className={s.label}>Pillar (optional)</label>
+                                <select className={s.select} value={formPillarId} onChange={(e) => setFormPillarId(e.target.value)}>
+                                    <option value="">— None —</option>
+                                    {PILLARS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                <span style={{ fontSize: 11, opacity: 0.5 }}>Used for ZPD auto-selection when no questions are linked</span>
                             </div>
                             <div>
                                 <label className={s.label}>Description</label>

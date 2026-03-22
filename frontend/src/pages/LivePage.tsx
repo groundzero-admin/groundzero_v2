@@ -83,7 +83,7 @@ export default function LivePage() {
   }, [chatText, hmsActions]);
 
   // Fetch student's live sessions to get HMS room code
-  const { data: liveSessions, isLoading: loadingLiveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean }[]>({
+  const { data: liveSessions, isLoading: loadingLiveSessions } = useQuery<{ room_code_guest: string | null; student_name: string; is_live: boolean; cohort_id: string }[]>({
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
@@ -127,8 +127,10 @@ export default function LivePage() {
     return () => window.removeEventListener("beforeunload", h);
   }, [hmsActions]);
 
-  // Session-driven flow: find active session for student's cohort
-  const { data: session, isLoading: loadingSession } = useActiveSession(student?.cohort_id);
+  // Session-driven flow: use cohort from live-sessions (checks all enrollments)
+  // student.cohort_id is a legacy field and may point to the wrong cohort.
+  const activeCohortId = activeLiveSession?.cohort_id ?? student?.cohort_id ?? null;
+  const { data: session, isLoading: loadingSession } = useActiveSession(activeCohortId);
   const { data: activity, isLoading: loadingActivity } = useActivity(session?.current_activity_id);
   const { data: sessionActivities } = useSessionActivities(session?.id);
 
