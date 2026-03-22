@@ -16,6 +16,7 @@ class SparkConversationCreate(BaseModel):
     competency_id: str | None = None
     selected_option: str | None = None
     confidence_report: str | None = None
+    student_response: dict | None = None  # raw student answer for contextual hints
 
 
 class SparkTurnRequest(BaseModel):
@@ -25,6 +26,7 @@ class SparkTurnRequest(BaseModel):
 class SparkHintRequest(BaseModel):
     student_id: UUID
     question_id: UUID
+    student_response: dict | None = None
 
 
 # ── Responses ──

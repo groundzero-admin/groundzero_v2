@@ -5,7 +5,6 @@ Returns (outcome: float 0-1, source: str, feedback: str)
 
 Deterministic slugs: outcome computed from response data
 LLM slugs: call Spark LLM with rubric from question data
-Participation slugs: always 1.0 (effort-based)
 """
 from __future__ import annotations
 
@@ -18,8 +17,6 @@ logger = logging.getLogger(__name__)
 # Source reliability weights by evaluation method
 _MCQ_SOURCE = "mcq"
 _LLM_SOURCE = "llm_transcript"
-_ARTIFACT_SOURCE = "artifact"
-_FACILITATOR_SOURCE = "facilitator"
 
 DETERMINISTIC_SLUGS = {
     "mcq_single", "mcq_timed",
@@ -39,11 +36,8 @@ LLM_SLUGS = {
     "audio_response",
     "debate_opinion",
     "ai_conversation",
-}
-
-PARTICIPATION_SLUGS = {
-    "reflection_rating": (1.0, _FACILITATOR_SOURCE),
-    "draw_scribble": (0.7, _ARTIFACT_SOURCE),
+    "draw_scribble",
+    "reflection_rating",
 }
 
 
@@ -167,6 +161,84 @@ Score 0.0 to 1.0 based on:
 
 Respond with JSON only: {{"score": 0.8, "feedback": "Great exploration of the topic!"}}"""
 
+    elif slug == "draw_scribble":
+        prompt_text = question_data.get("prompt", "")
+        rubric = question_data.get("rubric", "")
+        shapes = response.get("shapes", [])
+        drawing_b64 = response.get("drawing", "")
+
+        # If we have a base64 image and the model supports vision, use multimodal
+        if drawing_b64:
+            shape_desc = json.dumps(shapes, default=str) if shapes else "no shape metadata"
+            text_prompt = f"""You are evaluating a student's drawing/diagram.
+
+Task: {prompt_text}
+{f'Rubric: {rubric}' if rubric else ''}
+Shape metadata: {shape_desc}
+
+Look at the student's drawing and evaluate it.
+
+Score 0.0 to 1.0 based on:
+- 1.0 = fully meets the task requirements, clear and accurate
+- 0.7 = mostly correct, minor issues
+- 0.5 = partial attempt, some elements correct
+- 0.2 = attempted but mostly wrong or unclear
+- 0.0 = blank or completely unrelated
+
+Respond with JSON only: {{"score": 0.7, "feedback": "Your diagram shows..."}}"""
+
+            try:
+                resp = await spark_client.chat.completions.create(
+                    model=spark_model,
+                    messages=[{"role": "user", "content": [
+                        {"type": "text", "text": text_prompt},
+                        {"type": "image_url", "image_url": {"url": drawing_b64}},
+                    ]}],
+                    temperature=0.1,
+                )
+                return _parse_llm_score(resp, slug)
+            except Exception:
+                logger.warning("Vision eval failed for draw_scribble, falling back to text-only")
+                # Fall through to text-only evaluation below
+
+        # Text-only fallback: evaluate based on shape metadata
+        shape_desc = json.dumps(shapes, default=str) if shapes else "empty canvas"
+        prompt = f"""You are evaluating a student's drawing/diagram based on its shape metadata.
+
+Task: {prompt_text}
+{f'Rubric: {rubric}' if rubric else ''}
+Shapes drawn: {shape_desc}
+
+Score 0.0 to 1.0 based on:
+- Did the student draw relevant shapes for the task?
+- Are shapes labeled appropriately?
+- 1.0 = clear, complete diagram, 0.5 = partial attempt, 0.0 = empty/unrelated
+
+Respond with JSON only: {{"score": 0.7, "feedback": "Your diagram shows..."}}"""
+
+    elif slug == "reflection_rating":
+        prompt_text = question_data.get("prompt", "")
+        rating = response.get("rating")
+        follow_up = response.get("followUp", "")
+        scale_type = question_data.get("scale_type", "likert_5")
+
+        prompt = f"""You are evaluating a student's reflection response.
+
+Reflection question: {prompt_text}
+Scale type: {scale_type}
+Student's rating: {rating}
+Student's written reflection: {follow_up}
+
+Score 0.0 to 1.0 based on:
+- Thoughtfulness of the reflection (not the rating value itself)
+- If they wrote a follow-up, how meaningful and self-aware is it?
+- A high rating alone without reflection = 0.5
+- Any genuine written reflection = at least 0.7
+- Deep, specific self-awareness = 1.0
+- No follow-up and just a rating click = 0.4
+
+Respond with JSON only: {{"score": 0.7, "feedback": "Good reflection! ..."}}"""
+
     else:
         return 0.5, _LLM_SOURCE, "Answer recorded."
 
@@ -176,18 +248,22 @@ Respond with JSON only: {{"score": 0.8, "feedback": "Great exploration of the to
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1,
         )
-        content = resp.choices[0].message.content or ""
-        match = re.search(r"\{[\s\S]*\}", content)
-        if not match:
-            raise ValueError("No JSON in LLM response")
-        result = json.loads(match.group())
-        score = max(0.0, min(1.0, float(result.get("score", 0.5))))
-        feedback = str(result.get("feedback", "Answer evaluated."))
-        return score, _LLM_SOURCE, feedback
+        return _parse_llm_score(resp, slug)
     except Exception:
         logger.exception("LLM grading failed for slug=%s", slug)
-        # Fallback: give partial credit for attempting
         return 0.5, _LLM_SOURCE, "Answer recorded."
+
+
+def _parse_llm_score(resp, slug: str) -> tuple[float, str, str]:
+    """Extract score + feedback JSON from LLM response."""
+    content = resp.choices[0].message.content or ""
+    match = re.search(r"\{[\s\S]*\}", content)
+    if not match:
+        raise ValueError("No JSON in LLM response")
+    result = json.loads(match.group())
+    score = max(0.0, min(1.0, float(result.get("score", 0.5))))
+    feedback = str(result.get("feedback", "Answer evaluated."))
+    return score, _LLM_SOURCE, feedback
 
 
 async def evaluate(
@@ -202,10 +278,6 @@ async def evaluate(
 
     For LLM slugs, spark_client must be provided. If not, falls back to 0.5.
     """
-    if slug in PARTICIPATION_SLUGS:
-        outcome, source = PARTICIPATION_SLUGS[slug]
-        return outcome, source, "Response recorded."
-
     if slug == "multi_step":
         return await _evaluate_multi_step(question_data, response, spark_client, spark_model)
 
@@ -217,8 +289,8 @@ async def evaluate(
             return 0.5, _LLM_SOURCE, "Answer recorded."
         return await evaluate_with_llm(slug, question_data, response, spark_client, spark_model)
 
-    # Unknown slug — participation credit
-    return 0.5, _FACILITATOR_SOURCE, "Answer recorded."
+    # Unknown slug — fallback
+    return 0.5, _LLM_SOURCE, "Answer recorded."
 
 
 async def _evaluate_multi_step(

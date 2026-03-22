@@ -1,4 +1,4 @@
-import { Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause, CheckCircle2 } from "lucide-react";
+import { Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause, CheckCircle2, FileText, ExternalLink } from "lucide-react";
 import type { SessionActivity } from "@/api/types";
 
 const TYPE_META: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
@@ -66,6 +66,16 @@ export function ActivitiesTab({ activities, sessionId, activityInfoById, launchA
                                 <div style={{ fontSize: 10, color: "#475569", marginTop: 4, lineHeight: 1.2 }}>
                                     {info?.description && <div style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{info.description}</div>}
                                     {info?.questionCount != null && <div style={{ marginTop: info?.description ? 3 : 0, fontWeight: 800, color: "#334155" }}>{info.questionCount} questions</div>}
+                                </div>
+                            )}
+                            {a.resources && a.resources.length > 0 && (
+                                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                                    {a.resources.map((r, i) => (
+                                        <a key={i} href={r.url} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 6, background: "#eef2ff", border: "1px solid #c7d2fe", color: "#4f46e5", fontSize: 10, fontWeight: 600, textDecoration: "none" }}>
+                                            {r.type === "file" ? <FileText size={10} /> : <ExternalLink size={10} />}
+                                            {r.name || r.label || "Resource"}
+                                        </a>
+                                    ))}
                                 </div>
                             )}
                             <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>

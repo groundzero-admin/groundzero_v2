@@ -7,6 +7,7 @@ export interface SparkConversationCreate {
   competency_id?: string;
   selected_option?: string;
   confidence_report?: string;
+  student_response?: Record<string, unknown>;
 }
 
 export interface SparkTurnRequest {

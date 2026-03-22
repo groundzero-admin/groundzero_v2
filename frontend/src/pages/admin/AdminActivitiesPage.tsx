@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import {
     useActivities, useCreateActivity, useUpdateActivity, useDeleteActivity,
     useLinkActivityQuestion, useUnlinkActivityQuestion, useReorderActivityQuestions, useActivityQuestions,
 } from "@/api/hooks/useAdmin";
 import type { ActivityQuestion } from "@/api/types/admin";
-import { Plus, Pencil, Trash2, Search, Clock, Layers, HelpCircle, Link2, Unlink, ExternalLink, Eye, ArrowLeft, ArrowRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Clock, Layers, HelpCircle, Link2, Unlink, ExternalLink, Eye, ArrowLeft, ArrowRight, Upload, X } from "lucide-react";
+import { api } from "@/api/client";
 import LivePreview from "./LivePreview";
 import * as s from "./admin.css";
 
@@ -26,6 +27,7 @@ interface Activity {
     learning_outcomes: string[] | null;
     primary_competencies: { competency_id: string; expected_gain?: number }[] | null;
     question_ids: string[] | null;
+    resources: { type: string; url: string; name?: string; label?: string }[] | null;
 }
 
 const ACTIVITY_TYPES = ["warmup", "key_topic", "diy", "ai_lab", "artifact"];
@@ -77,6 +79,12 @@ export default function AdminActivitiesPage() {
     const [formDuration, setFormDuration] = useState<number | "">("");
     const [formDescription, setFormDescription] = useState("");
     const [formPillarId, setFormPillarId] = useState("");
+    const [formResources, setFormResources] = useState<{ type: string; url: string; name?: string; label?: string }[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const [showLinkInput, setShowLinkInput] = useState(false);
+    const [linkUrl, setLinkUrl] = useState("");
+    const [linkLabel, setLinkLabel] = useState("");
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Question management modal
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
@@ -97,6 +105,7 @@ export default function AdminActivitiesPage() {
         setEditingActivity(null);
         setFormId(""); setFormName(""); setFormType("warmup"); setFormMode("default");
         setFormModuleId("level_1"); setFormDuration(""); setFormDescription(""); setFormPillarId("");
+        setFormResources([]); setShowLinkInput(false); setLinkUrl(""); setLinkLabel("");
         setShowActivityModal(true);
     }
 
@@ -104,6 +113,7 @@ export default function AdminActivitiesPage() {
         setEditingActivity(a);
         setFormId(a.id); setFormName(a.name); setFormType(a.type); setFormMode(a.mode);
         setFormModuleId(a.module_id); setFormDuration(a.duration_minutes ?? ""); setFormDescription(a.description ?? ""); setFormPillarId(a.pillar_id ?? "");
+        setFormResources(a.resources ?? []); setShowLinkInput(false); setLinkUrl(""); setLinkLabel("");
         setShowActivityModal(true);
     }
 
@@ -114,6 +124,7 @@ export default function AdminActivitiesPage() {
             duration_minutes: formDuration !== "" ? Number(formDuration) : null,
             description: formDescription || null,
             pillar_id: formPillarId || null,
+            resources: formResources.length > 0 ? formResources : null,
         };
         if (editingActivity) {
             await updateActivity.mutateAsync({ id: editingActivity.id, ...payload });
@@ -275,6 +286,68 @@ export default function AdminActivitiesPage() {
                                 <label className={s.label}>Description</label>
                                 <textarea className={s.textarea} value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="What students will do..." rows={3} />
                             </div>
+
+                            {/* Resources: file uploads + links */}
+                            <div>
+                                <label className={s.label}>Resources (files &amp; links)</label>
+                                {formResources.map((r, i) => (
+                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 12px", background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                                        <span style={{ fontSize: 16 }}>{r.type === "file" ? "📄" : "🔗"}</span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                {r.name || r.label || r.url}
+                                            </div>
+                                            <div style={{ fontSize: 11, color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.url}</div>
+                                        </div>
+                                        <button type="button" onClick={() => setFormResources((prev) => prev.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 4 }}>
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" style={{ display: "none" }} onChange={async (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (!file) return;
+                                        setUploading(true);
+                                        try {
+                                            const { data } = await api.post("/admin/media/presigned-upload", { file_name: file.name, content_type: file.type });
+                                            const res = await fetch(data.upload_url, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
+                                            if (!res.ok) throw new Error("Upload failed");
+                                            setFormResources((prev) => [...prev, { type: "file", url: data.public_url, name: file.name }]);
+                                        } catch { /* ignore */ }
+                                        setUploading(false);
+                                        if (fileInputRef.current) fileInputRef.current.value = "";
+                                    }} />
+                                    <button type="button" disabled={uploading} onClick={() => fileInputRef.current?.click()} style={{ padding: "6px 14px", borderRadius: 8, background: "#6366f1", color: "#fff", fontWeight: 600, fontSize: 12, border: "none", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1, display: "flex", alignItems: "center", gap: 4 }}>
+                                        <Upload size={12} /> {uploading ? "Uploading..." : "Upload File"}
+                                    </button>
+                                    <button type="button" onClick={() => setShowLinkInput(true)} style={{ padding: "6px 14px", borderRadius: 8, background: "#f1f5f9", color: "#334155", fontWeight: 600, fontSize: 12, border: "1px solid #e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                                        <Link2 size={12} /> Add Link
+                                    </button>
+                                </div>
+                                {showLinkInput && (
+                                    <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "flex-end" }}>
+                                        <div style={{ flex: 2 }}>
+                                            <label style={{ fontSize: 11, color: "#64748b", marginBottom: 2, display: "block" }}>URL *</label>
+                                            <input className={s.input} value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://..." style={{ fontSize: 13 }} />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <label style={{ fontSize: 11, color: "#64748b", marginBottom: 2, display: "block" }}>Label</label>
+                                            <input className={s.input} value={linkLabel} onChange={(e) => setLinkLabel(e.target.value)} placeholder="Optional label" style={{ fontSize: 13 }} />
+                                        </div>
+                                        <button type="button" disabled={!linkUrl.trim()} onClick={() => {
+                                            setFormResources((prev) => [...prev, { type: "link", url: linkUrl.trim(), label: linkLabel.trim() || undefined }]);
+                                            setLinkUrl(""); setLinkLabel(""); setShowLinkInput(false);
+                                        }} style={{ padding: "8px 14px", borderRadius: 8, background: "#6366f1", color: "#fff", fontWeight: 600, fontSize: 12, border: "none", cursor: linkUrl.trim() ? "pointer" : "not-allowed", opacity: linkUrl.trim() ? 1 : 0.5, whiteSpace: "nowrap" }}>
+                                            Add
+                                        </button>
+                                        <button type="button" onClick={() => { setShowLinkInput(false); setLinkUrl(""); setLinkLabel(""); }} style={{ padding: "8px", borderRadius: 8, background: "none", border: "1px solid #e2e8f0", cursor: "pointer", color: "#94a3b8" }}>
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className={s.formActions}>
                                 <button type="button" className={s.cancelBtn} onClick={() => setShowActivityModal(false)}>Cancel</button>
                                 <button type="submit" className={s.submitBtn} disabled={activityPending}>

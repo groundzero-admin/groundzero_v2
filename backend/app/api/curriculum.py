@@ -91,6 +91,7 @@ async def create_activity(
         prerequisites=data.prerequisites,
         pillar_id=data.pillar_id,
         question_ids=data.question_ids or [],
+        resources=data.resources,
     )
     db.add(activity)
     await db.commit()

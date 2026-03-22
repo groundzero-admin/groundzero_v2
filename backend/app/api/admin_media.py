@@ -46,11 +46,13 @@ async def presigned_upload(
 
     key = f"media/{uuid.uuid4()}/{body.file_name}"
 
-    s3_client = boto3.client(
-        "s3",
-        region_name=settings.AWS_REGION,
-        endpoint_url=f"https://s3.{settings.AWS_REGION}.amazonaws.com",
-    )
+    s3_kwargs: dict = {"region_name": settings.AWS_REGION}
+    if settings.AWS_ACCESS_KEY_ID:
+        s3_kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+        s3_kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+    if settings.AWS_SESSION_TOKEN:
+        s3_kwargs["aws_session_token"] = settings.AWS_SESSION_TOKEN
+    s3_client = boto3.client("s3", **s3_kwargs)
 
     upload_url = s3_client.generate_presigned_url(
         "put_object",
@@ -63,8 +65,6 @@ async def presigned_upload(
         HttpMethod="PUT",
     )
 
-    public_url = (
-        f"https://{settings.MEDIA_BUCKET}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
-    )
+    public_url = f"https://{settings.MEDIA_BUCKET}.s3.{settings.AWS_REGION}.amazonaws.com/{key}"
 
     return PresignedUploadResponse(upload_url=upload_url, public_url=public_url)

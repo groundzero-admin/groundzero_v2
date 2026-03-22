@@ -11,7 +11,7 @@ import {
   useCohorts,
   useSessionActivities,
 } from "@/api/hooks/useTeacher";
-import { Calendar, ArrowLeft, Radio, Pause, Play, BookOpen, ChevronRight, ChevronLeft } from "lucide-react";
+import { Calendar, ArrowLeft, Radio, Pause, Play, BookOpen, ChevronRight, ChevronLeft, FileText, ExternalLink } from "lucide-react";
 import LivePreview from "@/pages/admin/LivePreview";
 import * as s from "./TeacherSessionPreviewPage.css";
 
@@ -125,7 +125,12 @@ export default function TeacherSessionPreviewPage() {
                 </div>
                 <div className={s.activityName}>{act.name}</div>
                 {act.description && <div className={s.activityDesc}>{act.description}</div>}
-                <div className={s.activityMeta}>{act.questions.length} questions</div>
+                <div className={s.activityMeta}>
+                  {act.questions.length} questions
+                  {act.resources && act.resources.length > 0 && (
+                    <> · <FileText size={12} style={{ verticalAlign: "middle" }} /> {act.resources.length} resources</>
+                  )}
+                </div>
                 <div className={s.activityActions} onClick={(e) => e.stopPropagation()}>
                   {!act.questions.length ? null : (
                     <button
@@ -209,6 +214,31 @@ export default function TeacherSessionPreviewPage() {
                   </div>
                 )}
               </div>
+
+              {selectedActivity.resources && selectedActivity.resources.length > 0 && (
+                <div style={{ marginTop: 20, padding: 16, background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: "#334155" }}>Resources</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {selectedActivity.resources.map((r, i) => (
+                      <a
+                        key={i}
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "flex", alignItems: "center", gap: 10,
+                          padding: "10px 14px", borderRadius: 8, background: "#fff",
+                          border: "1px solid #e2e8f0", color: "#4f46e5",
+                          fontSize: 13, fontWeight: 500, textDecoration: "none",
+                        }}
+                      >
+                        {r.type === "file" ? <FileText size={16} /> : <ExternalLink size={16} />}
+                        {r.name || r.label || r.url}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </main>

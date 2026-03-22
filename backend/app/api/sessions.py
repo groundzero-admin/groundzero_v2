@@ -160,7 +160,7 @@ async def get_session(session_id: uuid.UUID, db: AsyncSession = Depends(get_db),
 )
 async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depends(get_db), _user: User = Depends(require_role("student", "teacher", "admin"))):
     result = await db.execute(
-        select(SessionActivity, Activity.name, Activity.type, Activity.mode, Activity.duration_minutes)
+        select(SessionActivity, Activity.name, Activity.type, Activity.mode, Activity.duration_minutes, Activity.resources)
         .outerjoin(Activity, SessionActivity.activity_id == Activity.id)
         .where(SessionActivity.session_id == session_id)
         .order_by(SessionActivity.order)
@@ -170,7 +170,7 @@ async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depen
     # Auto-complete expired timed activities
     now = datetime.utcnow()
     dirty = False
-    for sa, name, atype, mode, duration in rows:
+    for sa, name, atype, mode, duration, _resources in rows:
         if (
             sa.status == "active"
             and mode == "timed_mcq"
@@ -200,8 +200,9 @@ async def get_session_activities(session_id: uuid.UUID, db: AsyncSession = Depen
             activity_name=name,
             activity_type=atype,
             duration_minutes=duration,
+            resources=resources,
         )
-        for sa, name, atype, mode, duration in rows
+        for sa, name, atype, mode, duration, resources in rows
     ]
 
 

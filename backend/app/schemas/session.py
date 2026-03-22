@@ -54,6 +54,7 @@ class SessionActivityOut(BaseModel):
     activity_name: str | None = None
     activity_type: str | None = None
     duration_minutes: int | None = None
+    resources: list[dict] | None = None
 
     model_config = {"from_attributes": True}
 

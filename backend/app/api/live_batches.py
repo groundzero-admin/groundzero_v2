@@ -106,6 +106,7 @@ class SessionViewActivityOut(BaseModel):
     description: str | None
     question_ids: list[str]
     questions: list[SessionViewQuestionOut]
+    resources: list[dict] | None = None
 
 
 class SessionViewOut(BaseModel):
@@ -481,6 +482,7 @@ async def build_session_view(session: Session, db: AsyncSession) -> SessionViewO
                     description=activity.description if activity else None,
                     question_ids=qids,
                     questions=questions_out,
+                    resources=activity.resources if activity else None,
                 )
             )
     # Fallback path: no session_activities rows (likely imported before activities existed).
@@ -569,6 +571,7 @@ async def build_session_view(session: Session, db: AsyncSession) -> SessionViewO
                     description=activity.description if activity else None,
                     question_ids=qids,
                     questions=questions_out,
+                    resources=activity.resources if activity else None,
                 )
             )
 

@@ -160,8 +160,9 @@ export default function LivePage() {
 
   // SPARK AI Companion — manual hint only
   const [sparkTrigger, setSparkTrigger] = useState<SparkTriggerData | null>(null);
-  const [_aiInteraction, setAiInteraction] = useState<"none" | "hint" | "conversation">("none");
+  const [aiInteraction, setAiInteraction] = useState<"none" | "hint" | "conversation">("none");
   const [wantHint, setWantHint] = useState(false); // shown after wrong answer
+  const lastAnswerRef = useRef<Record<string, unknown> | null>(null);
 
   // ── Stateful countdown timer — derived from server launched_at ──
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -223,12 +224,14 @@ export default function LivePage() {
     setSparkTrigger(null);
     setAiInteraction("none");
     setWantHint(false);
+    lastAnswerRef.current = null;
     questionShownAt.current = Date.now();
   }, [activityQuestion?.activity_question_id]);
 
   // Called by QuestionRenderer's onAnswer — auto-submits evidence
   const handleAnswer = useCallback(async (answer: unknown) => {
     if (!studentId || !activityQuestion || submitted) return;
+    lastAnswerRef.current = answer as Record<string, unknown>;
 
     const responseTimeMs = Date.now() - questionShownAt.current;
 
@@ -238,7 +241,9 @@ export default function LivePage() {
       session_id: session?.id,
       response_time_ms: responseTimeMs,
       activity_question_id: activityQuestion.activity_question_id,
+      activity_id: activity?.id,
       response: answer as Record<string, unknown>,
+      ai_interaction: aiInteraction,
     };
 
     try {
@@ -257,11 +262,16 @@ export default function LivePage() {
     } catch {
       // handled by TanStack Query
     }
-  }, [studentId, activityQuestion, submitted, session?.id, submitEvidence]);
+  }, [studentId, activityQuestion, submitted, session?.id, submitEvidence, aiInteraction]);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
+    if (studentId && activity?.id) {
+      await api.post(`/students/${studentId}/advance-activity-question`, null, {
+        params: { activity_id: activity.id },
+      });
+    }
     refetchQuestion();
-  }, [refetchQuestion]);
+  }, [studentId, activity?.id, refetchQuestion]);
 
   const handleTryAgain = useCallback(() => {
     setSubmitted(false);
@@ -559,6 +569,7 @@ export default function LivePage() {
                         questionId: activityQuestion.activity_question_id,
                         trigger: "wrong_answer",
                         competencyId: activityQuestion.competency_id,
+                        studentResponse: lastAnswerRef.current ?? undefined,
                       });
                       setAiInteraction("hint");
                       setWantHint(false);

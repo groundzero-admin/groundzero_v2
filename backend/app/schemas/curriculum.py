@@ -24,6 +24,7 @@ class ActivityCreate(BaseModel):
     )
     pillar_id: str | None = Field(None, description="math_logic | communication | creativity | ai_systems")
     question_ids: list[str] | None = Field(None, description='["uuid1", "uuid2"]')
+    resources: list[dict] | None = Field(None, description='[{"type":"file","url":"...","name":"..."}, {"type":"link","url":"...","label":"..."}]')
 
 
 class ActivityUpdate(BaseModel):
@@ -42,6 +43,7 @@ class ActivityUpdate(BaseModel):
     prerequisites: list[dict] | None = None
     pillar_id: str | None = None
     question_ids: list[str] | None = None
+    resources: list[dict] | None = None
 
 
 class ActivityOut(BaseModel):
@@ -61,6 +63,7 @@ class ActivityOut(BaseModel):
     prerequisites: list[dict] | None = None
     pillar_id: str | None = None
     question_ids: list[str] | None = None
+    resources: list[dict] | None = None
 
     model_config = {"from_attributes": True}
 

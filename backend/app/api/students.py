@@ -249,6 +249,23 @@ async def get_next_activity_question(
     )
 
 
+@router.post(
+    "/{student_id}/advance-activity-question",
+    status_code=204,
+    summary="Advance to Next Question",
+    description="Increment the student's progress index for the activity. Call this when 'Next Question' is clicked.",
+)
+async def advance_activity_question(
+    student_id: uuid.UUID,
+    activity_id: str = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    student = await student_service.get_student(db, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    await predictor_service.advance_activity_question(db, student_id, activity_id)
+
+
 @router.get(
     "/{student_id}/recommended-topics",
     response_model=list[RecommendedTopicOut],
@@ -315,15 +332,29 @@ async def get_student_session_score(
     session_id: uuid.UUID = Query(...),
     db: AsyncSession = Depends(get_db),
 ):
+    from sqlalchemy import text
+    # Total = questions answered (from progress index)
+    # Correct = last attempt per question with outcome >= 0.5
     result = await db.execute(
-        select(
-            func.count().label("total"),
-            func.sum(case((EvidenceEvent.outcome >= 0.5, 1), else_=0)).label("correct"),
-        ).where(
-            EvidenceEvent.student_id == student_id,
-            EvidenceEvent.session_id == session_id,
-            EvidenceEvent.source == "mcq",
-        )
+        text("""
+            SELECT
+                (SELECT COALESCE(SUM(p.current_index), 0)
+                 FROM student_activity_progress p
+                 JOIN session_activities sa ON sa.activity_id = p.activity_id AND sa.session_id = :sess
+                 WHERE p.student_id = :sid
+                ) AS total,
+                (SELECT COUNT(*) FROM (
+                    SELECT DISTINCT ON (meta->>'activityQuestionId') outcome
+                    FROM evidence_events
+                    WHERE student_id = :sid AND session_id = :sess
+                      AND meta->>'activityQuestionId' IS NOT NULL
+                    ORDER BY meta->>'activityQuestionId', created_at DESC
+                ) la WHERE la.outcome >= 0.5
+                ) AS correct
+        """),
+        {"sid": str(student_id), "sess": str(session_id)},
     )
     row = result.one()
-    return SessionScoreOut(total=int(row.total), correct=int(row.correct or 0))
+    total = int(row.total)
+    correct = min(int(row.correct or 0), total)
+    return SessionScoreOut(total=total, correct=correct)

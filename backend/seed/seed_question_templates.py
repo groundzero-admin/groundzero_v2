@@ -27,7 +27,8 @@ TEMPLATES = [
             "fields": [
                 {"key": "sentence", "type": "text", "label": "Sentence with {{blank}} placeholders", "required": True},
                 {"key": "answers", "type": "list", "label": "Correct answers (one per blank)", "required": True},
-                {"key": "distractors", "type": "list", "label": "Wrong options (optional, for word bank)", "required": False},
+                {"key": "mode", "type": "select", "label": "Input mode", "required": False, "options": ["word_bank", "text_input"], "default": "word_bank"},
+                {"key": "distractors", "type": "list", "label": "Wrong options (for word bank mode)", "required": False},
             ]
         },
         "llm_prompt_template": """Generate a fill-in-the-blanks question based on: "{{description}}" (grade band: {{grade_band}}).
@@ -61,26 +62,31 @@ Return ONLY a JSON object with these exact keys:
 {
   "instruction": "string — what the student should do",
   "nodes": [
-    {"id": "n1", "type": "start", "label": "Start", "x": 50, "y": 8},
-    {"id": "n2", "type": "process", "label": "Step text", "x": 50, "y": 30},
-    {"id": "n3", "type": "process", "blank": true, "correct": "correct answer", "x": 50, "y": 52},
-    {"id": "n4", "type": "end", "label": "End", "x": 50, "y": 88}
+    {"id": "n1", "type": "start", "label": "Start"},
+    {"id": "n2", "type": "process", "label": "Short label"},
+    {"id": "n3", "type": "decision", "label": "Condition?"},
+    {"id": "n4", "type": "process", "blank": true, "correct": "Yes path"},
+    {"id": "n5", "type": "process", "blank": true, "correct": "No path"},
+    {"id": "n6", "type": "end", "label": "End"}
   ],
   "edges": [
     {"from": "n1", "to": "n2"},
     {"from": "n2", "to": "n3"},
-    {"from": "n3", "to": "n4"}
+    {"from": "n3", "to": "n4", "label": "Yes"},
+    {"from": "n3", "to": "n5", "label": "No"},
+    {"from": "n4", "to": "n6"},
+    {"from": "n5", "to": "n6"}
   ],
-  "items": ["correct answer", "distractor 1", "distractor 2"]
+  "items": ["Yes path", "No path", "distractor 1", "distractor 2"]
 }
 
 Rules:
-- Use type "start" (1 node), "end" (1 node), "process" (steps), "decision" (yes/no branch)
-- Blank nodes: set blank=true, correct="answer text", omit label
-- Non-blank nodes: set label="text", omit blank/correct
-- x/y are 0-100 percentages. start y=8, end y=88, space others evenly in between
-- For decision branches: decision x=50, left branch x=25, right branch x=75, converge back at x=50
-- items = all correct answers for blank nodes + 2-3 distractors (same type of text)
+- MUST include at least one "decision" node with Yes/No branches — no purely linear flowcharts
+- Node labels: MAX 4 words — never more than 16 characters. Use abbreviations if needed (e.g. "Absorb CO2" not "Plant absorbs carbon dioxide from the air")
+- Blank nodes: set blank=true, correct="short answer ≤4 words", omit label
+- Non-blank nodes: set label="short text", omit blank/correct
+- Do NOT include x/y coordinates — layout is computed automatically
+- items = all correct answers for blank nodes + 2-3 distractors of similar length
 - Return ONLY the JSON, no explanation""",
     },
     {
@@ -328,7 +334,7 @@ system_prompt should guide Spark to stay on topic and age-appropriate. Return ON
         "example_use_cases": "Flowchart symbols, creative expression, math diagram sketching",
         "frontend_component": "DrawScribble",
         "icon": "\U0001F3A8",
-        "scorable": False,
+        "scorable": True,
         "sort_order": 14,
         "input_schema": {
             "fields": [
@@ -348,7 +354,7 @@ prompt should be specific and achievable. Leave reference_image_url empty. Retur
         "example_use_cases": "Emotional responses, confidence check, session reflection",
         "frontend_component": "ReflectionRating",
         "icon": "\U0001F31F",
-        "scorable": False,
+        "scorable": True,
         "sort_order": 15,
         "input_schema": {
             "fields": [

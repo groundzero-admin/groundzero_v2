@@ -22,6 +22,7 @@ class EvidenceCreate(BaseModel):
 
     # Rich activity question evaluation (if set, backend derives outcome + source)
     activity_question_id: uuid.UUID | None = None
+    activity_id: str | None = None  # activity the student is working on
     response: dict | None = None
 
 

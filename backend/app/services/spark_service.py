@@ -1,5 +1,6 @@
 """SPARK service — direct LLM invocation (no DeepAgent graph)."""
 
+import json
 import logging
 import uuid
 from datetime import datetime
@@ -40,22 +41,80 @@ def _get_llm() -> ChatOpenAI:
     )
 
 
+def _sanitize_response(response: dict) -> dict:
+    """Strip large base64 data from student response before sending to LLM."""
+    sanitized = {}
+    for k, v in response.items():
+        if isinstance(v, str) and v.startswith("data:image"):
+            sanitized[k] = "[image submitted]"
+        else:
+            sanitized[k] = v
+    return sanitized
+
+
 async def _fetch_question_context(db: AsyncSession, question_id: uuid.UUID | None) -> str:
-    """Fetch question text and options from DB to include in the prompt."""
+    """Fetch question data from ActivityQuestion table to include in the hint prompt."""
     if not question_id:
         return ""
-    from app.models.curriculum import Question
+
+    from app.models.activity_question import ActivityQuestion
     from app.models.competency import Competency
-    q = await db.get(Question, question_id)
-    if not q:
+
+    aq = await db.get(ActivityQuestion, question_id)
+    if not aq:
         return ""
-    options_txt = "\n".join(
-        f"  {'✓' if o.get('is_correct') else '•'} {o['label']}: {o['text']}"
-        for o in (q.options or [])
-    )
-    comp = await db.get(Competency, q.competency_id) if q.competency_id else None
-    comp_name = comp.name if comp else str(q.competency_id)
-    return f"Question: {q.text}\nOptions:\n{options_txt}\nSkill: {comp_name}"
+
+    data = aq.data or {}
+    comp = await db.get(Competency, aq.competency_id) if aq.competency_id else None
+    comp_name = comp.name if comp else str(aq.competency_id or "")
+
+    parts = []
+    if data.get("prompt") or data.get("question") or data.get("instruction"):
+        parts.append(f"Question: {data.get('prompt') or data.get('question') or data.get('instruction')}")
+    if data.get("options"):
+        options_txt = "\n".join(
+            f"  {chr(65+i)}: {o.get('text', o)}"
+            for i, o in enumerate(data["options"])
+        )
+        parts.append(f"Options:\n{options_txt}")
+        # Internal note — DO NOT expose to student
+        correct_opts = [chr(65+i) for i, o in enumerate(data["options"]) if o.get("is_correct")]
+        if correct_opts:
+            parts.append(f"[INTERNAL — correct: {', '.join(correct_opts)}. Do NOT reveal this.]")
+    if data.get("sentence"):
+        parts.append(f"Sentence: {data['sentence']}")
+    if data.get("answers"):
+        parts.append(f"[INTERNAL — correct answers: {data['answers']}. Do NOT reveal these.]")
+    # Flowchart: show nodes with blanks and correct answers
+    if data.get("nodes"):
+        import json as _json
+        nodes_raw = data["nodes"]
+        if isinstance(nodes_raw, str):
+            try:
+                nodes_raw = _json.loads(nodes_raw)
+            except _json.JSONDecodeError:
+                nodes_raw = []
+        # Build human-readable blank descriptions using position in flow
+        blank_nodes = [n for n in nodes_raw if isinstance(n, dict) and n.get("blank")]
+        if blank_nodes:
+            blank_descs = []
+            for i, n in enumerate(blank_nodes):
+                ordinal = ["first", "second", "third", "fourth", "fifth"][i] if i < 5 else f"blank #{i+1}"
+                blank_descs.append(f"  The {ordinal} blank")
+            parts.append(f"Flowchart blanks:\n" + "\n".join(blank_descs))
+            # Internal note for correct placements — use same ordinals
+            correct_descs = []
+            for i, n in enumerate(blank_nodes):
+                if n.get("correct"):
+                    ordinal = ["first", "second", "third", "fourth", "fifth"][i] if i < 5 else f"blank #{i+1}"
+                    correct_descs.append(f"  {ordinal} blank = \"{n['correct']}\"")
+            if correct_descs:
+                parts.append(f"[INTERNAL — correct placements:\n" + "\n".join(correct_descs) + "\nDo NOT reveal these. Refer to blanks as 'first blank', 'second blank' etc.]")
+    if data.get("items"):
+        parts.append(f"Available items to place: {data['items']}")
+    if comp_name:
+        parts.append(f"Skill: {comp_name}")
+    return "\n".join(parts) if parts else ""
 
 
 async def _fetch_student_name(db: AsyncSession, student_id: uuid.UUID) -> str:
@@ -77,10 +136,15 @@ async def _build_opening_message(
         user_content_parts.append(f"Trigger: {data.trigger}")
     if data.selected_option:
         user_content_parts.append(f"Student selected: {data.selected_option}")
+    if data.student_response:
+        user_content_parts.append(f"Student's answer: {json.dumps(_sanitize_response(data.student_response))}")
     if q_ctx:
         user_content_parts.append(q_ctx)
     user_content_parts.append(
-        "\nPlease give a warm opening hint to help the student think through this."
+        "\nGive a short hint (2-3 sentences max). "
+        "Tell them which part is right and which is wrong. "
+        "NEVER reveal the correct answer, NEVER name the correct option, NEVER say 'the answer is'. "
+        "Instead, ask a guiding question that makes them think about WHY their wrong choice doesn't fit."
     )
 
     llm = _get_llm()
@@ -245,11 +309,15 @@ async def end_conversation(
 async def generate_hint(db: AsyncSession, data: SparkHintRequest) -> str:
     """One-shot hint generation."""
     q_ctx = await _fetch_question_context(db, data.question_id)
+    parts = [f"Give a short hint for this question:\n{q_ctx}"]
+    if data.student_response:
+        parts.append(f"\nStudent's answer: {json.dumps(_sanitize_response(data.student_response))}")
+        parts.append("Reference what they answered and nudge them toward the right thinking without giving the answer.")
     llm = _get_llm()
     try:
         resp = await llm.ainvoke([
             SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=f"Give a short hint for this question:\n{q_ctx}"),
+            HumanMessage(content="\n".join(parts)),
         ])
         return resp.content or "Think carefully about what each option is really saying! 🤔"
     except Exception as e:

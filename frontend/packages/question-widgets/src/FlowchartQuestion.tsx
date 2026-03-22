@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import dagre from "@dagrejs/dagre";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
@@ -10,105 +11,156 @@ type NodeState = "preset" | "empty" | "filled" | "active" | "correct" | "wrong";
 interface FlowNode {
   id: string;
   type: NodeType;
-  label?: string;   // pre-filled label (not editable)
-  blank?: boolean;  // student must fill this
-  correct?: string; // correct answer for blank nodes
-  x: number;        // 0–100 % of viewBox width
-  y: number;        // 0–100 % of viewBox height
+  label?: string;
+  blank?: boolean;
+  correct?: string;
 }
 
 interface FlowEdge {
   from: string;
   to: string;
-  label?: string; // "Yes" / "No" / ""
+  label?: string;
 }
 
-// ─── Geometry ────────────────────────────────────────────────────────────────
+// ─── Node dimensions ─────────────────────────────────────────────────────────
 
-const VW = 400;
+const NW: Record<NodeType, number> = { start: 100, end: 100, process: 120, decision: 110 };
+const NH: Record<NodeType, number> = { start: 34,  end: 34,  process: 38,  decision: 54  };
 
-const NW: Record<NodeType, number> = { start: 106, end: 106, process: 126, decision: 116 };
-const NH: Record<NodeType, number> = { start: 36,  end: 36,  process: 40,  decision: 58  };
+// ─── Dagre layout ────────────────────────────────────────────────────────────
 
-const cx = (n: FlowNode) => (n.x / 100) * VW;
-const cy = (n: FlowNode, vh: number) => (n.y / 100) * vh;
-const hw = (t: NodeType) => NW[t] / 2;
-const hh = (t: NodeType) => NH[t] / 2;
-
-function exitPt(n: FlowNode, idx: number, total: number, vh: number) {
-  const x = cx(n), y = cy(n, vh);
-  if (n.type === "decision" && total >= 2) {
-    const dw = hw("decision") + 8;
-    return idx === 0 ? { x: x - dw, y } : { x: x + dw, y };
-  }
-  return { x, y: y + hh(n.type) };
+interface LayoutResult {
+  nodes: Map<string, { x: number; y: number; w: number; h: number }>;
+  edges: Map<string, { points: { x: number; y: number }[] }>;
+  width: number;
+  height: number;
 }
 
-function entryPt(n: FlowNode, vh: number) {
-  return { x: cx(n), y: cy(n, vh) - hh(n.type) };
-}
+function computeLayout(nodes: FlowNode[], edges: FlowEdge[]): LayoutResult {
+  const g = new dagre.graphlib.Graph({ multigraph: true });
+  g.setGraph({
+    rankdir: "TB",
+    nodesep: 40,
+    ranksep: 50,
+    marginx: 30,
+    marginy: 30,
+  });
+  g.setDefaultEdgeLabel(() => ({}));
 
-function edgePath(from: FlowNode, to: FlowNode, idx: number, total: number, vh: number): string {
-  const s = exitPt(from, idx, total, vh);
-  const e = entryPt(to, vh);
-  if (Math.abs(s.x - e.x) < 4) {
-    return `M${s.x},${s.y} L${e.x},${e.y}`;
-  }
-  // Orthogonal elbow: down → across → down
-  const midY = s.y + Math.max(18, (e.y - s.y) * 0.45);
-  return `M${s.x},${s.y} L${s.x},${midY} L${e.x},${midY} L${e.x},${e.y}`;
+  nodes.forEach((n) => {
+    g.setNode(n.id, { width: NW[n.type], height: NH[n.type] });
+  });
+  edges.forEach((e, i) => {
+    g.setEdge(e.from, e.to, { label: e.label || "", labelpos: "c", width: e.label ? 24 : 0, height: e.label ? 14 : 0 }, `e${i}`);
+  });
+
+  dagre.layout(g);
+
+  const nodeMap = new Map<string, { x: number; y: number; w: number; h: number }>();
+  g.nodes().forEach((id) => {
+    const n = g.node(id);
+    if (n) nodeMap.set(id, { x: n.x, y: n.y, w: n.width, h: n.height });
+  });
+
+  const edgeMap = new Map<string, { points: { x: number; y: number }[] }>();
+  g.edges().forEach((e) => {
+    const edge = g.edge(e);
+    if (edge) edgeMap.set(e.name ?? `${e.v}->${e.w}`, { points: edge.points || [] });
+  });
+
+  const graphLabel = g.graph();
+  return {
+    nodes: nodeMap,
+    edges: edgeMap,
+    width: graphLabel?.width ?? 400,
+    height: graphLabel?.height ?? 300,
+  };
 }
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
 const C: Record<NodeState, { fill: string; stroke: string; text: string; dash?: string }> = {
-  preset:  { fill: "#EDF2F7", stroke: "#A0AEC0", text: "#4A5568" },
-  empty:   { fill: "#fff",    stroke: "#CBD5E0", text: "#a0aec0", dash: "5,4" },
-  filled:  { fill: "#FAF5FF", stroke: "#805AD5", text: "#553C9A" },
-  active:  { fill: "#EDE9FE", stroke: "#6D28D9", text: "#4C1D95" },
-  correct: { fill: "#F0FFF4", stroke: "#38A169", text: "#276749" },
-  wrong:   { fill: "#FFF5F5", stroke: "#E53E3E", text: "#C53030" },
+  preset:  { fill: "#F8FAFC", stroke: "#94A3B8", text: "#475569" },
+  empty:   { fill: "#FAFAFA", stroke: "#CBD5E1", text: "#94A3B8", dash: "6,4" },
+  filled:  { fill: "#F5F3FF", stroke: "#8B5CF6", text: "#6D28D9" },
+  active:  { fill: "#EDE9FE", stroke: "#7C3AED", text: "#5B21B6" },
+  correct: { fill: "#F0FDF4", stroke: "#22C55E", text: "#166534" },
+  wrong:   { fill: "#FEF2F2", stroke: "#EF4444", text: "#DC2626" },
 };
 
 // ─── SVG: one node ────────────────────────────────────────────────────────────
 
-function FlowNodeSVG({ node, label, state, onClick, isTarget, vh }: {
+function FlowNodeSVG({ node, label, state, onClick, isTarget, pos }: {
   node: FlowNode; label: string; state: NodeState;
-  onClick: () => void; isTarget: boolean; vh: number;
+  onClick: () => void; isTarget: boolean;
+  pos: { x: number; y: number; w: number; h: number };
 }) {
-  const x = cx(node), y = cy(node, vh);
+  const { x, y, w, h } = pos;
   const c = C[state];
-  const sw = state === "active" || state === "correct" || state === "wrong" ? 2.5 : 1.5;
-  const pulse = isTarget ? { filter: "drop-shadow(0 0 4px #805AD5)" } : {};
+  const sw = state === "active" || state === "correct" || state === "wrong" ? 2 : 1.5;
+
+  const rawLabel = label || (node.blank ? "?" : "");
+  const fontSize = node.type === "decision" ? 10 : 11;
+  const maxChars = node.type === "decision" ? 14 : 16;
+
+  function wrapText(text: string, max: number): string[] {
+    if (text.length <= max) return [text];
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let current = "";
+    for (const word of words) {
+      if (!current) { current = word; continue; }
+      if ((current + " " + word).length <= max) { current += " " + word; }
+      else { lines.push(current); current = word; }
+    }
+    if (current) lines.push(current);
+    return lines.slice(0, 2);
+  }
+  const lines = wrapText(rawLabel, maxChars);
+  const lineH = fontSize + 2;
 
   const textEl = (
-    <text x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-      fontSize={node.type === "decision" ? 10 : 11} fontWeight={700}
-      fill={c.text} style={{ pointerEvents: "none", userSelect: "none" as const }}>
-      {label || (node.blank ? "?" : "")}
+    <text x={x} y={y} textAnchor="middle" fontWeight={600}
+      fontSize={fontSize} fill={c.text}
+      style={{ pointerEvents: "none", userSelect: "none" as const, fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      {lines.map((line, i) => (
+        <tspan key={i} x={x}
+          dy={i === 0 ? -(lineH * (lines.length - 1)) / 2 : lineH}
+          dominantBaseline="central">
+          {line}
+        </tspan>
+      ))}
     </text>
   );
+
+  const sharedStyle = {
+    cursor: node.blank ? "pointer" : "default" as const,
+    transition: "all 0.2s ease",
+    ...(isTarget ? { filter: "drop-shadow(0 0 6px rgba(124,58,237,0.4))" } : {}),
+  };
 
   const sharedRect = {
     fill: c.fill, stroke: c.stroke, strokeWidth: sw,
     strokeDasharray: c.dash,
-    style: { cursor: node.blank ? "pointer" : "default" as const, ...pulse },
+    style: sharedStyle,
     onClick: node.blank ? onClick : undefined,
   };
+
+  const hw = w / 2, hh = h / 2;
 
   return (
     <g>
       {(node.type === "start" || node.type === "end") && (
-        <rect x={x - hw("start")} y={y - hh("start")} width={NW.start} height={NH.start}
-          rx={NH.start / 2} {...sharedRect}
-          strokeWidth={node.type === "end" ? sw + 1 : sw} />
+        <rect x={x - hw} y={y - hh} width={w} height={h}
+          rx={h / 2} {...sharedRect}
+          strokeWidth={node.type === "end" ? sw + 0.5 : sw} />
       )}
       {node.type === "process" && (
-        <rect x={x - hw("process")} y={y - hh("process")} width={NW.process} height={NH.process}
-          rx={5} {...sharedRect} />
+        <rect x={x - hw} y={y - hh} width={w} height={h}
+          rx={8} {...sharedRect} />
       )}
       {node.type === "decision" && (() => {
-        const dw = hw("decision") + 8, dh = hh("decision");
+        const dw = hw + 4, dh = hh;
         return (
           <polygon points={`${x},${y - dh} ${x + dw},${y} ${x},${y + dh} ${x - dw},${y}`}
             {...sharedRect} />
@@ -121,25 +173,42 @@ function FlowNodeSVG({ node, label, state, onClick, isTarget, vh }: {
 
 // ─── SVG: one edge ────────────────────────────────────────────────────────────
 
-function FlowEdgeSVG({ edge, nodes, idx, total, vh }: {
-  edge: FlowEdge; nodes: FlowNode[]; idx: number; total: number; vh: number;
+function FlowEdgeSVG({ edge, points }: {
+  edge: FlowEdge; points: { x: number; y: number }[];
 }) {
-  const from = nodes.find(n => n.id === edge.from);
-  const to   = nodes.find(n => n.id === edge.to);
-  if (!from || !to) return null;
+  if (points.length < 2) return null;
 
-  const s = exitPt(from, idx, total, vh);
-  const d = edgePath(from, to, idx, total, vh);
+  // Build a smooth path through dagre's waypoints
+  const [first, ...rest] = points;
+  let d = `M${first.x},${first.y}`;
+  if (rest.length === 1) {
+    d += ` L${rest[0].x},${rest[0].y}`;
+  } else {
+    // Use the waypoints as-is with line segments (dagre already routes them well)
+    for (const p of rest) {
+      d += ` L${p.x},${p.y}`;
+    }
+  }
 
-  // Label near exit point
-  const lx = s.x + (idx === 0 && from.type === "decision" ? -14 : from.type === "decision" ? 14 : 0);
-  const ly = s.y + 14;
+  // Edge label near the middle waypoint
+  const midIdx = Math.floor(points.length / 2);
+  const mp = points[midIdx];
 
   return (
     <g>
-      <path d={d} fill="none" stroke="#CBD5E0" strokeWidth="1.5" markerEnd="url(#gz-arrow)" />
+      <path d={d} fill="none" stroke="#94A3B8" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round"
+        markerEnd="url(#gz-arrow)" />
       {edge.label && (
-        <text x={lx} y={ly} textAnchor="middle" fontSize="10" fontWeight="700" fill="#718096">{edge.label}</text>
+        <g>
+          <rect x={mp.x - 14} y={mp.y - 8} width={28} height={16} rx={4}
+            fill="#fff" fillOpacity={0.92} stroke="#E2E8F0" strokeWidth={0.5} />
+          <text x={mp.x} y={mp.y} textAnchor="middle" dominantBaseline="central"
+            fontSize="9" fontWeight="600" fill="#64748B"
+            style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+            {edge.label}
+          </text>
+        </g>
       )}
     </g>
   );
@@ -180,29 +249,12 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
   const nodes = flow?.nodes ?? [];
   const edges = flow?.edges ?? [];
 
-  // Dynamic viewBox height: max node bottom + padding
-  const VH = useMemo(() => {
-    if (!nodes.length) return 280;
-    const maxBottom = Math.max(...nodes.map(n => (n.y / 100) * 500 + NH[n.type] / 2));
-    return Math.max(280, maxBottom + 48);
-  }, [nodes]);
-
-  // Outgoing edge count per node (for decision exit point routing)
-  const outgoing = useMemo(() => {
-    const m: Record<string, number> = {};
-    edges.forEach(e => { m[e.from] = (m[e.from] ?? 0) + 1; });
-    return m;
-  }, [edges]);
-
-  // Per-edge index within its source node's outgoing edges
-  const edgeIdx = useMemo(() => {
-    const ctr: Record<string, number> = {};
-    return edges.map(e => { const i = ctr[e.from] ?? 0; ctr[e.from] = i + 1; return i; });
-  }, [edges]);
+  // Dagre computes all positions
+  const layout = useMemo(() => computeLayout(nodes, edges), [nodes, edges]);
 
   if (!flow) {
     return (
-      <div style={{ ...CARD, textAlign: "center" as const, color: "#a0aec0", padding: 40 }}>
+      <div style={{ ...CARD, textAlign: "center" as const, color: "#94A3B8", padding: 40 }}>
         Define nodes + edges JSON to preview flowchart
       </div>
     );
@@ -218,14 +270,13 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
   function nodeState(n: FlowNode): NodeState {
     if (!n.blank) return "preset";
     if (checked) return placed[n.id] === n.correct ? "correct" : "wrong";
-    if (placed[n.id]) return selectedItem ? "filled" : "filled";
+    if (placed[n.id]) return "filled";
     return selectedItem ? "active" : "empty";
   }
 
   function handleNodeClick(n: FlowNode) {
     if (!n.blank || checked) return;
     if (placed[n.id]) {
-      // Return to bank
       setPlaced(p => { const c = { ...p }; delete c[n.id]; return c; });
       setChecked(false);
     } else if (selectedItem) {
@@ -236,50 +287,71 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
 
   function handleReset() { setPlaced({}); setChecked(false); setSelectedItem(null); }
 
-  // Display label per node
   const displayLabel = (n: FlowNode) =>
     n.blank ? (placed[n.id] ?? "") : (n.label ?? "");
+
+  const vw = Math.max(layout.width, 200);
+  const vh = Math.max(layout.height, 200);
 
   return (
     <div style={CARD}>
       <div style={HEADING}>{instruction || "Complete the flowchart"}</div>
 
       {/* ── Flowchart canvas ── */}
-      <div style={{ background: "#FAFBFC", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 14, overflow: "hidden" }}>
-        <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: "100%", display: "block" }}>
+      <div style={{
+        background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+        borderRadius: 12,
+        border: "1px solid #E2E8F0",
+        marginBottom: 16,
+        overflow: "hidden",
+      }}>
+        <svg viewBox={`0 0 ${vw} ${vh}`} style={{ width: "100%", display: "block" }}>
           <defs>
-            <marker id="gz-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-              <polygon points="0,0 7,3.5 0,7" fill="#A0AEC0" />
+            <marker id="gz-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,3 L0,6 L1.5,3 Z" fill="#94A3B8" />
             </marker>
+            <pattern id="gz-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="0.5" fill="#CBD5E1" opacity="0.4" />
+            </pattern>
           </defs>
+          <rect width={vw} height={vh} fill="url(#gz-dots)" />
 
           {/* Edges (behind nodes) */}
-          {edges.map((e, i) => (
-            <FlowEdgeSVG key={i} edge={e} nodes={nodes} idx={edgeIdx[i]} total={outgoing[e.from] ?? 1} vh={VH} />
-          ))}
+          {edges.map((e, i) => {
+            const edgeLayout = layout.edges.get(`e${i}`);
+            if (!edgeLayout) return null;
+            return <FlowEdgeSVG key={i} edge={e} points={edgeLayout.points} />;
+          })}
 
           {/* Nodes */}
-          {nodes.map(n => (
-            <FlowNodeSVG
-              key={n.id}
-              node={n}
-              label={displayLabel(n)}
-              state={nodeState(n)}
-              isTarget={!!selectedItem && !!n.blank && !placed[n.id] && !checked}
-              onClick={() => handleNodeClick(n)}
-              vh={VH}
-            />
-          ))}
+          {nodes.map(n => {
+            const pos = layout.nodes.get(n.id);
+            if (!pos) return null;
+            return (
+              <FlowNodeSVG
+                key={n.id}
+                node={n}
+                label={displayLabel(n)}
+                state={nodeState(n)}
+                isTarget={!!selectedItem && !!n.blank && !placed[n.id] && !checked}
+                onClick={() => handleNodeClick(n)}
+                pos={pos}
+              />
+            );
+          })}
         </svg>
       </div>
 
       {/* ── Item bank ── */}
       {!checked && items.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, color: "#718096", fontWeight: 600, marginBottom: 8 }}>
+          <div style={{
+            fontSize: 11, color: "#64748B", fontWeight: 500, marginBottom: 8,
+            fontFamily: "system-ui, -apple-system, sans-serif",
+          }}>
             {selectedItem
               ? `"${selectedItem}" selected — tap an empty node to place it`
-              : "Tap an item to select it, then tap an empty node"}
+              : "Tap an item, then tap an empty node to place it"}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {items.filter(item => !placedSet.has(item)).map((item, i) => (
@@ -287,13 +359,16 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
                 key={i}
                 onClick={() => setSelectedItem(selectedItem === item ? null : item)}
                 style={{
-                  padding: "7px 16px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                  cursor: "pointer", transition: "all 0.15s",
-                  background: selectedItem === item ? "#805AD5" : "#fff",
-                  color:      selectedItem === item ? "#fff"    : "#4A5568",
-                  border:     selectedItem === item ? "2px solid #6D28D9" : "1.5px dashed #a0aec0",
-                  transform:  selectedItem === item ? "scale(1.06)" : "scale(1)",
-                  boxShadow:  selectedItem === item ? "0 2px 8px rgba(128,90,213,0.3)" : "none",
+                  padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.15s ease",
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                  background: selectedItem === item ? "#7C3AED" : "#fff",
+                  color:      selectedItem === item ? "#fff"    : "#475569",
+                  border:     selectedItem === item ? "2px solid #6D28D9" : "1.5px solid #E2E8F0",
+                  transform:  selectedItem === item ? "scale(1.04)" : "scale(1)",
+                  boxShadow:  selectedItem === item
+                    ? "0 4px 12px rgba(124,58,237,0.25)"
+                    : "0 1px 3px rgba(0,0,0,0.06)",
                 }}
               >
                 {item}

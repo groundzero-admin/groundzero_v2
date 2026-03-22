@@ -13,6 +13,7 @@
 ## React Best Practices
 - Use React Query for all server state — hooks in `src/api/hooks/`
 - Keep components small and focused — one responsibility per component
+- No component file should exceed 200 lines — split into helpers, hooks, or sub-components
 - No useEffect for data fetching — use React Query
 - No prop drilling more than 2 levels — use context or co-locate state
 - Invalidate queries after mutations — don't manually update cache

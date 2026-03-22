@@ -12,6 +12,7 @@ export interface EvidenceCreate {
   ai_interaction?: "none" | "hint" | "conversation";
   // Rich activity question — backend derives outcome + source
   activity_question_id?: string;
+  activity_id?: string;
   response?: Record<string, unknown>;
 }
 

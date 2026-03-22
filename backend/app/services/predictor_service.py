@@ -665,6 +665,7 @@ async def get_next_activity_question(
     # ── Ordered mode: activity has an explicit question list ──
     if activity.question_ids:
         from app.models.student import StudentActivityProgress
+        from app.models.evidence import EvidenceEvent
 
         # Load or create progress record
         prog_result = await db.execute(
@@ -683,11 +684,16 @@ async def get_next_activity_question(
             db.add(progress)
             await db.flush()
 
-        idx = progress.current_index
-        if idx >= len(activity.question_ids):
+        # Just return question at current_index — no advancing here
+        if progress.current_index >= len(activity.question_ids):
+            from datetime import datetime
+            progress.completed_at = datetime.utcnow()
+            await db.commit()
             return None  # all questions done
 
-        qid_str = str(activity.question_ids[idx])
+        await db.commit()
+
+        qid_str = str(activity.question_ids[progress.current_index])
         aq_result = await db.execute(
             select(ActivityQuestion, QuestionTemplate.slug.label("slug"))
             .outerjoin(QuestionTemplate, ActivityQuestion.template_id == QuestionTemplate.id)
@@ -707,7 +713,6 @@ async def get_next_activity_question(
         state = state_result.scalar_one_or_none()
         comp_result = await db.execute(select(Competency).where(Competency.id == aq.competency_id))
         comp = comp_result.scalar_one_or_none()
-        await db.commit()
         return NextActivityQuestionResult(
             activity_question_id=aq.id,
             template_slug=slug or "mcq_single",
@@ -901,7 +906,7 @@ async def get_next_activity_question(
 
     row = (await db.execute(query)).first()
 
-    # Fallback: any published question for this competency
+    # Fallback: any published question for this competency (excluding answered)
     if not row:
         fallback = (
             select(ActivityQuestion, QuestionTemplate.slug.label("slug"))
@@ -913,6 +918,8 @@ async def get_next_activity_question(
             .order_by(func.random())
             .limit(1)
         )
+        if answered_ids:
+            fallback = fallback.where(ActivityQuestion.id.notin_(answered_ids))
         row = (await db.execute(fallback)).first()
 
     if not row:
@@ -1009,3 +1016,35 @@ async def get_next_question_for_topic(
         p_learned=round(state.p_learned, 4) if state else 0.10,
         stage=state.stage if state else 1,
     )
+
+
+async def advance_activity_question(
+    db: AsyncSession,
+    student_id: uuid.UUID,
+    activity_id: str,
+) -> None:
+    """Increment current_index for the student's activity progress (called on 'Next Question' click)."""
+    from app.models.student import StudentActivityProgress
+
+    result = await db.execute(select(Activity).where(Activity.id == activity_id))
+    activity = result.scalar_one_or_none()
+    if not activity or not activity.question_ids:
+        return
+
+    prog_result = await db.execute(
+        select(StudentActivityProgress).where(
+            StudentActivityProgress.student_id == student_id,
+            StudentActivityProgress.activity_id == activity_id,
+        )
+    )
+    progress = prog_result.scalar_one_or_none()
+    if not progress:
+        return
+
+    progress.current_index += 1
+
+    if progress.current_index >= len(activity.question_ids):
+        from datetime import datetime
+        progress.completed_at = datetime.utcnow()
+
+    await db.commit()

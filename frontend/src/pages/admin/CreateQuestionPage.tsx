@@ -332,7 +332,9 @@ export default function CreateQuestionPage() {
                     key={field.key}
                     field={field}
                     value={formData[field.key]}
-                    onChange={(v) => setField(field.key, v)}
+                    onChange={(v) => {
+                      setField(field.key, v);
+                    }}
                     allData={formData}
                   />
                 ))}
@@ -1278,45 +1280,9 @@ function parseEdgesJson(v: unknown): EdgeDef[] {
   } catch { return []; }
 }
 
-function computeLayout(nodes: NodeDef[], edges: EdgeDef[]): (NodeDef & { x: number; y: number })[] {
-  const outEdges = new Map<string, string[]>();
-  edges.forEach((e) => {
-    if (!outEdges.has(e.from)) outEdges.set(e.from, []);
-    outEdges.get(e.from)!.push(e.to);
-  });
-
-  const start = nodes.find((n) => n.type === "start") ?? nodes[0];
-  if (!start) return nodes.map((n) => ({ ...n, x: 50, y: 50 }));
-
-  const levels: string[][] = [];
-  const visited = new Set<string>();
-  let queue = [start.id];
-  while (queue.length > 0) {
-    levels.push([...queue]);
-    queue.forEach((id) => visited.add(id));
-    const next: string[] = [];
-    queue.forEach((id) => (outEdges.get(id) ?? []).forEach((t) => { if (!visited.has(t)) next.push(t); }));
-    queue = next;
-  }
-  nodes.forEach((n) => { if (!visited.has(n.id)) levels.push([n.id]); });
-
-  const positions = new Map<string, { x: number; y: number }>();
-  const total = levels.length;
-  levels.forEach((level, li) => {
-    const y = total === 1 ? 50 : Math.round(8 + (li / (total - 1)) * 80);
-    const count = level.length;
-    level.forEach((id, ci) => {
-      const x = count === 1 ? 50 : Math.round(20 + (ci / (count - 1)) * 60);
-      positions.set(id, { x, y });
-    });
-  });
-
-  return nodes.map((n) => ({ ...n, x: positions.get(n.id)?.x ?? 50, y: positions.get(n.id)?.y ?? 50 }));
-}
-
-function serializeNodes(nodes: NodeDef[], edges: EdgeDef[]): string {
-  return JSON.stringify(computeLayout(nodes, edges).map(({ id, type, label, blank, correct, x, y }) => {
-    const node: Record<string, unknown> = { id, type, x, y };
+function serializeNodes(nodes: NodeDef[]): string {
+  return JSON.stringify(nodes.map(({ id, type, label, blank, correct }) => {
+    const node: Record<string, unknown> = { id, type };
     if (blank) { node.blank = true; node.correct = correct; }
     else { node.label = label; }
     return node;
@@ -1327,9 +1293,8 @@ function FlowchartNodesBuilder({ field, value, onChange, allData }: {
   field: InputField; value: unknown; onChange: (v: unknown) => void; allData?: Record<string, unknown>;
 }) {
   const nodes = parseNodesJson(value);
-  const edges = parseEdgesJson(allData?.edges);
 
-  const update = (next: NodeDef[]) => onChange(serializeNodes(next, edges));
+  const update = (next: NodeDef[]) => onChange(serializeNodes(next));
 
   const addNode = () => {
     const id = `n${nodes.length + 1}`;

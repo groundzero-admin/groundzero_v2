@@ -115,6 +115,7 @@ export interface SessionViewActivity {
     description: string | null;
     question_ids: string[];
     questions: SessionViewQuestion[];
+    resources: { type: string; url: string; name?: string; label?: string }[] | null;
 }
 
 export interface SessionViewOut {

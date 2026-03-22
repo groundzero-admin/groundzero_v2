@@ -73,16 +73,8 @@ async def process_evidence(
     _activity_question: ActivityQuestion | None = None
     _template_slug: str = "mcq_single"
 
-    # ── Idempotency: if this activity_question was already answered, return existing event ──
-    if data.activity_question_id:
-        existing = (await db.execute(
-            select(EvidenceEvent).where(
-                EvidenceEvent.student_id == data.student_id,
-                EvidenceEvent.meta["activityQuestionId"].astext == str(data.activity_question_id),
-            ).limit(1)
-        )).scalar_one_or_none()
-        if existing:
-            return existing, [], None
+    # No idempotency guard — students can retry a question after hints.
+    # Multiple evidence events per activity_question_id is expected (last attempt wins for scoring).
 
     # ── Evaluate activity question response if provided ──
     if data.activity_question_id and data.response is not None:
@@ -92,6 +84,7 @@ async def process_evidence(
             tmpl = await db.get(QuestionTemplate, aq.template_id)
             slug = tmpl.slug if tmpl else "mcq_single"
             _template_slug = slug
+
             try:
                 from app.config import Settings
                 from openai import AsyncOpenAI
@@ -254,29 +247,8 @@ async def process_evidence(
             if engine_st:
                 db_st.last_evidence_at = engine_st.last_evidence_at
 
-    # 7. Advance activity progress if this answers the current question
-    if _activity_question is not None:
-        from app.models.curriculum import Activity
-        act_result = await db.execute(
-            select(Activity).where(Activity.question_ids.contains([str(_activity_question.id)]))
-        )
-        activity = act_result.scalar_one_or_none()
-        if activity:
-            prog_result = await db.execute(
-                select(StudentActivityProgress).where(
-                    StudentActivityProgress.student_id == data.student_id,
-                    StudentActivityProgress.activity_id == activity.id,
-                )
-            )
-            progress = prog_result.scalar_one_or_none()
-            if progress is not None:
-                question_ids = activity.question_ids or []
-                expected_id = str(question_ids[progress.current_index]) if progress.current_index < len(question_ids) else None
-                if expected_id == str(_activity_question.id):
-                    progress.current_index += 1
-                    if progress.current_index >= len(question_ids):
-                        from datetime import datetime
-                        progress.completed_at = datetime.utcnow()
+    # Progress advancement is handled in predictor_service.get_next_activity_question
+    # so students can retry questions before moving on.
 
     await db.commit()
     await db.refresh(event)

@@ -20,6 +20,7 @@ export interface SparkTriggerData {
   competencyId?: string;
   selectedOption?: string;
   confidenceReport?: string;
+  studentResponse?: Record<string, unknown>;
 }
 
 interface AICompanionShellProps {
@@ -81,6 +82,7 @@ export function AICompanionShell({
         competency_id: triggerData.competencyId,
         selected_option: triggerData.selectedOption,
         confidence_report: triggerData.confidenceReport,
+        student_response: triggerData.studentResponse,
       };
 
       try {

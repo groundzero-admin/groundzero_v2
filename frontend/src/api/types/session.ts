@@ -18,6 +18,7 @@ export interface SessionActivity {
   activity_name: string | null;
   activity_type: string | null;
   duration_minutes: number | null;
+  resources: { type: string; url: string; name?: string; label?: string }[] | null;
 }
 
 export interface StudentScore {

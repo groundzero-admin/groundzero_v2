@@ -47,6 +47,7 @@ function startOfDay(d: Date): Date {
 }
 
 function isSessionPast(sess: LiveSession): boolean {
+  if (sess.is_live) return false;
   if (sess.ended_at) return true;
   const d = parseScheduleDate(sess.scheduled_at);
   if (!d) return false;
