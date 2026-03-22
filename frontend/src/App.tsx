@@ -41,6 +41,9 @@ import CreateQuestionPage from "@/pages/admin/CreateQuestionPage";
 import QuestionBankPage from "@/pages/admin/QuestionBankPage";
 import AdminStudentSkillGraphPage from "@/pages/admin/AdminStudentSkillGraphPage";
 import ClassReportPage from "@/pages/admin/ClassReportPage";
+import ClassRecordingDetailPage from "@/pages/ClassRecordingDetailPage";
+import ClassRecordingsPage from "@/pages/admin/ClassRecordingsPage";
+import RecordingRendererPage from "@/pages/RecordingRendererPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +86,7 @@ export default function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/graph" element={<SkillGraphPage />} />
               <Route path="/invite/:token" element={<SetPasswordPage />} />
+              <Route path="/recording-renderer" element={<RecordingRendererPage />} />
 
               {/* ── Student routes (with shell / navbar) ── */}
               <Route
@@ -243,6 +247,8 @@ export default function App() {
                 <Route path="/admin/sessions/:sessionId/class-report" element={<ClassReportPage />} />
                 <Route path="/admin/question-bank" element={<QuestionBankPage />} />
                 <Route path="/admin/create-question" element={<CreateQuestionPage />} />
+                <Route path="/admin/class-recordings" element={<ClassRecordingsPage />} />
+                <Route path="/admin/sessions/:sessionId/recordings" element={<ClassRecordingDetailPage />} />
               </Route>
 
               {/* ── Live Class (full-screen, no shell) — admin can also teach ── */}
@@ -251,6 +257,14 @@ export default function App() {
                 element={
                   <RequireAuth allowedRoles={["teacher", "admin"]}>
                     <LiveClassPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/teacher/sessions/:sessionId/recordings"
+                element={
+                  <RequireAuth allowedRoles={["teacher", "admin"]}>
+                    <ClassRecordingDetailPage />
                   </RequireAuth>
                 }
               />

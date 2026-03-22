@@ -1,7 +1,7 @@
 """100ms API integration service.
 
-Handles management token generation, room CRUD, room codes, and
-enable/disable for live class sessions.
+Handles management token generation, room CRUD, room codes, recording control,
+and class recording asset retrieval.
 """
 import time
 import uuid
@@ -100,6 +100,86 @@ async def end_active_room(room_id: str) -> dict:
             headers=_headers(),
             json={"reason": "Class ended by admin", "lock": False},
             timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def start_recording_for_room(room_id: str, meeting_url: str) -> dict:
+    """Start browser-composited room recording with transcription + summary."""
+    payload = {
+        "meeting_url": meeting_url,
+        "resolution": {"width": 1280, "height": 720},
+        "transcription": {
+            "enabled": True,
+            "output_modes": ["txt", "srt", "json"],
+            "summary": {"enabled": True},
+        }
+    }
+    async with httpx.AsyncClient(verify=False) as client:
+        resp = await client.post(
+            f"{HMS_API_BASE}/recordings/room/{room_id}/start",
+            headers=_headers(),
+            json=payload,
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def stop_recording_for_room(room_id: str) -> dict:
+    """Stop all running recordings in the room."""
+    async with httpx.AsyncClient(verify=False) as client:
+        resp = await client.post(
+            f"{HMS_API_BASE}/recordings/room/{room_id}/stop",
+            headers=_headers(),
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def list_recordings(room_id: str, limit: int = 20) -> dict:
+    """List recordings filtered by room_id."""
+    async with httpx.AsyncClient(verify=False) as client:
+        resp = await client.get(
+            f"{HMS_API_BASE}/recordings",
+            headers=_headers(),
+            params={"room_id": room_id, "limit": limit},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def get_active_recording(room_id: str) -> dict | None:
+    """Return active recording (starting/running/stopping) for room if present."""
+    listing = await list_recordings(room_id=room_id, limit=50)
+    for item in listing.get("data", []):
+        if item.get("status") in {"starting", "running", "stopping"}:
+            return item
+    return None
+
+
+async def get_recording(recording_id: str) -> dict:
+    """Fetch recording details, including recording_assets."""
+    async with httpx.AsyncClient(verify=False) as client:
+        resp = await client.get(
+            f"{HMS_API_BASE}/recordings/{recording_id}",
+            headers=_headers(),
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def get_recording_asset_presigned_url(asset_id: str) -> dict:
+    """Generate a short-lived presigned URL for an asset."""
+    async with httpx.AsyncClient(verify=False) as client:
+        resp = await client.get(
+            f"{HMS_API_BASE}/recording-assets/{asset_id}/presigned-url",
+            headers=_headers(),
+            timeout=20,
         )
         resp.raise_for_status()
         return resp.json()
