@@ -10,8 +10,8 @@ export function ChatTab({ messages, chatText, setChatText, sendMessage }: {
     const visible = messages.filter((m: any) => { try { return !JSON.parse(m.message)?.type; } catch { return true; } });
 
     return (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <div style={{ flex: 1, overflow: "auto", padding: "6px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+            <div style={{ flex: 1, minHeight: 0, overflow: "auto", padding: "6px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
                 {visible.map((m: any, i: number) => (
                     <div key={i} style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "8px 10px", fontSize: 10 }}>
                         <div style={{ fontWeight: 900, fontSize: 9, color: "#64748b", marginBottom: 2 }}>{m.senderName}</div>

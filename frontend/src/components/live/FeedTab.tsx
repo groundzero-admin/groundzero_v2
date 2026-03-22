@@ -78,7 +78,7 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
     const students = [...attempted, ...notAttempted];
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
             {/* Activity tabs */}
             {ordered.length > 0 && (
                 <div style={{ display: "flex", overflowX: "auto", flexShrink: 0, borderBottom: "1px solid #e2e8f0", background: "#fff", scrollbarWidth: "none" }}>

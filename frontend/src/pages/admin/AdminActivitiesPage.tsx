@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import {
     useActivities, useCreateActivity, useUpdateActivity, useDeleteActivity,
@@ -81,13 +81,33 @@ export default function AdminActivitiesPage() {
     // Question management modal
     const [activeActivity, setActiveActivity] = useState<Activity | null>(null);
     const [showQuestionModal, setShowQuestionModal] = useState(false);
+    /** Nested modal: pick from question bank to link */
+    const [showLinkQuestionModal, setShowLinkQuestionModal] = useState(false);
     const [linkSearch, setLinkSearch] = useState("");
     const [, setLinkGradeFilter] = useState("");
     const [previewQuestion, setPreviewQuestion] = useState<ActivityQuestion | null>(null);
 
+    const questionMap = useMemo(
+        () => new Map((allQuestions ?? []).map((q: ActivityQuestion) => [String(q.id), q])),
+        [allQuestions],
+    );
+
+    const activityQuestionBank = useMemo(() => {
+        if (!activeActivity) {
+            return { linked: [] as ActivityQuestion[], unlinked: [] as ActivityQuestion[] };
+        }
+        const linkedIds = new Set((activeActivity.question_ids ?? []).map((id) => String(id)));
+        const linked = (activeActivity.question_ids ?? [])
+            .map((id) => questionMap.get(String(id)))
+            .filter(Boolean) as ActivityQuestion[];
+        const unlinked = (allQuestions ?? []).filter((q: ActivityQuestion) => !linkedIds.has(String(q.id)));
+        return { linked, unlinked };
+    }, [activeActivity, allQuestions, questionMap]);
+
     function openManageQuestions(a: Activity) {
         setActiveActivity(a);
         setShowQuestionModal(true);
+        setShowLinkQuestionModal(false);
         setPreviewQuestion(null);
         setLinkSearch("");
         setLinkGradeFilter("");
@@ -129,7 +149,6 @@ export default function AdminActivitiesPage() {
         return matchSearch && matchType;
     });
 
-    const questionMap = new Map((allQuestions ?? []).map((q: ActivityQuestion) => [String(q.id), q]));
     const activityPending = editingActivity ? updateActivity.isPending : createActivity.isPending;
 
     return (
@@ -170,7 +189,13 @@ export default function AdminActivitiesPage() {
                         <div
                             key={a.id}
                             className={s.card}
-                            onClick={() => { setActiveActivity(a); setShowQuestionModal(true); setPreviewQuestion(null); setLinkSearch(""); }}
+                            onClick={() => {
+                                setActiveActivity(a);
+                                setShowQuestionModal(true);
+                                setShowLinkQuestionModal(false);
+                                setPreviewQuestion(null);
+                                setLinkSearch("");
+                            }}
                         >
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                                 <div style={{ minWidth: 0 }}>
@@ -286,23 +311,9 @@ export default function AdminActivitiesPage() {
                 </div>
             )}
 
-            {/* ── Manage Questions Modal (large) ── */}
-            {showQuestionModal && activeActivity && (() => {
-                const linkedIds = new Set((activeActivity.question_ids ?? []).map((id) => String(id)));
-                const linked = (activeActivity.question_ids ?? [])
-                    .map((id) => questionMap.get(String(id)))
-                    .filter(Boolean) as ActivityQuestion[];
-                const unlinked = (allQuestions ?? []).filter((q: ActivityQuestion) => !linkedIds.has(String(q.id)));
-                const searchFiltered = linkSearch.trim()
-                    ? unlinked.filter((q: ActivityQuestion) => {
-                        const text = `${q.title} ${q.template_name ?? ""} ${q.template_slug ?? ""}`.toLowerCase();
-                        return text.includes(linkSearch.toLowerCase());
-                    })
-                    : unlinked;
-                const showAddList = linkSearch.length >= 0;
-
-                return (
-                    <div className={s.overlay} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>
+            {/* ── Manage Questions Modal: linked list + preview; “Link new question” opens nested modal ── */}
+            {showQuestionModal && activeActivity && (
+                    <div className={s.overlay} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); setShowLinkQuestionModal(false); }}>
                         <div
                             className={s.modal}
                             style={{ width: "92vw", maxWidth: 1100, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column" }}
@@ -311,19 +322,30 @@ export default function AdminActivitiesPage() {
                             <h2 className={s.modalTitle}>Manage Questions — “{activeActivity.name}”</h2>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 24, flex: 1, minHeight: 0 }}>
-                                {/* Left: Linked cards + Add section */}
-                                <div style={{ display: "flex", flexDirection: "column", gap: 20, minHeight: 0, overflow: "hidden" }}>
-                                    {/* Linked Questions — small cards */}
-                                    <div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                                {/* Left: Linked questions only (scrollable) */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0, overflow: "hidden", flex: 1 }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", flexShrink: 0 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                             <HelpCircle size={16} style={{ flexShrink: 0 }} />
-                                            <span style={{ fontWeight: 600, fontSize: 14 }}>Linked Questions ({linked.length})</span>
+                                            <span style={{ fontWeight: 600, fontSize: 14 }}>Linked questions ({activityQuestionBank.linked.length})</span>
                                         </div>
-                                        {linked.length === 0 ? (
-                                            <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>No questions linked yet. Add some below.</p>
-                                        ) : (
+                                        <button
+                                            type="button"
+                                            className={s.addBtn}
+                                            style={{ padding: "8px 16px", fontSize: 12 }}
+                                            onClick={() => setShowLinkQuestionModal(true)}
+                                        >
+                                            <Link2 size={14} /> Link new question
+                                        </button>
+                                    </div>
+                                    {activityQuestionBank.linked.length === 0 ? (
+                                        <p style={{ fontSize: 13, color: "var(--color-text-tertiary)", fontStyle: "italic", flexShrink: 0 }}>
+                                            No questions linked yet. Use <strong>Link new question</strong> to add from the bank.
+                                        </p>
+                                    ) : (
+                                        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingRight: 4 }}>
                                             <div className={s.questionsCardGrid}>
-                                                {linked.map((q) => {
+                                                {activityQuestionBank.linked.map((q) => {
                                                     const pos = (activeActivity.question_ids ?? []).indexOf(String(q.id));
                                                     const canMoveLeft = pos > 0;
                                                     const canMoveRight = pos >= 0 && pos < (activeActivity.question_ids ?? []).length - 1;
@@ -402,77 +424,8 @@ export default function AdminActivitiesPage() {
                                                     );
                                                 })}
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {/* Add question: Link Existing (search) + Create New */}
-                                    <div style={{ borderTop: "1px solid var(--color-border-subtle)", paddingTop: 16 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                                            <span style={{ fontWeight: 600, fontSize: 14 }}>Add question</span>
-                                            <button
-                                                type="button"
-                                                className={s.addBtn}
-                                                style={{ padding: "6px 14px", fontSize: 12 }}
-                                                onClick={() => navigate("/admin/create-question")}
-                                            >
-                                                <ExternalLink size={12} /> Create New
-                                            </button>
                                         </div>
-                                        <div style={{ position: "relative", marginBottom: 10 }}>
-                                            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }} />
-                                            <input
-                                                className={s.input}
-                                                style={{ paddingLeft: 36 }}
-                                                placeholder="Search question bank by title or template…"
-                                                value={linkSearch}
-                                                onChange={(e) => setLinkSearch(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className={s.addQuestionList}>
-                                            {showAddList && (linkSearch.trim() ? searchFiltered : unlinked).slice(0, 50).map((q: ActivityQuestion) => (
-                                                <div key={q.id} className={s.addQuestionRow}>
-                                                    <div style={{ flex: 1, minWidth: 0 }} onClick={() => setPreviewQuestion(q)}>
-                                                        <div style={{ fontWeight: 500, fontSize: 13 }}>{q.title}</div>
-                                                        {extractStatementSnippet(q.data) && (
-                                                            <div style={{ fontSize: 12, color: "#059669", marginTop: 2 }}>
-                                                                {extractStatementSnippet(q.data)!.slice(0, 80)}…
-                                                            </div>
-                                                        )}
-                                                        <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-                                                            {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"}
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        className={s.addBtn}
-                                                        style={{ padding: "4px 12px", fontSize: 11, flexShrink: 0 }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            linkQuestion.mutate(
-                                                                { activityId: activeActivity.id, questionId: q.id },
-                                                                {
-                                                                    onSuccess: (updated: Activity) => {
-                                                                        setActiveActivity((prev) => (prev && prev.id === updated.id ? { ...prev, question_ids: updated.question_ids ?? [] } : prev));
-                                                                    },
-                                                                }
-                                                            );
-                                                        }}
-                                                        disabled={linkQuestion.isPending}
-                                                    >
-                                                        <Link2 size={10} /> Link
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            {!linkSearch.trim() && unlinked.length === 0 && linked.length > 0 && (
-                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", fontStyle: "italic" }}>All questions are already linked.</p>
-                                            )}
-                                            {linkSearch.trim() && searchFiltered.length === 0 && (
-                                                <p style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>
-                                                    No matches. <button type="button" className={s.editBtn} style={{ fontSize: 12 }} onClick={() => navigate("/admin/create-question")}>Create new question →</button>
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* Right: Preview */}
@@ -495,7 +448,120 @@ export default function AdminActivitiesPage() {
                             </div>
 
                             <div className={s.formActions} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-subtle)" }}>
-                                <button type="button" className={s.cancelBtn} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); }}>Close</button>
+                                <button type="button" className={s.cancelBtn} onClick={() => { setShowQuestionModal(false); setActiveActivity(null); setPreviewQuestion(null); setShowLinkQuestionModal(false); }}>Close</button>
+                            </div>
+                        </div>
+                    </div>
+            )}
+
+            {/* ── Link question from bank (nested modal, scrollable list) ── */}
+            {showLinkQuestionModal && activeActivity && (() => {
+                const searchFiltered = linkSearch.trim()
+                    ? activityQuestionBank.unlinked.filter((q: ActivityQuestion) => {
+                        const text = `${q.title} ${q.template_name ?? ""} ${q.template_slug ?? ""}`.toLowerCase();
+                        return text.includes(linkSearch.toLowerCase());
+                    })
+                    : activityQuestionBank.unlinked;
+                const list = linkSearch.trim() ? searchFiltered : activityQuestionBank.unlinked;
+                return (
+                    <div
+                        className={s.overlay}
+                        style={{ zIndex: 1100 }}
+                        onClick={() => { setShowLinkQuestionModal(false); setLinkSearch(""); }}
+                    >
+                        <div
+                            className={s.modal}
+                            style={{
+                                width: "min(560px, 94vw)",
+                                maxHeight: "85vh",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h2 className={s.modalTitle} style={{ flexShrink: 0 }}>Link question</h2>
+                            <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", margin: "-8px 0 12px", flexShrink: 0 }}>
+                                To “{activeActivity.name}” — search the bank and link. The list scrolls when there are many questions.
+                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexShrink: 0, flexWrap: "wrap" }}>
+                                <button
+                                    type="button"
+                                    className={s.addBtn}
+                                    style={{ padding: "6px 14px", fontSize: 12 }}
+                                    onClick={() => navigate("/admin/create-question")}
+                                >
+                                    <ExternalLink size={12} /> Create new question
+                                </button>
+                            </div>
+                            <div style={{ position: "relative", marginBottom: 10, flexShrink: 0 }}>
+                                <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", opacity: 0.5 }} />
+                                <input
+                                    className={s.input}
+                                    style={{ paddingLeft: 36 }}
+                                    placeholder="Search by title or template…"
+                                    value={linkSearch}
+                                    onChange={(e) => setLinkSearch(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div
+                                className={s.addQuestionList}
+                                style={{ flex: 1, minHeight: 120, maxHeight: "min(52vh, 520px)", overflowY: "auto" }}
+                            >
+                                {list.length === 0 && (
+                                    <p style={{ fontSize: 12, color: "var(--color-text-tertiary)", padding: 8 }}>
+                                        {linkSearch.trim()
+                                            ? "No matches."
+                                            : activityQuestionBank.unlinked.length === 0
+                                              ? "All questions in the bank are already linked to this activity."
+                                              : "No questions to show."}
+                                        {" "}
+                                        <button type="button" className={s.editBtn} style={{ fontSize: 12 }} onClick={() => navigate("/admin/create-question")}>
+                                            Create new question →
+                                        </button>
+                                    </p>
+                                )}
+                                {list.map((q: ActivityQuestion) => (
+                                    <div key={q.id} className={s.addQuestionRow}>
+                                        <div style={{ flex: 1, minWidth: 0 }} onClick={() => setPreviewQuestion(q)}>
+                                            <div style={{ fontWeight: 500, fontSize: 13 }}>{q.title}</div>
+                                            {extractStatementSnippet(q.data) && (
+                                                <div style={{ fontSize: 12, color: "#059669", marginTop: 2 }}>
+                                                    {(extractStatementSnippet(q.data) as string).slice(0, 80)}
+                                                    {(extractStatementSnippet(q.data) as string).length > 80 ? "…" : ""}
+                                                </div>
+                                            )}
+                                            <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
+                                                {q.template_name ?? q.template_slug ?? "—"} · Grade {q.grade_band || "any"}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className={s.addBtn}
+                                            style={{ padding: "4px 12px", fontSize: 11, flexShrink: 0 }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                linkQuestion.mutate(
+                                                    { activityId: activeActivity.id, questionId: q.id },
+                                                    {
+                                                        onSuccess: (updated: Activity) => {
+                                                            setActiveActivity((prev) => (prev && prev.id === updated.id ? { ...prev, question_ids: updated.question_ids ?? [] } : prev));
+                                                        },
+                                                    },
+                                                );
+                                            }}
+                                            disabled={linkQuestion.isPending}
+                                        >
+                                            <Link2 size={10} /> Link
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className={s.formActions} style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--color-border-subtle)", flexShrink: 0 }}>
+                                <button type="button" className={s.cancelBtn} onClick={() => { setShowLinkQuestionModal(false); setLinkSearch(""); }}>
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>

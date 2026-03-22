@@ -1,5 +1,8 @@
-import { Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause, CheckCircle2 } from "lucide-react";
+import { Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause, CheckCircle2, LayoutGrid } from "lucide-react";
 import type { SessionActivity } from "@/api/types";
+
+/** Default filter: show every activity in session order (avoids missing new activities that use a different type). */
+const FILTER_ALL = "__all__";
 
 const TYPE_META: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
     warmup:    { icon: <Flame size={16} />,    color: "#f59e0b", label: "Warm-up" },
@@ -24,16 +27,45 @@ export function ActivitiesTab({ activities, sessionId, activityInfoById, launchA
         typeCounts[t] = (typeCounts[t] || 0) + 1;
     }
     const availableTypes = Object.keys(typeCounts);
-    const selectedType = activeType ?? availableTypes[0] ?? null;
-    const filtered = activities.filter(a => (a.activity_type ?? "other") === selectedType);
+    const selectedType = activeType ?? FILTER_ALL;
+    const showAll = selectedType === FILTER_ALL;
+    const filtered = showAll
+        ? [...activities].sort((a, b) => a.order - b.order)
+        : activities.filter((a) => (a.activity_type ?? "other") === selectedType);
 
     return (
-        <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-            {/* Type chips */}
+        <div style={{ padding: 10, display: "flex", flexDirection: "column", gap: 8, flex: 1, minHeight: 0, overflowY: "auto" }}>
+            {/* Type chips — "All" is default so mid-class additions always appear */}
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                    type="button"
+                    onClick={() => setActiveType(null)}
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "7px 12px",
+                        borderRadius: 999,
+                        border: showAll ? "1px solid #6366f155" : "1px solid #e2e8f0",
+                        background: showAll ? "#eef2ff" : "#f8fafc",
+                        color: showAll ? "#0f172a" : "#334155",
+                        cursor: "pointer",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        boxShadow: showAll ? "0 0 0 3px rgba(99,102,241,0.12)" : "none",
+                    }}
+                >
+                    <span style={{ width: 22, height: 22, borderRadius: 999, display: "inline-flex", alignItems: "center", justifyContent: "center", background: "#6366f118", color: "#6366f1" }}>
+                        <LayoutGrid size={14} />
+                    </span>
+                    <span style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+                        All
+                        <span style={{ fontSize: 10, fontWeight: 900, color: "#64748b" }}>{activities.length}</span>
+                    </span>
+                </button>
                 {availableTypes.map(t => {
                     const meta = TYPE_META[t] ?? { icon: <BookOpen size={14} />, color: "#888", label: t };
-                    const isActive = t === selectedType;
+                    const isActive = !showAll && t === selectedType;
                     const doneCount = activities.filter(a => (a.activity_type ?? "other") === t && a.status === "completed").length;
                     return (
                         <button key={t} onClick={() => setActiveType(t)} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 999, border: isActive ? `1px solid ${meta.color}55` : "1px solid #e2e8f0", background: isActive ? `${meta.color}12` : "#f8fafc", color: isActive ? "#0f172a" : "#334155", cursor: "pointer", fontSize: 11, fontWeight: 800, boxShadow: isActive ? `0 0 0 3px ${meta.color}14` : "none" }}>

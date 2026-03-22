@@ -50,31 +50,12 @@ export default function LivePage() {
   const [chatText, setChatText] = useState("");
   const [sideTab, setSideTab] = useState<"activity" | "chat">("activity");
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [sidebarWidth, setSidebarWidth] = useState<number>(420);
-  const [isResizing, setIsResizing] = useState(false);
+  /** Activity / Chat column: fixed at max width (not resizable), aligned with teacher Live Class */
+  const SIDEBAR_WIDTH_PX = 560;
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages.length]);
-
-  // ── Sidebar resizing ──
-  useEffect(() => {
-    if (!isResizing) return;
-    const onMove = (e: MouseEvent) => {
-      const rightPadding = 16;
-      const minW = 320;
-      const maxW = Math.min(560, window.innerWidth - rightPadding);
-      const next = Math.max(minW, Math.min(maxW, window.innerWidth - e.clientX));
-      setSidebarWidth(next);
-    };
-    const onUp = () => setIsResizing(false);
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-    };
-  }, [isResizing]);
 
   const sendChat = useCallback(() => {
     const txt = chatText.trim();
@@ -88,6 +69,7 @@ export default function LivePage() {
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
+    staleTime: 10_000,
   });
   const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
   const roomCode = activeLiveSession?.room_code_guest ?? "";
@@ -469,22 +451,8 @@ export default function LivePage() {
           )}
         </div>
 
-        {/* ── Drag resizer (desktop only) ── */}
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          onMouseDown={() => setIsResizing(true)}
-          className={s.resizer}
-          style={{
-            background: isResizing ? "rgba(99,102,241,0.20)" : "rgba(148,163,184,0.25)",
-            borderLeft: "1px solid rgba(148,163,184,0.35)",
-            borderRight: "1px solid rgba(148,163,184,0.35)",
-          }}
-          title="Drag to resize"
-        />
-
-        {/* ── Right: Sidebar ── */}
-        <div className={s.rightCol} style={{ width: sidebarWidth }}>
+        {/* ── Right: Activity / Chat (fixed max width, not resizable) ── */}
+        <div className={s.rightCol} style={{ width: SIDEBAR_WIDTH_PX, flexShrink: 0 }}>
 
           {/* ── Tab bar ── */}
           <div style={{

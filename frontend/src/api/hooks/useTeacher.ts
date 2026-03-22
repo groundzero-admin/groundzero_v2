@@ -88,8 +88,10 @@ export function useSessionActivities(sessionId: string | null | undefined) {
     queryFn: async () =>
       (await api.get(`/sessions/${sessionId}/activities`)).data,
     enabled: !!sessionId,
-    staleTime: 5_000,
+    staleTime: 3_000,
     refetchInterval: 5_000,
+    /** Keep polling when teacher switches tabs (e.g. admin adds an activity mid-class). */
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -100,6 +102,7 @@ export function useAddSessionActivity() {
       api.post(`/sessions/${sessionId}/activities`, { activity_id: activityId }).then((r) => r.data),
     onSuccess: (_data, { sessionId }) => {
       qc.invalidateQueries({ queryKey: ["session-activities", sessionId] });
+      qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });
 }
@@ -111,6 +114,7 @@ export function useRemoveSessionActivity() {
       api.delete(`/sessions/${sessionId}/activities/${activityId}`),
     onSuccess: (_data, { sessionId }) => {
       qc.invalidateQueries({ queryKey: ["session-activities", sessionId] });
+      qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
     },
   });
 }
@@ -121,6 +125,51 @@ export function useTeacherSessionView(cohortId: string | undefined, sessionId: s
     queryFn: () =>
       api.get(`/teacher/cohorts/${cohortId}/sessions/${sessionId}/view`).then((r) => r.data),
     enabled: !!cohortId && !!sessionId,
+    staleTime: 3_000,
+    /** Match session activity list so Preview/Feed metadata stays in sync when admin edits the plan mid-class. */
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: true,
+  });
+}
+
+export interface ActivityQuestionResponseRow {
+  student_id: string;
+  student_name: string;
+  outcome: number;
+  response: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface ActivityQuestionBlock {
+  activity_question_id: string;
+  order_index: number;
+  title: string;
+  template_slug: string | null;
+  responses: ActivityQuestionResponseRow[];
+}
+
+export interface ActivityQuestionResponsesData {
+  activity_id: string;
+  activity_name: string;
+  questions: ActivityQuestionBlock[];
+}
+
+/** Live class: per-question student answer JSON + outcomes for one session activity. */
+export function useActivityQuestionResponses(
+  cohortId: string | null | undefined,
+  sessionId: string | null | undefined,
+  activityId: string | null | undefined,
+) {
+  return useQuery<ActivityQuestionResponsesData>({
+    queryKey: ["activity-question-responses", cohortId, sessionId, activityId],
+    queryFn: async () =>
+      (
+        await api.get(`/teacher/cohorts/${cohortId}/sessions/${sessionId}/activity-question-responses`, {
+          params: { activity_id: activityId },
+        })
+      ).data,
+    enabled: !!cohortId && !!sessionId && !!activityId,
+    refetchInterval: 5_000,
   });
 }
 
@@ -158,6 +207,7 @@ export function useLaunchActivity() {
       qc.invalidateQueries({ queryKey: ["active-session"] });
       qc.invalidateQueries({ queryKey: ["session-activities"] });
       qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
+      qc.invalidateQueries({ queryKey: ["activity-question-responses"] });
     },
   });
 }
