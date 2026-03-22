@@ -30,7 +30,8 @@ function useMyLiveSessions() {
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then((r) => r.data),
     enabled: !!studentId,
-    staleTime: 60_000,
+    /** Keep short: after enrollments change, card should appear without waiting minutes (see admin atomic enroll). */
+    staleTime: 10_000,
   });
 }
 

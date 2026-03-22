@@ -13,7 +13,7 @@ export const sidebar = style({
     gap: vars.space[1],
 });
 
-export const navItem = style({
+const navItemBase = {
     display: "flex",
     alignItems: "center",
     gap: vars.space[3],
@@ -34,6 +34,16 @@ export const navItem = style({
         color: vars.color.text.primary,
         backgroundColor: vars.color.surface.hover,
     },
+} as const;
+
+export const navItem = style({
+    ...navItemBase,
+});
+
+/** Same as navItem but for `<a target="_blank">` (e.g. Teacher View) */
+export const navItemLink = style({
+    ...navItemBase,
+    textDecoration: "none",
 });
 
 export const navItemActive = style({

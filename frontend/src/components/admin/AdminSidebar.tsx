@@ -23,22 +23,41 @@ export default function AdminSidebar() {
     return (
         <aside className={s.sidebar}>
             <div className={s.sectionLabel}>Management</div>
-            {NAV_ITEMS.map(({ label, path, icon: Icon }) => (
-                <button
-                    key={path}
-                    className={`${s.navItem} ${
-                        label === "Question Bank"
-                            ? (isQuestionBankActive ? s.navItemActive : "")
-                            : label === "Teacher View"
-                                ? (pathname.startsWith("/teacher") ? s.navItemActive : "")
-                                : (pathname.startsWith(path) ? s.navItemActive : "")
-                    }`}
-                    onClick={() => navigate(path)}
-                >
-                    <Icon size={18} />
-                    {label}
-                </button>
-            ))}
+            {NAV_ITEMS.map(({ label, path, icon: Icon }) => {
+                const activeClass =
+                    label === "Question Bank"
+                        ? (isQuestionBankActive ? s.navItemActive : "")
+                        : label === "Teacher View"
+                            ? (pathname.startsWith("/teacher") ? s.navItemActive : "")
+                            : (pathname.startsWith(path) ? s.navItemActive : "");
+
+                if (path === "/teacher") {
+                    return (
+                        <a
+                            key={path}
+                            href={path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${s.navItemLink} ${activeClass}`}
+                        >
+                            <Icon size={18} />
+                            {label}
+                        </a>
+                    );
+                }
+
+                return (
+                    <button
+                        key={path}
+                        type="button"
+                        className={`${s.navItem} ${activeClass}`}
+                        onClick={() => navigate(path)}
+                    >
+                        <Icon size={18} />
+                        {label}
+                    </button>
+                );
+            })}
         </aside>
     );
 }

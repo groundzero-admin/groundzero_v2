@@ -49,6 +49,8 @@ export function useUpdateTemplate() {
             qc.invalidateQueries({ queryKey: ["cohorts"] });
             qc.invalidateQueries({ queryKey: ["cohorts", vars.id] }); // no-op if not present, ok
             qc.invalidateQueries({ queryKey: ["cohorts"], exact: false });
+            qc.invalidateQueries({ queryKey: ["session-activities"] });
+            qc.invalidateQueries({ queryKey: ["teacher-session-view"] });
         },
     });
 }

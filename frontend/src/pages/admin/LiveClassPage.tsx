@@ -7,6 +7,7 @@ import { useSessionActivities, useLaunchActivity, usePauseActivity, useLivePulse
 import { VideoArea, type TileData } from "@/components/live/VideoArea";
 import { ActivitiesTab } from "@/components/live/ActivitiesTab";
 import { FeedTab } from "@/components/live/FeedTab";
+import { LiveQuestionAnswersTab } from "@/components/live/LiveQuestionAnswersTab";
 import { ChatTab } from "@/components/live/ChatTab";
 
 export default function LiveClassPage() {
@@ -26,12 +27,13 @@ export default function LiveClassPage() {
 
     const [pinnedId, setPinnedId]         = useState<string | null>(null);
     const [chatText, setChatText]         = useState("");
-    const [activeTab, setActiveTab]       = useState<"activities" | "feed" | "chat">("activities");
+    const [activeTab, setActiveTab]       = useState<"activities" | "feed" | "preview" | "chat">("activities");
     const [activeType, setActiveType]     = useState<string | null>(null);
     const [feedActivityId, setFeedActivityId] = useState<string | null>(null);
     const [joinError, setJoinError]       = useState<string | null>(null);
-    const [sidebarWidth, setSidebarWidth] = useState(380);
-    const [isResizing, setIsResizing]     = useState(false);
+
+    /** Teacher right panel (Activities / Feed / Preview / Chat): fixed at max width */
+    const SIDEBAR_WIDTH_PX = 560;
 
     const { data: sessionActivities } = useSessionActivities(sessionId || undefined);
     const { data: pulseEvents }       = useLivePulse(cohortId || undefined, sessionId || undefined);
@@ -42,19 +44,6 @@ export default function LiveClassPage() {
     const launchActivity = useLaunchActivity();
     const pauseActivity  = usePauseActivity();
     const endSession     = useEndSession();
-
-    // Sidebar resize
-    useEffect(() => {
-        if (!isResizing) return;
-        const onMove = (e: MouseEvent) => {
-            const next = Math.max(320, Math.min(560, window.innerWidth - e.clientX));
-            setSidebarWidth(next);
-        };
-        const onUp = () => setIsResizing(false);
-        window.addEventListener("mousemove", onMove);
-        window.addEventListener("mouseup", onUp);
-        return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-    }, [isResizing]);
 
     // Join HMS
     useEffect(() => {
@@ -153,24 +142,30 @@ export default function LiveClassPage() {
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
                 <VideoArea tiles={tiles} pinnedId={pinnedId} setPinnedId={setPinnedId} onMute={makeMuteHandler} />
 
-                {/* Drag resizer */}
-                <div role="separator" aria-orientation="vertical" onMouseDown={() => setIsResizing(true)} style={{ width: 8, cursor: "col-resize", background: isResizing ? "rgba(99,102,241,0.20)" : "rgba(148,163,184,0.25)", borderLeft: "1px solid rgba(148,163,184,0.35)", borderRight: "1px solid rgba(148,163,184,0.35)" }} />
-
-                {/* Sidebar */}
-                <div style={{ width: sidebarWidth, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #e2e8f0", background: "#fff" }}>
+                {/* Sidebar — fixed max width (not resizable) */}
+                <div style={{ width: SIDEBAR_WIDTH_PX, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #e2e8f0", background: "#fff" }}>
                     <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
-                        {(["activities", "feed", "chat"] as const).map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer", background: activeTab === tab ? "#eef2ff" : "transparent", color: activeTab === tab ? "#1e293b" : "#64748b", fontWeight: 800, fontSize: 11, borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent" }}>
-                                {tab === "activities" ? "Activities" : tab === "feed" ? "Feed" : "Chat"}
+                        {(["activities", "feed", "preview", "chat"] as const).map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer", background: activeTab === tab ? "#eef2ff" : "transparent", color: activeTab === tab ? "#1e293b" : "#64748b", fontWeight: 800, fontSize: 10, borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent" }}>
+                                {tab === "activities" ? "Activities" : tab === "feed" ? "Feed" : tab === "preview" ? "Preview" : "Chat"}
                             </button>
                         ))}
                     </div>
-                    <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+                    <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                         {activeTab === "activities" && (
                             <ActivitiesTab activities={sessionActivities ?? []} sessionId={sessionId} activityInfoById={activityInfoById} launchActivity={launchActivity} pauseActivity={pauseActivity} activeType={activeType} setActiveType={setActiveType} />
                         )}
                         {activeTab === "feed" && (
                             <FeedTab sessionActivities={sessionActivities} activityScores={activityScores} cohortStudents={cohortStudents} pulseEvents={pulseEvents} messages={messages} feedActivityId={feedActivityId} setFeedActivityId={setFeedActivityId} activityInfoById={activityInfoById} />
+                        )}
+                        {activeTab === "preview" && cohortId && sessionId && (
+                            <LiveQuestionAnswersTab
+                                cohortId={cohortId}
+                                sessionId={sessionId}
+                                sessionActivities={sessionActivities}
+                                sessionView={sessionView}
+                                cohortStudents={cohortStudents}
+                            />
                         )}
                         {activeTab === "chat" && (
                             <ChatTab messages={messages} chatText={chatText} setChatText={setChatText} sendMessage={async () => { if (!chatText.trim()) return; await hmsActions.sendBroadcastMessage(chatText.trim()); setChatText(""); }} />

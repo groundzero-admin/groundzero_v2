@@ -48,14 +48,3 @@ export const loading = style({
   height: "100dvh",
   background: "#f8fafc",
 });
-
-export const resizer = style({
-  width: 8,
-  cursor: "col-resize",
-  "@media": {
-    "screen and (max-width: 1024px)": {
-      display: "none",
-    },
-  },
-});
-
