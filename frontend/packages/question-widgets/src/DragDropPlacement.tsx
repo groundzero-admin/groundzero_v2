@@ -8,6 +8,7 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
   const items = arr(data.items);
   const zones = arr(data.zones);
   const zoneList = zones.length > 0 ? zones : items.map((_, i) => `Zone ${i + 1}`);
+  const multiStepMode = data.__multi_step_mode === true;
 
   const [placed, setPlaced] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -32,7 +33,16 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
   const onDrop = (e: DragEvent, zoneIdx: number) => {
     e.preventDefault();
     const item = e.dataTransfer.getData("text/plain");
-    if (item) setPlaced((prev) => ({ ...prev, [zoneIdx]: item }));
+    if (item) {
+      setPlaced((prev) => {
+        const next = { ...prev, [zoneIdx]: item };
+        if (multiStepMode) {
+          const stepCorrect = zoneList.every((z, i) => next[i] === z);
+          onAnswer?.({ placed: next, correct: stepCorrect });
+        }
+        return next;
+      });
+    }
     setDragOver(null);
     setChecked(false);
   };
@@ -78,17 +88,17 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
           </div>
         ))}
       </div>
-      {allPlaced && !checked && (
+      {allPlaced && !checked && !multiStepMode && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
           <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
-      {checked && (
+      {checked && !multiStepMode && (
         <div style={allCorrect ? FEEDBACK_OK : FEEDBACK_ERR}>
           {allCorrect ? "Correct!" : "Not quite right. Click Reset to try again."}
         </div>
       )}
-      {checked && !allCorrect && (
+      {checked && !allCorrect && !multiStepMode && (
         <div style={{ marginTop: 8, textAlign: "center" }}>
           <button style={BTN_SECONDARY} onClick={() => { setPlaced({}); setChecked(false); }}>Reset</button>
         </div>

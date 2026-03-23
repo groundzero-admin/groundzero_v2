@@ -7,6 +7,7 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
   const answers = arr(data.answers);
   const distractors = arr(data.distractors);
   const mode = str(data.mode) || (distractors.length > 0 ? "word_bank" : "text_input");
+  const multiStepMode = data.__multi_step_mode === true;
   const allWords = [...answers, ...distractors];
   const parts = sentence.split(/\{\{blank\}\}/gi);
   const blankCount = parts.length - 1;
@@ -24,6 +25,13 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
   if (!sentence) return null;
 
   const usedWords = new Set(filled.filter(Boolean));
+  const emitProgress = (nextFilled: (string | null)[]) => {
+    if (!multiStepMode) return;
+    const stepCorrect = nextFilled.every(
+      (f, i) => f?.trim().toLowerCase() === answers[i]?.trim().toLowerCase(),
+    );
+    onAnswer?.({ filled: nextFilled, correct: stepCorrect });
+  };
 
   const placeWord = (word: string) => {
     const idx = filled.indexOf(null);
@@ -32,6 +40,7 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
     next[idx] = word;
     setFilled(next);
     setChecked(false);
+    emitProgress(next);
   };
 
   const removeWord = (idx: number) => {
@@ -39,6 +48,7 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
     next[idx] = null;
     setFilled(next);
     setChecked(false);
+    emitProgress(next);
   };
 
   const setTyped = (idx: number, value: string) => {
@@ -46,6 +56,7 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
     next[idx] = value || null;
     setFilled(next);
     setChecked(false);
+    emitProgress(next);
   };
 
   const allFilled = filled.every((f) => f !== null && f !== "");
@@ -152,7 +163,7 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
         </div>
       )}
 
-      {allFilled && !checked && (
+      {allFilled && !checked && !multiStepMode && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
           <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>

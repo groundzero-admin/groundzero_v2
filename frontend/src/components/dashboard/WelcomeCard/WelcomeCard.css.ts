@@ -14,6 +14,12 @@ export const cardWrap = style({
   borderTopColor: "#3b82f6",
   boxShadow:
     "0 10px 40px rgba(59, 130, 246, 0.08), 0 2px 12px rgba(15, 23, 42, 0.04)",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      padding: vars.space[4],
+      borderRadius: "18px",
+    },
+  },
 });
 
 export const root = style({
@@ -21,6 +27,12 @@ export const root = style({
   alignItems: "center",
   gap: vars.space[6],
   flexWrap: "wrap",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      gap: vars.space[4],
+      alignItems: "flex-start",
+    },
+  },
 });
 
 export const avatarArea = style({
@@ -63,6 +75,12 @@ export const levelBadge = style({
 export const info = style({
   flex: 1,
   minWidth: "220px",
+  "@media": {
+    "screen and (max-width: 600px)": {
+      minWidth: 0,
+      width: "100%",
+    },
+  },
 });
 
 export const greeting = style({
@@ -71,6 +89,11 @@ export const greeting = style({
   fontWeight: vars.font.weight.bold,
   color: vars.color.text.primary,
   lineHeight: vars.font.lineHeight.tight,
+  "@media": {
+    "screen and (max-width: 600px)": {
+      fontSize: vars.font.size.xl,
+    },
+  },
 });
 
 export const name = style({
@@ -94,6 +117,15 @@ export const pillarPills = style({
   marginLeft: "auto",
   flexShrink: 0,
   padding: "4px 8px",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      marginLeft: 0,
+      width: "100%",
+      justifyContent: "center",
+      overflowX: "visible",
+      paddingBottom: "2px",
+    },
+  },
 });
 
 export const pillarCol = style({

@@ -210,7 +210,23 @@ function ShapeExplorerMode() {
   );
 }
 
-function McqSection({ question, options, correctAnswer, hint, onAnswer, resetKey }: { question: string; options: string[]; correctAnswer: string; hint: string; onAnswer?: ((a: unknown) => void) | null; resetKey?: number }) {
+function McqSection({
+  question,
+  options,
+  correctAnswer,
+  hint,
+  onAnswer,
+  resetKey,
+  multiStepMode = false,
+}: {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  hint: string;
+  onAnswer?: ((a: unknown) => void) | null;
+  resetKey?: number;
+  multiStepMode?: boolean;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -234,11 +250,21 @@ function McqSection({ question, options, correctAnswer, hint, onAnswer, resetKey
     <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #e2e8f0" }}>
       <div style={HEADING}>{question}</div>
       {options.map((opt, i) => (
-        <div key={i} style={optStyle(i, opt)} onClick={() => !submitted && setSelected(i)}>
+        <div
+          key={i}
+          style={optStyle(i, opt)}
+          onClick={() => {
+            if (submitted) return;
+            setSelected(i);
+            if (multiStepMode) {
+              onAnswer?.({ selected: options[i], correct: correct(options[i] ?? "") });
+            }
+          }}
+        >
           <span style={radioStyle(i, opt)} />{opt}
         </div>
       ))}
-      {selected !== null && !submitted && (
+      {selected !== null && !submitted && !multiStepMode && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
           <button style={BTN} onClick={() => { setSubmitted(true); onAnswer?.({ selected: options[selected!], correct: correct(options[selected!] ?? "") }); }}>Submit</button>
         </div>
@@ -258,6 +284,7 @@ export default function GeometryExplorer({ data, onAnswer, resetKey }: QuestionP
   const options = arr(data.options);
   const correctAnswer = str(data.correct_answer);
   const hint = str(data.hint);
+  const multiStepMode = data.__multi_step_mode === true;
 
   return (
     <div style={CARD}>
@@ -265,7 +292,15 @@ export default function GeometryExplorer({ data, onAnswer, resetKey }: QuestionP
       {mode === "angle_slider"   && <AngleSliderMode />}
       {mode === "shape_explorer" && <ShapeExplorerMode />}
       {question && options.length > 0 && (
-        <McqSection question={question} options={options} correctAnswer={correctAnswer} hint={hint} onAnswer={onAnswer} resetKey={resetKey} />
+        <McqSection
+          question={question}
+          options={options}
+          correctAnswer={correctAnswer}
+          hint={hint}
+          onAnswer={onAnswer}
+          resetKey={resetKey}
+          multiStepMode={multiStepMode}
+        />
       )}
     </div>
   );

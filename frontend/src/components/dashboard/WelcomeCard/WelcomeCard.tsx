@@ -25,6 +25,12 @@ const PILLAR_VISUAL: Record<
   ai_systems: { color: "#22c55e", Icon: Bot },
   math_logic: { color: "#14b8a6", Icon: Calculator },
 };
+const PILLAR_LABEL: Record<(typeof PILLAR_ORDER)[number], string> = {
+  communication: "Communication",
+  creativity: "Creativity",
+  ai_systems: "AI Systems",
+  math_logic: "Math & Logic",
+};
 
 export function WelcomeCard({
   student,
@@ -59,8 +65,9 @@ export function WelcomeCard({
             const pp = pillarProgress[pid];
             const pct = pp ? Math.round(pp.avgPLearned * 100) : 0;
             const { color, Icon } = PILLAR_VISUAL[pid];
+            const label = PILLAR_LABEL[pid];
             return (
-              <div key={pid} className={s.pillarCol}>
+              <div key={pid} className={s.pillarCol} title={label} aria-label={label}>
                 <div className={s.pillarTrack}>
                   <div
                     className={s.pillarFill}

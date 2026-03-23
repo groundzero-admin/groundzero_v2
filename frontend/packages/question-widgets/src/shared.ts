@@ -30,6 +30,7 @@ export const HEADING: CSSProperties = {
   marginBottom: 16,
   color: "#1a202c",
   lineHeight: 1.4,
+  whiteSpace: "pre-wrap",
 };
 
 export const OPT: CSSProperties = {
@@ -44,6 +45,7 @@ export const OPT: CSSProperties = {
   cursor: "pointer",
   transition: "all 0.15s",
   fontWeight: 500,
+  whiteSpace: "pre-wrap",
 };
 export const OPT_SEL: CSSProperties = {
   ...OPT,
@@ -214,7 +216,16 @@ export const FEEDBACK_ERR: CSSProperties = {
 /* ─── Data parsing helpers ─── */
 
 export function str(v: unknown): string {
-  return typeof v === "string" ? v : "";
+  if (typeof v !== "string") return "";
+  // Teachers may type literal escape sequences in authoring fields.
+  // Interpret common ones when rendering.
+  return v
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\\r/g, "\r")
+    .replace(/\\f/g, "\f")
+    .replace(/\\v/g, "\v")
+    .replace(/\\b/g, "\b");
 }
 
 export function arr(v: unknown): string[] {

@@ -27,6 +27,7 @@ export default function DragDropClassifier({ data, onAnswer, resetKey }: Questio
   const itemLabels = classifierItems.map((it) => it.label).filter(Boolean);
   const correctMap = new Map(classifierItems.map((it) => [it.label, it.correct_category]));
   const cats = categories.length > 0 ? categories : ["Category A", "Category B"];
+  const multiStepMode = data.__multi_step_mode === true;
 
   const [buckets, setBuckets] = useState<Record<number, string[]>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -50,7 +51,16 @@ export default function DragDropClassifier({ data, onAnswer, resetKey }: Questio
     e.preventDefault();
     const item = e.dataTransfer.getData("text/plain");
     if (item && !placedItems.has(item)) {
-      setBuckets((prev) => ({ ...prev, [catIdx]: [...(prev[catIdx] || []), item] }));
+      setBuckets((prev) => {
+        const next = { ...prev, [catIdx]: [...(prev[catIdx] || []), item] };
+        if (multiStepMode) {
+          const stepCorrect = Object.entries(next).every(([i, items]) =>
+            items.every((it) => correctMap.get(it) === cats[Number(i)]),
+          );
+          onAnswer?.({ buckets: next, correct: stepCorrect });
+        }
+        return next;
+      });
     }
     setDragOver(null);
     setDragging(null);
@@ -176,19 +186,19 @@ export default function DragDropClassifier({ data, onAnswer, resetKey }: Questio
         })}
       </div>
 
-      {allPlaced && !checked && (
+      {allPlaced && !checked && !multiStepMode && (
         <div style={{ marginTop: 16, textAlign: "center" }}>
           <button style={BTN} onClick={() => { const correct = computeAllCorrect(); setChecked(true); onAnswer?.({ buckets, correct }); }}>
             Submit
           </button>
         </div>
       )}
-      {checked && (
+      {checked && !multiStepMode && (
         <div style={allCorrect ? FEEDBACK_OK : FEEDBACK_ERR}>
           {allCorrect ? "🎉 Perfect! All items sorted correctly." : "Almost! Some items are wrong — tap them to remove and try again."}
         </div>
       )}
-      {checked && !allCorrect && (
+      {checked && !allCorrect && !multiStepMode && (
         <div style={{ marginTop: 8, textAlign: "center" }}>
           <button style={BTN_SECONDARY} onClick={() => { setBuckets({}); setChecked(false); }}>Try Again</button>
         </div>

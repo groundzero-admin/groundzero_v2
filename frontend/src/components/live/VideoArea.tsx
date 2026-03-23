@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { Users, X, UserRoundCheck } from "lucide-react";
 import { VideoTile } from "./VideoTile";
 
 export interface TileData {
@@ -10,19 +12,40 @@ export interface TileData {
     audioTrack?: string;
 }
 
-export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute }: {
+export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferredMainPeerId }: {
     tiles: TileData[];
     pinnedId: string | null;
     setPinnedId: (id: string | null) => void;
     onMute: (tile: TileData) => (() => void) | undefined;
+    preferredMainPeerId?: string | null;
 }) {
+    const [isCompactViewport, setIsCompactViewport] = useState(false);
+    const [showParticipants, setShowParticipants] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 1024px)");
+        const sync = () => setIsCompactViewport(mq.matches);
+        sync();
+        mq.addEventListener("change", sync);
+        return () => mq.removeEventListener("change", sync);
+    }, []);
+    useEffect(() => {
+        if (!isCompactViewport) setShowParticipants(false);
+    }, [isCompactViewport]);
+
     const hasScreenShare = tiles.some(t => t.isScreen);
     // If pinnedId points at a peer who left (or stale id), fall back — otherwise spotlight stays null while tiles exist.
     let spotlightTile: TileData | null = null;
     if (pinnedId) spotlightTile = tiles.find(t => t.id === pinnedId) ?? null;
     if (!spotlightTile) {
         if (hasScreenShare) spotlightTile = tiles.find(t => t.isScreen) || null;
-        else spotlightTile = tiles.find(t => !t.isScreen && !t.isLocal) ?? tiles[0] ?? null;
+        else {
+            spotlightTile =
+                (preferredMainPeerId ? tiles.find(t => !t.isScreen && t.peerId === preferredMainPeerId) : null)
+                ?? tiles.find(t => !t.isScreen && !t.isLocal)
+                ?? tiles[0]
+                ?? null;
+        }
     }
 
     const peerScreenTile = spotlightTile ? tiles.find(t => t.isScreen && t.peerId === spotlightTile!.peerId) : null;
@@ -55,7 +78,58 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute }: {
             </div>
 
             {/* Participant strip */}
-            {tiles.length > 0 && (
+            {tiles.length > 0 && isCompactViewport && (
+                <div style={{ padding: "6px 8px 0", background: "rgba(0,0,0,0.3)", flexShrink: 0 }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <button
+                            type="button"
+                            onClick={() => setShowParticipants(v => !v)}
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "7px 10px",
+                                borderRadius: 9,
+                                border: "1px solid rgba(148,163,184,0.35)",
+                                background: "rgba(15,23,42,0.85)",
+                                color: "#e2e8f0",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                fontWeight: 700,
+                            }}
+                        >
+                            {showParticipants ? <X size={14} /> : <Users size={14} />}
+                            {showParticipants ? "Hide participants" : "Show participants"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const teacherLike = tiles.find(t => t.peerId === preferredMainPeerId)
+                                    ?? tiles.find(t => !t.isScreen && !t.isLocal)
+                                    ?? null;
+                                if (teacherLike) setPinnedId(teacherLike.id);
+                            }}
+                            style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "7px 10px",
+                                borderRadius: 9,
+                                border: "1px solid rgba(34,197,94,0.45)",
+                                background: "rgba(20,83,45,0.6)",
+                                color: "#dcfce7",
+                                cursor: "pointer",
+                                fontSize: 12,
+                                fontWeight: 700,
+                            }}
+                        >
+                            <UserRoundCheck size={14} />
+                            Select teacher
+                        </button>
+                    </div>
+                </div>
+            )}
+            {tiles.length > 0 && (!isCompactViewport || showParticipants) && (
                 <div style={{ display: "flex", gap: 6, padding: "5px 8px", overflowX: "auto", flexShrink: 0, background: "rgba(0,0,0,0.3)", scrollbarWidth: "none" }}>
                     {tiles.filter(t => !t.isScreen).map(t => {
                         const isSelected = t.id === (pinnedId ?? tiles.find(x => !x.isScreen && !x.isLocal)?.id ?? tiles[0]?.id);

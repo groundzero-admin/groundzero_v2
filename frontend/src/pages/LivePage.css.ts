@@ -11,6 +11,9 @@ export const page = style({
       height: "auto",
       overflow: "auto",
     },
+    "screen and (max-width: 640px)": {
+      minHeight: "100dvh",
+    },
   },
 });
 
@@ -22,11 +25,21 @@ export const leftCol = style({
   flex: 1,
   minWidth: 0,
   background: "#0b0b1a",
+  "@media": {
+    "screen and (max-width: 1024px)": {
+      minHeight: "58dvh",
+    },
+    "screen and (max-width: 640px)": {
+      minHeight: "52dvh",
+    },
+  },
 });
 
 export const rightCol = style({
   display: "flex",
   flexDirection: "column",
+  width: "560px",
+  flexShrink: 0,
   height: "100%",
   overflow: "hidden",
   borderLeft: "1px solid #e2e8f0",
@@ -37,6 +50,12 @@ export const rightCol = style({
       maxHeight: "none",
       borderLeft: "none",
       borderTop: "1px solid #e2e8f0",
+      width: "100%",
+      flexShrink: 1,
+      minHeight: "42dvh",
+    },
+    "screen and (max-width: 640px)": {
+      minHeight: "48dvh",
     },
   },
 });

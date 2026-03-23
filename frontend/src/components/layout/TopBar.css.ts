@@ -11,15 +11,21 @@ export const header = style({
 });
 
 export const inner = style({
-  width: "70%",
-  maxWidth: "70%",
+  width: "min(1120px, 100%)",
   margin: "0 auto",
-  padding: 0,
+  padding: `0 ${vars.space[5]}`,
   height: "56px",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   boxSizing: "border-box",
+  gap: vars.space[2],
+  "@media": {
+    "screen and (max-width: 900px)": {
+      padding: `0 ${vars.space[3]}`,
+      height: "52px",
+    },
+  },
 });
 
 export const brand = style({
@@ -33,18 +39,37 @@ export const brandName = style({
   fontWeight: vars.font.weight.bold,
   fontSize: vars.font.size.lg,
   color: vars.color.text.primary,
+  "@media": {
+    "screen and (max-width: 600px)": {
+      fontSize: vars.font.size.base,
+    },
+  },
 });
 
 export const right = style({
   display: "flex",
   alignItems: "center",
   gap: vars.space[3],
+  "@media": {
+    "screen and (max-width: 600px)": {
+      gap: vars.space[2],
+    },
+  },
 });
 
 export const studentName = style({
   fontSize: vars.font.size.sm,
   color: vars.color.text.secondary,
   fontWeight: vars.font.weight.medium,
+  maxWidth: "180px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      display: "none",
+    },
+  },
 });
 
 export const iconBtn = style({

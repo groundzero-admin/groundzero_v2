@@ -238,6 +238,7 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [placed, setPlaced]             = useState<Record<string, string>>({});
   const [checked, setChecked]           = useState(false);
+  const multiStepMode = data.__multi_step_mode === true;
 
   useEffect(() => {
     if (resetKey === undefined) return;
@@ -277,10 +278,19 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
   function handleNodeClick(n: FlowNode) {
     if (!n.blank || checked) return;
     if (placed[n.id]) {
-      setPlaced(p => { const c = { ...p }; delete c[n.id]; return c; });
+      setPlaced(p => {
+        const c = { ...p };
+        delete c[n.id];
+        if (multiStepMode) onAnswer?.({ placed: c, correct: blankNodes.every((bn) => c[bn.id] === bn.correct) });
+        return c;
+      });
       setChecked(false);
     } else if (selectedItem) {
-      setPlaced(p => ({ ...p, [n.id]: selectedItem }));
+      setPlaced(p => {
+        const next = { ...p, [n.id]: selectedItem };
+        if (multiStepMode) onAnswer?.({ placed: next, correct: blankNodes.every((bn) => next[bn.id] === bn.correct) });
+        return next;
+      });
       setSelectedItem(null);
     }
   }
@@ -379,7 +389,7 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
       )}
 
       {/* ── Actions ── */}
-      {allFilled && !checked && (
+      {allFilled && !checked && !multiStepMode && (
         <div style={{ textAlign: "center", marginTop: 4 }}>
           <button style={BTN} onClick={() => {
             setChecked(true);
@@ -390,7 +400,7 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
         </div>
       )}
 
-      {checked && (
+      {checked && !multiStepMode && (
         <>
           <div style={allCorrect ? FEEDBACK_OK : FEEDBACK_ERR}>
             {allCorrect
