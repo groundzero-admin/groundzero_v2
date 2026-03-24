@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { useHMSActions, useHMSStore, selectPeers, selectIsConnectedToRoom, selectHMSMessages, selectIsLocalAudioEnabled, selectIsLocalVideoEnabled, selectIsLocalScreenShared } from "@100mslive/react-sdk";
 import { Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, PhoneOff } from "lucide-react";
-import { api } from "@/api/client";
-import { useSessionActivities, useLaunchActivity, usePauseActivity, useLivePulse, useSessionScores, useSessionActivityScores, useCohortStudents, useEndSession, useTeacherSessionView } from "@/api/hooks/useTeacher";
+import { useSessionActivities, useLaunchActivity, usePauseActivity, useLivePulse, useSessionScores, useSessionActivityScores, useCohortStudents, useTeacherSessionView } from "@/api/hooks/useTeacher";
 import { VideoArea, type TileData } from "@/components/live/VideoArea";
 import { ActivitiesTab } from "@/components/live/ActivitiesTab";
 import { FeedTab } from "@/components/live/FeedTab";
@@ -43,7 +42,6 @@ export default function LiveClassPage() {
     const { data: sessionView }       = useTeacherSessionView(cohortId || undefined, sessionId || undefined);
     const launchActivity = useLaunchActivity();
     const pauseActivity  = usePauseActivity();
-    const endSession     = useEndSession();
 
     // Join HMS
     useEffect(() => {
@@ -66,11 +64,8 @@ export default function LiveClassPage() {
         return () => window.removeEventListener("beforeunload", h);
     }, [hmsActions]);
 
-    async function handleEndClass() {
-        if (!sessionId || !cohortId) return;
-        endSession.mutate(sessionId);
-        try { await api.post(`/cohorts/${cohortId}/sessions/${sessionId}/end-class`); } catch { }
-        await hmsActions.endRoom(false, "Class ended by teacher");
+    async function handleLeaveClass() {
+        try { await hmsActions.leave(); } catch { }
         window.close();
     }
 
@@ -186,8 +181,8 @@ export default function LiveClassPage() {
                     </button>
                 ))}
                 <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
-                <button onClick={handleEndClass} disabled={endSession.isPending} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 12, color: "#fff", background: "#ef4444" }}>
-                    <PhoneOff size={16} /> {endSession.isPending ? "Ending..." : "End Class"}
+                <button onClick={handleLeaveClass} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 12, color: "#fff", background: "#64748b" }}>
+                    <PhoneOff size={16} /> Leave
                 </button>
             </div>
         </div>

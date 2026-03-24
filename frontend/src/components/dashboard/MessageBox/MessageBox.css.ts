@@ -14,6 +14,12 @@ export const surface = style({
   borderTopColor: "#6366f1",
   boxShadow:
     "0 8px 36px rgba(99, 102, 241, 0.07), 0 2px 12px rgba(15, 23, 42, 0.035)",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      padding: vars.space[4],
+      borderRadius: "18px",
+    },
+  },
 });
 
 export const root = style({
@@ -41,6 +47,12 @@ export const inputRow = style({
   display: "flex",
   gap: vars.space[2],
   alignItems: "flex-end",
+  "@media": {
+    "screen and (max-width: 600px)": {
+      flexDirection: "column",
+      alignItems: "stretch",
+    },
+  },
 });
 
 export const input = style({
@@ -83,5 +95,12 @@ export const sendBtn = style({
   },
   ":active": {
     transform: "scale(0.95)",
+  },
+  "@media": {
+    "screen and (max-width: 600px)": {
+      width: "100%",
+      borderRadius: vars.radius.xl,
+      height: "42px",
+    },
   },
 });

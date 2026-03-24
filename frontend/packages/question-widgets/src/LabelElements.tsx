@@ -5,6 +5,7 @@ import { CARD, HEADING, TAG, BTN, FEEDBACK_OK, str, arr } from "./shared";
 export default function LabelElements({ data, onAnswer, resetKey }: QuestionProps) {
   const instruction = str(data.instruction);
   const labels = arr(data.label_options);
+  const multiStepMode = data.__multi_step_mode === true;
 
   const [placed, setPlaced] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -20,7 +21,11 @@ export default function LabelElements({ data, onAnswer, resetKey }: QuestionProp
 
   const toggle = (l: string) => {
     if (submitted) return;
-    setPlaced((prev) => prev.includes(l) ? prev.filter((p) => p !== l) : [...prev, l]);
+    setPlaced((prev) => {
+      const next = prev.includes(l) ? prev.filter((p) => p !== l) : [...prev, l];
+      if (multiStepMode) onAnswer?.({ placed: next });
+      return next;
+    });
   };
 
   const handleSubmit = () => {
@@ -55,12 +60,12 @@ export default function LabelElements({ data, onAnswer, resetKey }: QuestionProp
           ))}
         </div>
       )}
-      {!submitted && placed.length > 0 && (
+      {!multiStepMode && !submitted && placed.length > 0 && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
           <button style={BTN} onClick={handleSubmit}>Submit</button>
         </div>
       )}
-      {submitted && (
+      {!multiStepMode && submitted && (
         <div style={FEEDBACK_OK}>Labels submitted.</div>
       )}
     </div>

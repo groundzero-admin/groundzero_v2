@@ -6,6 +6,7 @@ export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProp
   const prompt = str(data.prompt);
   const audioUrl = str(data.audio_url);
   const allowReplay = data.allow_replay !== false;
+  const multiStepMode = data.__multi_step_mode === true;
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -83,20 +84,24 @@ export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProp
 
       <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          const next = e.target.value;
+          setText(next);
+          if (multiStepMode) onAnswer?.({ text: next });
+        }}
         placeholder="Type what you remember..."
-        disabled={submitted}
-        style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 50 }}
+        disabled={!multiStepMode && submitted}
+        style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 92 }}
       />
 
-      {!submitted && (
+      {!multiStepMode && !submitted && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
           <button style={BTN} onClick={handleSubmit} disabled={!text.trim()}>
             Submit
           </button>
         </div>
       )}
-      {submitted && (
+      {!multiStepMode && submitted && (
         <div style={{ marginTop: 10, padding: "10px 14px", background: "#F0FFF4", border: "1px solid #9AE6B4", borderRadius: 8, fontSize: 13, color: "#276749" }}>
           Answer submitted.
         </div>

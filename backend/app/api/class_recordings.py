@@ -2,13 +2,15 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.auth import require_role
 from app.database import get_db
+from app.models.batch_enrollment import CohortEnrollment
 from app.models.session import Cohort, Session
+from app.models.student import Student
 from app.models.user import User
 from app.services import hms_service
 
@@ -19,6 +21,27 @@ def _can_access_session(session: Session, user: User) -> bool:
     if user.role == "admin":
         return True
     return session.teacher_id is not None and str(session.teacher_id) == str(user.id)
+
+async def _can_access_session_as_student(
+    session: Session,
+    user: User,
+    db: AsyncSession,
+) -> bool:
+    if not session.cohort_id:
+        return False
+    student_row = await db.execute(select(Student).where(Student.user_id == user.id))
+    student = student_row.scalar_one_or_none()
+    if not student:
+        return False
+    enroll_row = await db.execute(
+        select(CohortEnrollment.id).where(
+            and_(
+                CohortEnrollment.student_id == student.id,
+                CohortEnrollment.cohort_id == session.cohort_id,
+            )
+        )
+    )
+    return enroll_row.scalar_one_or_none() is not None
 
 
 @router.get("", summary="Admin list of ended classes with recording links")
@@ -58,7 +81,7 @@ async def list_class_recordings(
 async def get_session_recordings(
     session_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role("teacher", "admin")),
+    user: User = Depends(require_role("teacher", "admin", "student")),
 ):
     result = await db.execute(
         select(Session, Cohort.name, User.full_name)
@@ -72,7 +95,10 @@ async def get_session_recordings(
         raise HTTPException(status_code=404, detail="Session not found")
 
     session, cohort_name, teacher_name = row
-    if not _can_access_session(session, user):
+    allowed = _can_access_session(session, user)
+    if not allowed and user.role == "student":
+        allowed = await _can_access_session_as_student(session, user, db)
+    if not allowed:
         raise HTTPException(status_code=403, detail="Not allowed to view this session recording")
 
     if not session.live_room or not session.live_room.hms_room_id:

@@ -7,6 +7,9 @@ export const row = style({
   gridTemplateColumns: "repeat(3, 1fr)",
   gap: "16px",
   "@media": {
+    "screen and (max-width: 1200px)": {
+      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    },
     "screen and (max-width: 900px)": {
       gridTemplateColumns: "1fr",
     },
@@ -34,6 +37,13 @@ const cardBase = style({
   ":hover": {
     transform: "translateY(-2px)",
     boxShadow: "0 12px 36px rgba(15, 23, 42, 0.08)",
+  },
+  "@media": {
+    "screen and (max-width: 900px)": {
+      minHeight: "150px",
+      padding: "16px",
+      borderRadius: "18px",
+    },
   },
 });
 

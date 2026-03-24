@@ -23,6 +23,13 @@ export const link = style({
     color: vars.color.text.secondary,
     backgroundColor: vars.color.surface.hover,
   },
+  "@media": {
+    "screen and (max-width: 600px)": {
+      padding: `${vars.space[2]} ${vars.space[3]}`,
+      fontSize: vars.font.size.xs,
+      gap: vars.space[1],
+    },
+  },
 });
 
 export const linkActive = style({

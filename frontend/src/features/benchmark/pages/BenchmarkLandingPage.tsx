@@ -17,6 +17,13 @@ export default function BenchmarkLandingPage() {
 
   return (
     <div className="bl-root">
+      <button
+        type="button"
+        onClick={() => navigate("/dashboard")}
+        className="bl-back-btn"
+      >
+        ← Back to Dashboard
+      </button>
       {/* Floating avatars */}
       <div className="bl-avatars">
         {CHARACTERS.map((c, i) => (
@@ -90,11 +97,30 @@ const cssStyles = `
   @keyframes blFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
   .bl-root {
+    position: relative;
     display: flex; flex-direction: column; align-items: center;
     padding: 24px 16px 32px; min-height: 100vh; min-height: 100dvh;
     background: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 50%, #fef3c7 100%);
     overflow-y: auto;
   }
+
+  .bl-back-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: rgba(255,255,255,0.82);
+    color: #334155;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 10px rgba(15,23,42,0.08);
+  }
+  .bl-back-btn:hover { background: #fff; }
 
   .bl-avatars { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; justify-content: center; }
   .bl-avatar-img {
@@ -171,6 +197,7 @@ const cssStyles = `
   /* ─── Desktop ─── */
   @media (min-width: 640px) {
     .bl-root { padding: 40px 24px 48px; justify-content: center; }
+    .bl-back-btn { top: 18px; left: 18px; font-size: 13px; padding: 8px 14px; }
     .bl-avatars { gap: 12px; margin-bottom: 24px; }
     .bl-avatar-img { width: 44px; height: 44px; }
     .bl-title { font-size: 2.25rem; margin-bottom: 8px; }

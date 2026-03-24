@@ -132,80 +132,177 @@ export function ActivityPanel({
           </div>
         ) : (
           <div className={s.questionArea}>
-            {questionsLoading ? (
-              <div className={s.emptyState}>
-                <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
-                <div className={s.emptyText}>Loading questions...</div>
-              </div>
-            ) : !activityQuestion ? (
-              <div className={s.emptyState}>
-                <div className={s.emptyIcon}>
-                  <BookOpen size={24} />
-                </div>
-                <div className={s.emptyTitle}>All caught up!</div>
-                <div className={s.emptyText}>
-                  No more questions for this skill right now. Great work!
-                </div>
-              </div>
-            ) : (
-              <QuestionRenderer
-                key={activityQuestion.activity_question_id}
-                slug={activityQuestion.template_slug}
-                data={activityQuestion.data}
-                onAnswer={onAnswer}
-                resetKey={resetKey}
-              />
-            )}
+            <div style={{ position: "relative", minHeight: "100%" }}>
+              <div style={{ opacity: submitting ? 0.55 : 1, transition: "opacity 140ms ease", pointerEvents: submitting ? "none" : "auto" }}>
+                {questionsLoading ? (
+                  <div className={s.emptyState}>
+                    <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
+                    <div className={s.emptyText}>Loading questions...</div>
+                  </div>
+                ) : !activityQuestion ? (
+                  <div className={s.emptyState}>
+                    <div className={s.emptyIcon}>
+                      <BookOpen size={24} />
+                    </div>
+                    <div className={s.emptyTitle}>All caught up!</div>
+                    <div className={s.emptyText}>
+                      No more questions for this skill right now. Great work!
+                    </div>
+                  </div>
+                ) : (
+                  <QuestionRenderer
+                    key={activityQuestion.activity_question_id}
+                    slug={activityQuestion.template_slug}
+                    data={activityQuestion.data}
+                    onAnswer={onAnswer}
+                    resetKey={resetKey}
+                  />
+                )}
 
-            {/* Hint on wrong answer */}
-            {submitted && isCorrect === false && (() => {
-              const hint = typeof activityQuestion?.data?.hint === "string" ? activityQuestion.data.hint : null;
-              if (!hint) return null;
-              return (
-                <div style={{
-                  marginTop: 12,
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  background: "rgba(251,191,36,0.1)",
-                  color: "#fbbf24",
-                  border: "1px solid rgba(251,191,36,0.2)",
-                  lineHeight: 1.5,
-                }}>
-                  💡 {hint}
+                {/* Hint on wrong answer */}
+                {submitted && isCorrect === false && (() => {
+                  const hint = typeof activityQuestion?.data?.hint === "string" ? activityQuestion.data.hint : null;
+                  if (!hint) return null;
+                  return (
+                    <div style={{
+                      marginTop: 12,
+                      padding: "12px 14px",
+                      borderRadius: 10,
+                      fontSize: 13,
+                      background: "rgba(251,191,36,0.1)",
+                      color: "#fbbf24",
+                      border: "1px solid rgba(251,191,36,0.2)",
+                      lineHeight: 1.5,
+                    }}>
+                      💡 {hint}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {submitting && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    pointerEvents: "all",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      borderRadius: 999,
+                      padding: "8px 14px",
+                      background: "rgba(15,23,42,0.72)",
+                      color: "#e2e8f0",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      backdropFilter: "blur(2px)",
+                    }}
+                  >
+                    Checking answer
+                    <span style={{ display: "inline-flex", gap: 3 }}>
+                      <span style={{ width: 4, height: 4, borderRadius: 999, background: "#cbd5e1", animation: `${s.dotsPulse} 800ms infinite` }} />
+                      <span style={{ width: 4, height: 4, borderRadius: 999, background: "#cbd5e1", animation: `${s.dotsPulse} 800ms 120ms infinite` }} />
+                      <span style={{ width: 4, height: 4, borderRadius: 999, background: "#cbd5e1", animation: `${s.dotsPulse} 800ms 240ms infinite` }} />
+                    </span>
+                  </div>
                 </div>
-              );
-            })()}
+              )}
+            </div>
           </div>
         )}
 
         {activityQuestion && !timerExpired && submitted && (
-          <div className={s.actions}>
-            {isCorrect === false && (
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={onTryAgain}
-                style={{ flex: 1 }}
-                disabled={submitting}
+          <>
+            <div style={{ minHeight: 48 }}>
+            {isCorrect === true && (
+              <div
+                style={{
+                  marginTop: 4,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.08))",
+                  color: "#166534",
+                  border: "1px solid rgba(34,197,94,0.35)",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                  willChange: "transform, opacity",
+                }}
               >
-                Try Again
-              </Button>
+                Hurray! Great answer.
+              </div>
             )}
-            <Button
-              variant="primary"
-              size="md"
-              onClick={onNext}
-              style={{ flex: 1 }}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-              ) : (
-                "Next Question"
+            {isCorrect === false && (
+              <div
+                style={{
+                  marginTop: 4,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.07))",
+                  color: "#991b1b",
+                  border: "1px solid rgba(239,68,68,0.35)",
+                  fontWeight: 700,
+                  fontSize: 13,
+                  animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                  willChange: "transform, opacity",
+                }}
+              >
+                Not quite right. Try again!
+              </div>
+            )}
+            </div>
+
+            <div className={s.actions}>
+              {isCorrect === false && (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={onTryAgain}
+                  style={{ flex: 1 }}
+                  disabled={submitting}
+                >
+                  Try Again
+                </Button>
               )}
-            </Button>
-          </div>
+              {isCorrect === false && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={onNext}
+                  style={{ padding: "6px 10px", fontSize: 12, minWidth: 132, flex: "0 0 auto" }}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    "Next Question"
+                  )}
+                </Button>
+              )}
+              {isCorrect === true && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={onNext}
+                  style={{ flex: 1 }}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : (
+                    "Next Question"
+                  )}
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </Card>

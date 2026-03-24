@@ -10,6 +10,7 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
   const tolerance = num(data.tolerance, 0);
   const unit = str(data.unit);
   const imageUrl = str(data.image_url);
+  const multiStepMode = data.__multi_step_mode === true;
   const fmt = (v: number) => unit ? `${v} ${unit}` : `${v}`;
 
   const [val, setVal] = useState(Math.round((min + max) / 2));
@@ -43,8 +44,14 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
         <div style={{ position: "relative" }}>
           <input
             type="range" min={min} max={max} value={val}
-            onChange={(e) => { setVal(Number(e.target.value)); setChecked(false); }}
-            disabled={checked}
+            onChange={(e) => {
+              const nextVal = Number(e.target.value);
+              const nextCorrect = Math.abs(nextVal - correct) <= tolerance;
+              setVal(nextVal);
+              setChecked(false);
+              if (multiStepMode) onAnswer?.({ value: nextVal, correct: nextCorrect });
+            }}
+            disabled={!multiStepMode && checked}
             style={{ width: "100%", accentColor: "#7C3AED", cursor: checked ? "default" : "pointer", height: 6 }}
           />
           {/* Tick at correct value (shown after check) */}
@@ -75,7 +82,7 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
         </div>
       )}
 
-      {!checked && (
+      {!checked && !multiStepMode && (
         <div style={{ textAlign: "center" }}>
           <button style={BTN} onClick={() => { setChecked(true); onAnswer?.({ value: val, correct: isCorrect }); }}>
             Submit
@@ -83,7 +90,7 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
         </div>
       )}
 
-      {checked && (
+      {checked && !multiStepMode && (
         <div style={isCorrect ? FEEDBACK_OK : FEEDBACK_ERR}>
           {isCorrect
             ? `✓ Correct! The answer is ${fmt(correct)}.`

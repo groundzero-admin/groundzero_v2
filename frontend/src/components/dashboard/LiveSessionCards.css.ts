@@ -18,6 +18,13 @@ export const liveCard = style({
     "0 10px 40px rgba(244, 63, 94, 0.09), 0 2px 14px rgba(15, 23, 42, 0.04)",
   minHeight: "172px",
   boxSizing: "border-box",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      padding: "16px",
+      borderRadius: "18px",
+      minHeight: "unset",
+    },
+  },
 });
 
 export const liveHeaderRow = style({
@@ -26,6 +33,12 @@ export const liveHeaderRow = style({
   alignItems: "flex-start",
   gap: "16px",
   minHeight: "128px",
+  "@media": {
+    "screen and (max-width: 700px)": {
+      flexDirection: "column",
+      minHeight: "unset",
+    },
+  },
 });
 
 export const liveEmptyDesc = style({
@@ -47,6 +60,13 @@ export const timeBoxMuted = style({
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
+  "@media": {
+    "screen and (max-width: 700px)": {
+      alignSelf: "flex-start",
+      minWidth: "unset",
+      width: "100%",
+    },
+  },
 });
 
 export const timeBoxPlaceholder = style({
@@ -120,6 +140,13 @@ export const timeBox = style({
   background: "#f1f5f9",
   minWidth: "100px",
   flexShrink: 0,
+  "@media": {
+    "screen and (max-width: 700px)": {
+      minWidth: "unset",
+      width: "100%",
+      textAlign: "left",
+    },
+  },
 });
 
 export const timeBoxLabel = style({
@@ -182,6 +209,13 @@ export const journeyCard = style({
   maxHeight: "min(72vh, 520px)",
   minHeight: 0,
   overflow: "hidden",
+  "@media": {
+    "screen and (max-width: 900px)": {
+      borderRadius: "18px",
+      padding: "16px",
+      maxHeight: "none",
+    },
+  },
 });
 
 export const journeyScroll = style({

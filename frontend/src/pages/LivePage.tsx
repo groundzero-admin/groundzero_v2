@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Loader2, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, PhoneOff } from "lucide-react";
+import { Loader2, Mic, MicOff, Camera, CameraOff, Monitor, MonitorOff, PhoneOff, Menu, X, UserRoundCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import {
@@ -49,13 +49,23 @@ export default function LivePage() {
   });
   const [chatText, setChatText] = useState("");
   const [sideTab, setSideTab] = useState<"activity" | "chat">("activity");
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
+  const [showCompactControls, setShowCompactControls] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  /** Activity / Chat column: fixed at max width (not resizable), aligned with teacher Live Class */
-  const SIDEBAR_WIDTH_PX = 560;
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMessages.length]);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const sync = () => setIsCompactViewport(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  useEffect(() => {
+    if (!isCompactViewport) setShowCompactControls(false);
+  }, [isCompactViewport]);
 
   const sendChat = useCallback(() => {
     const txt = chatText.trim();
@@ -70,6 +80,8 @@ export default function LivePage() {
     queryFn: () => api.get("/students/me/live-sessions").then(r => r.data),
     enabled: !!studentId,
     staleTime: 10_000,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: true,
   });
   const activeLiveSession = liveSessions?.find(s => s.is_live) ?? null;
   const roomCode = activeLiveSession?.room_code_guest ?? "";
@@ -283,6 +295,11 @@ export default function LivePage() {
   }
 
   const tiles: TileData[] = [];
+  const teacherPeerId = peers.find((p: any) => {
+    const role = String(p?.roleName ?? p?.role?.name ?? "").toLowerCase();
+    const name = String(p?.name ?? "").toLowerCase();
+    return !p?.isLocal && (role.includes("teacher") || role.includes("facilitator") || role.includes("host") || name.includes("teacher"));
+  })?.id ?? null;
   for (const p of peers) {
     if (p.auxiliaryTracks?.length) {
       tiles.push({
@@ -318,6 +335,30 @@ export default function LivePage() {
     };
   }
 
+  const mediaButtons = [
+    {
+      icon: isAudioOn ? <Mic size={16} /> : <MicOff size={16} />,
+      label: "Mic",
+      on: isAudioOn as boolean,
+      danger: !isAudioOn,
+      fn: () => hmsActions.setLocalAudioEnabled(!isAudioOn),
+    },
+    {
+      icon: isVideoOn ? <Camera size={16} /> : <CameraOff size={16} />,
+      label: "Cam",
+      on: isVideoOn as boolean,
+      danger: !isVideoOn,
+      fn: () => hmsActions.setLocalVideoEnabled(!isVideoOn),
+    },
+    {
+      icon: isScreenShared ? <MonitorOff size={16} /> : <Monitor size={16} />,
+      label: isScreenShared ? "Stop" : "Share",
+      on: isScreenShared as boolean,
+      warn: isScreenShared,
+      fn: () => hmsActions.setScreenShareEnabled(!isScreenShared),
+    },
+  ];
+
   return (
     <>
       <div className={s.page}>
@@ -340,10 +381,27 @@ export default function LivePage() {
             </div>
           ) : !roomCode ? (
             <div style={{
-              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 10,
               padding: 24, textAlign: "center", color: "#64748b", fontSize: 14, background: "#0b0b1a",
             }}>
               No live class right now. Join from your dashboard when your teacher starts the session.
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
+                style={{
+                  marginTop: 4,
+                  padding: "9px 14px",
+                  borderRadius: 10,
+                  border: "1px solid #334155",
+                  background: "#111827",
+                  color: "#e2e8f0",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 12,
+                }}
+              >
+                Go back to dashboard
+              </button>
             </div>
           ) : !isConnected ? (
             <div style={{
@@ -360,6 +418,8 @@ export default function LivePage() {
                 pinnedId={pinnedId}
                 setPinnedId={setPinnedId}
                 onMute={makeMuteHandler}
+                preferredMainPeerId={teacherPeerId}
+                isCompactViewport={isCompactViewport}
               />
               <div
                 style={{
@@ -386,75 +446,147 @@ export default function LivePage() {
                     alignItems: "center",
                     gap: 6,
                     flexWrap: "wrap",
-                    justifyContent: "flex-end",
-                    flex: 1,
+                    justifyContent: isCompactViewport ? "flex-start" : "flex-end",
+                    width: isCompactViewport ? "100%" : "auto",
+                    flexBasis: isCompactViewport ? "100%" : "auto",
+                    flex: isCompactViewport ? undefined : 1,
                     minWidth: 0,
                   }}
                 >
-                  {[
-                    {
-                      icon: isAudioOn ? <Mic size={16} /> : <MicOff size={16} />,
-                      label: "Mic",
-                      on: isAudioOn as boolean,
-                      danger: !isAudioOn,
-                      fn: () => hmsActions.setLocalAudioEnabled(!isAudioOn),
-                    },
-                    {
-                      icon: isVideoOn ? <Camera size={16} /> : <CameraOff size={16} />,
-                      label: "Cam",
-                      on: isVideoOn as boolean,
-                      danger: !isVideoOn,
-                      fn: () => hmsActions.setLocalVideoEnabled(!isVideoOn),
-                    },
-                    {
-                      icon: isScreenShared ? <MonitorOff size={16} /> : <Monitor size={16} />,
-                      label: isScreenShared ? "Stop" : "Share",
-                      on: isScreenShared as boolean,
-                      warn: isScreenShared,
-                      fn: () => hmsActions.setScreenShareEnabled(!isScreenShared),
-                    },
-                  ].map((b, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={b.fn}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                        padding: "7px 14px",
-                        borderRadius: 10,
-                        border: "none",
-                        cursor: "pointer",
-                        fontWeight: 600,
-                        fontSize: 12,
-                        color: "#fff",
-                        background: b.danger ? "#ef4444" : (b as { warn?: boolean }).warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
-                      }}
-                    >
-                      {b.icon} {b.label}
-                    </button>
-                  ))}
-                  <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
-                  <button
-                    type="button"
-                    onClick={handleLeaveClass}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                      padding: "7px 14px",
-                      borderRadius: 10,
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      fontSize: 12,
-                      color: "#fff",
-                      background: "#64748b",
-                    }}
-                  >
-                    <PhoneOff size={16} /> Leave
-                  </button>
+                  {isCompactViewport ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowCompactControls((v) => !v)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 12px",
+                          borderRadius: 10,
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          color: "#fff",
+                          background: "#1f2937",
+                        }}
+                      >
+                        {showCompactControls ? <X size={16} /> : <Menu size={16} />}
+                        {showCompactControls ? "Hide controls" : "Show controls"}
+                      </button>
+                      {showCompactControls && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", width: "100%" }}>
+                          {mediaButtons.map((b, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={b.fn}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 5,
+                                padding: "8px 12px",
+                                borderRadius: 10,
+                                border: "none",
+                                cursor: "pointer",
+                                fontWeight: 600,
+                                fontSize: 12,
+                                color: "#fff",
+                                background: b.danger ? "#ef4444" : b.warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
+                              }}
+                            >
+                              {b.icon} {b.label}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={handleLeaveClass}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 5,
+                              padding: "8px 12px",
+                              borderRadius: 10,
+                              border: "none",
+                              cursor: "pointer",
+                              fontWeight: 600,
+                              fontSize: 12,
+                              color: "#fff",
+                              background: "#64748b",
+                            }}
+                          >
+                            <PhoneOff size={16} /> Leave
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {mediaButtons.map((b, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={b.fn}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "8px 12px",
+                            borderRadius: 10,
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                            fontSize: "clamp(12px, 2.8vw, 13px)",
+                            color: "#fff",
+                            background: b.danger ? "#ef4444" : b.warn ? "#f59e0b" : b.on ? "#6366f1" : "#1c1c30",
+                          }}
+                        >
+                          {b.icon} {b.label}
+                        </button>
+                      ))}
+                      {teacherPeerId && (
+                        <button
+                          type="button"
+                          onClick={() => setPinnedId(teacherPeerId)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                            padding: "8px 12px",
+                            borderRadius: 10,
+                            border: "1px solid rgba(34,197,94,0.45)",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                            fontSize: "clamp(12px, 2.8vw, 13px)",
+                            color: "#dcfce7",
+                            background: "rgba(20,83,45,0.6)",
+                          }}
+                        >
+                          <UserRoundCheck size={16} /> Select teacher
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleLeaveClass}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                          padding: "8px 12px",
+                          borderRadius: 10,
+                          border: "none",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                          fontSize: "clamp(12px, 2.8vw, 13px)",
+                          color: "#fff",
+                          background: "#dc2626",
+                        }}
+                      >
+                        <PhoneOff size={16} /> Leave
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </>
@@ -462,7 +594,7 @@ export default function LivePage() {
         </div>
 
         {/* ── Right: Activity / Chat (fixed max width, not resizable) ── */}
-        <div className={s.rightCol} style={{ width: SIDEBAR_WIDTH_PX, flexShrink: 0 }}>
+        <div className={s.rightCol}>
 
           {/* ── Tab bar ── */}
           <div style={{
@@ -570,7 +702,9 @@ export default function LivePage() {
           {sideTab === "chat" && (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
               <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-                {chatMessages.length === 0 ? (
+                {!roomCode ? (
+                  <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 24 }}>No active session now.</div>
+                ) : chatMessages.length === 0 ? (
                   <div style={{ color: "#64748b", fontSize: 12, textAlign: "center", padding: 24 }}>No messages yet — say hi!</div>
                 ) : chatMessages.map((m: any) => {
                   const isMe = m.senderName === (activeLiveSession?.student_name ?? student?.name ?? "Student");
@@ -593,7 +727,8 @@ export default function LivePage() {
                   value={chatText}
                   onChange={(e) => setChatText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                  placeholder="Type a message..."
+                  placeholder={roomCode ? "Type a message..." : "No active session now"}
+                  disabled={!roomCode}
                   style={{
                     flex: 1, background: "#f8fafc", border: "1px solid #e2e8f0",
                     borderRadius: 12, padding: "10px 12px", color: "#0f172a", fontSize: 12, outline: "none",
@@ -601,9 +736,10 @@ export default function LivePage() {
                 />
                 <button
                   onClick={sendChat}
+                  disabled={!roomCode}
                   style={{
                     background: "#4f46e5", border: "none", borderRadius: 12, padding: "10px 14px",
-                    color: "#fff", fontWeight: 900, fontSize: 12, cursor: "pointer",
+                    color: "#fff", fontWeight: 900, fontSize: 12, cursor: roomCode ? "pointer" : "not-allowed", opacity: roomCode ? 1 : 0.5,
                   }}
                 >
                   ↑

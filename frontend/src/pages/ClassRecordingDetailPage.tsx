@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, FileText, Video, Download, MessageSquare, Users, Loader2 } from "lucide-react";
@@ -54,36 +54,39 @@ export default function ClassRecordingDetailPage() {
   });
 
   const latestRecording = useMemo(() => data?.recordings?.[0] ?? null, [data]);
-  const allVideoAssets = (latestRecording?.assets ?? []).filter(
-    (a) => (a.type === "room-composite" || a.type === "room-vod") && a.url,
-  );
-  const preferredVideoAsset = allVideoAssets.find(
-    (a) => !(a.path ?? "").toLowerCase().includes("rec-audio"),
-  ) ?? allVideoAssets[0] ?? null;
-  const transcriptAssets = (latestRecording?.assets ?? []).filter(
-    (a) => (a.type === "transcript" || a.type === "summary") && a.url,
-  );
-  const pendingTranscripts = (latestRecording?.assets ?? []).filter(
-    (a) =>
-      (a.type === "transcript" || a.type === "summary") &&
-      !a.url &&
-      a.status !== "failed",
-  );
+  const [openRecordingIds, setOpenRecordingIds] = useState<Record<string, boolean>>({});
 
-  const extraDownloadAssets = useMemo(() => {
-    const assets = latestRecording?.assets ?? [];
-    const primaryId = preferredVideoAsset?.id;
-    return assets.filter((a) => {
-      if (!a.url || a.status !== "completed") return false;
-      if (a.id === primaryId) return false;
-      if (a.type === "transcript" || a.type === "summary") return false;
-      if (a.type === "chat" || a.type === "speaker-label") return true;
-      if (a.type === "room-composite" || a.type === "room-vod") {
-        return (a.path ?? "").toLowerCase().includes("rec-audio");
-      }
-      return false;
+  const recordingDerived = useMemo(() => {
+    const rows = (data?.recordings ?? []).map((rec) => {
+      const allVideoAssets = (rec.assets ?? []).filter(
+        (a) => (a.type === "room-composite" || a.type === "room-vod") && a.url,
+      );
+      const preferredVideoAsset = allVideoAssets.find(
+        (a) => !(a.path ?? "").toLowerCase().includes("rec-audio"),
+      ) ?? allVideoAssets[0] ?? null;
+      const transcriptAssets = (rec.assets ?? []).filter(
+        (a) => (a.type === "transcript" || a.type === "summary") && a.url,
+      );
+      const pendingTranscripts = (rec.assets ?? []).filter(
+        (a) =>
+          (a.type === "transcript" || a.type === "summary") &&
+          !a.url &&
+          a.status !== "failed",
+      );
+      const extraDownloadAssets = (rec.assets ?? []).filter((a) => {
+        if (!a.url || a.status !== "completed") return false;
+        if (a.id === preferredVideoAsset?.id) return false;
+        if (a.type === "transcript" || a.type === "summary") return false;
+        if (a.type === "chat" || a.type === "speaker-label") return true;
+        if (a.type === "room-composite" || a.type === "room-vod") {
+          return (a.path ?? "").toLowerCase().includes("rec-audio");
+        }
+        return false;
+      });
+      return { rec, preferredVideoAsset, transcriptAssets, pendingTranscripts, extraDownloadAssets };
     });
-  }, [latestRecording?.assets, preferredVideoAsset?.id]);
+    return rows;
+  }, [data?.recordings]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", padding: 20, fontFamily: "'Inter', sans-serif" }}>
@@ -124,135 +127,149 @@ export default function ClassRecordingDetailPage() {
           </div>
         )}
 
-        {latestRecording && (
-          <>
-            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <Video size={16} />
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Recording Video</div>
-              </div>
-              {latestRecording.status === "failed" ? (
-                <div style={{ fontSize: 13, color: "#dc2626" }}>
-                  Recording failed for this session.
-                </div>
-              ) : !preferredVideoAsset ? (
-                <div style={{ fontSize: 13, color: "#64748b" }}>Video asset not available yet.</div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <video
-                    key={preferredVideoAsset.id}
-                    controls
-                    src={preferredVideoAsset.url ?? undefined}
-                    style={{ width: "100%", maxHeight: 540, borderRadius: 12, background: "#0f172a" }}
-                  />
-                </div>
-              )}
-            </div>
+        {recordingDerived.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {recordingDerived.map(({ rec, preferredVideoAsset, transcriptAssets, pendingTranscripts, extraDownloadAssets }, idx) => {
+              const isOpen = openRecordingIds[rec.id] ?? idx === 0;
+              return (
+                <div key={rec.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden" }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenRecordingIds((prev) => ({
+                        ...prev,
+                        [rec.id]: !isOpen,
+                      }))
+                    }
+                    style={{
+                      width: "100%",
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      padding: "12px 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "#0f172a" }}>
+                        Session occurrence {idx + 1}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                        {(rec.started_at || rec.created_at)
+                          ? `Started: ${new Date(rec.started_at || rec.created_at || "").toLocaleString()}`
+                          : "Start time unavailable"}{" "}
+                        ·{" "}
+                        {rec.stopped_at ? `Ended: ${new Date(rec.stopped_at).toLocaleString()}` : "Ended: —"}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#475569" }}>{isOpen ? "Hide" : "Open"}</div>
+                  </button>
 
-            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                <FileText size={16} />
-                <div style={{ fontSize: 14, fontWeight: 700 }}>Transcripts and Summary</div>
-              </div>
-              {pendingTranscripts.length > 0 && (
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: "#64748b",
-                    marginBottom: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Loader2 size={14} style={{ opacity: isFetching ? 1 : 0.5 }} aria-hidden />
-                  {pendingTranscripts.map((a) => (
-                    <span key={a.id} style={{ border: "1px dashed #cbd5e1", borderRadius: 8, padding: "4px 8px" }}>
-                      {a.type}
-                      {a.output_mode ? ` (${a.output_mode})` : ""}: {a.status}
-                    </span>
-                  ))}
-                  <span style={{ color: "#94a3b8" }}>— checking every 15s until ready.</span>
-                </div>
-              )}
-              {transcriptAssets.length === 0 && pendingTranscripts.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#64748b" }}>
-                  No transcript or summary links returned yet. If transcription was enabled, wait a few minutes and refresh.
-                </div>
-              ) : (
-                transcriptAssets.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {transcriptAssets.map((asset) => (
-                      <a
-                        key={asset.id}
-                        href={asset.url ?? "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{
-                          border: "1px solid #cbd5e1",
-                          borderRadius: 10,
-                          padding: "8px 12px",
-                          textDecoration: "none",
-                          color: "#0f172a",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          background: "#f8fafc",
-                        }}
-                      >
-                        {asset.type}
-                        {asset.output_mode ? ` (${asset.output_mode})` : ""}
-                      </a>
-                    ))}
-                  </div>
-                )
-              )}
-            </div>
+                  {isOpen && (
+                    <div style={{ borderTop: "1px solid #e2e8f0", padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Video size={16} />
+                        <div style={{ fontSize: 14, fontWeight: 700 }}>Recording Video</div>
+                      </div>
+                      {rec.status === "failed" ? (
+                        <div style={{ fontSize: 13, color: "#dc2626" }}>Recording failed for this occurrence.</div>
+                      ) : !preferredVideoAsset ? (
+                        <div style={{ fontSize: 13, color: "#64748b" }}>Video asset not available yet.</div>
+                      ) : (
+                        <video
+                          key={preferredVideoAsset.id}
+                          controls
+                          src={preferredVideoAsset.url ?? undefined}
+                          style={{ width: "100%", maxHeight: 520, borderRadius: 12, background: "#0f172a" }}
+                        />
+                      )}
 
-            {extraDownloadAssets.length > 0 && (
-              <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <Download size={16} />
-                  <div style={{ fontSize: 14, fontWeight: 700 }}>Chat, audio, and other files</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <FileText size={16} />
+                        <div style={{ fontSize: 14, fontWeight: 700 }}>Transcripts and Summary</div>
+                      </div>
+                      {pendingTranscripts.length > 0 && (
+                        <div style={{ fontSize: 13, color: "#64748b", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <Loader2 size={14} style={{ opacity: isFetching ? 1 : 0.5 }} aria-hidden />
+                          {pendingTranscripts.map((a) => (
+                            <span key={a.id} style={{ border: "1px dashed #cbd5e1", borderRadius: 8, padding: "4px 8px" }}>
+                              {a.type}{a.output_mode ? ` (${a.output_mode})` : ""}: {a.status}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {transcriptAssets.length > 0 ? (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {transcriptAssets.map((asset) => (
+                            <a
+                              key={asset.id}
+                              href={asset.url ?? "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                border: "1px solid #cbd5e1",
+                                borderRadius: 10,
+                                padding: "8px 12px",
+                                textDecoration: "none",
+                                color: "#0f172a",
+                                fontSize: 12,
+                                fontWeight: 700,
+                                background: "#f8fafc",
+                              }}
+                            >
+                              {asset.type}{asset.output_mode ? ` (${asset.output_mode})` : ""}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        pendingTranscripts.length === 0 && (
+                          <div style={{ fontSize: 13, color: "#64748b" }}>
+                            No transcript or summary links returned yet.
+                          </div>
+                        )
+                      )}
+
+                      {extraDownloadAssets.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <Download size={16} />
+                            <div style={{ fontSize: 14, fontWeight: 700 }}>Chat, audio, and other files</div>
+                          </div>
+                          {extraDownloadAssets.map((asset) => (
+                            <a
+                              key={asset.id}
+                              href={asset.url ?? "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                border: "1px solid #cbd5e1",
+                                borderRadius: 10,
+                                padding: "10px 12px",
+                                textDecoration: "none",
+                                color: "#0f172a",
+                                fontSize: 13,
+                                fontWeight: 600,
+                                background: "#f8fafc",
+                              }}
+                            >
+                              {asset.type === "chat" ? <MessageSquare size={16} /> : asset.type === "speaker-label" ? <Users size={16} /> : <Download size={16} />}
+                              <span>{asset.type}{asset.output_mode ? ` · ${asset.output_mode}` : ""}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div style={{ fontSize: 13, color: "#64748b", marginBottom: 12 }}>
-                  The main video above is a browser capture of the class view (usually the teacher). These are separate exports from 100ms: chat log, speaker labels, and an optional audio-only copy.
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {extraDownloadAssets.map((asset) => (
-                    <a
-                      key={asset.id}
-                      href={asset.url ?? "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        border: "1px solid #cbd5e1",
-                        borderRadius: 10,
-                        padding: "10px 12px",
-                        textDecoration: "none",
-                        color: "#0f172a",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        background: "#f8fafc",
-                      }}
-                    >
-                      {asset.type === "chat" ? <MessageSquare size={16} /> : asset.type === "speaker-label" ? <Users size={16} /> : <Download size={16} />}
-                      <span>
-                        {asset.type === "chat" && "Chat export (CSV)"}
-                        {asset.type === "speaker-label" && "Speaker labels (CSV)"}
-                        {asset.type === "room-composite" && "Audio-only recording (MP4)"}
-                        {!["chat", "speaker-label", "room-composite"].includes(asset.type) && asset.type}
-                        {asset.output_mode ? ` · ${asset.output_mode}` : ""}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

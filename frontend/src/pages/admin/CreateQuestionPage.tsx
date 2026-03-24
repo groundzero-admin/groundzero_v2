@@ -1289,7 +1289,7 @@ function serializeNodes(nodes: NodeDef[]): string {
   }));
 }
 
-function FlowchartNodesBuilder({ field, value, onChange }: {
+function FlowchartNodesBuilder({ field, value, onChange, allData: _allData }: {
   field: InputField; value: unknown; onChange: (v: unknown) => void; allData?: Record<string, unknown>;
 }) {
   const nodes = parseNodesJson(value);

@@ -6,6 +6,7 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
   const prompt = str(data.prompt);
   const scaleType = str(data.scale_type) || "emoji";
   const followUpPrompt = str(data.follow_up_prompt);
+  const multiStepMode = data.__multi_step_mode === true;
   const emojis = scaleType === "emoji" ? ["😟", "😐", "🙂", "😊", "🤩"]
     : scaleType === "stars" ? ["⭐", "⭐", "⭐", "⭐", "⭐"]
     : scaleType === "thumbs" ? ["👎", "👍"] : ["1", "2", "3", "4", "5"];
@@ -36,7 +37,11 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
         {emojis.map((e, i) => (
           <div
             key={i}
-            onClick={() => !submitted && setSelected(i)}
+            onClick={() => {
+              if (submitted) return;
+              setSelected(i);
+              if (multiStepMode) onAnswer?.({ rating: i, followUp });
+            }}
             style={{
               width: 40, height: 40, borderRadius: "50%",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -57,18 +62,22 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
       {followUpPrompt && (
         <textarea
           value={followUp}
-          onChange={(e) => setFollowUp(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setFollowUp(next);
+            if (multiStepMode) onAnswer?.({ rating: selected, followUp: next });
+          }}
           placeholder={followUpPrompt}
-          disabled={submitted}
-          style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 50, marginTop: 12 }}
+          disabled={!multiStepMode && submitted}
+          style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 92, marginTop: 12 }}
         />
       )}
-      {!submitted && selected !== null && (
+      {!multiStepMode && !submitted && selected !== null && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
           <button style={BTN} onClick={handleSubmit}>Submit</button>
         </div>
       )}
-      {submitted && (
+      {!multiStepMode && submitted && (
         <div style={{ marginTop: 10, padding: "10px 14px", background: "#F0FFF4", border: "1px solid #9AE6B4", borderRadius: 8, fontSize: 13, color: "#276749" }}>
           Response recorded. Thank you!
         </div>

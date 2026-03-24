@@ -5,6 +5,7 @@ import { type Shape, type ToolType, TOOLS, COLORS, genId, getCanvasPos, hitTest,
 
 export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
+  const multiStepMode = data.__multi_step_mode === true;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
   const [history, setHistory] = useState<Shape[][]>([]);
@@ -126,6 +127,14 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
   };
 
   useEffect(() => {
+    if (!multiStepMode || !canvasRef.current) return;
+    onAnswer?.({
+      drawing: canvasRef.current.toDataURL("image/png"),
+      shapes: shapes.map(({ id: _, ...r }) => r),
+    });
+  }, [multiStepMode, shapes, onAnswer]);
+
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (submitted || editing) return;
       if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
@@ -175,10 +184,12 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
         {selectedId && !submitted && <button onClick={() => { pushHistory(); setShapes(p => p.filter(s => s.id !== selectedId)); setSelectedId(null); }} style={{ padding: "5px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", cursor: "pointer" }}>Delete</button>}
         {shapes.length > 0 && !submitted && <button onClick={() => { pushHistory(); setShapes([]); setSelectedId(null); }} style={{ padding: "5px 14px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "#F1F5F9", color: "#475569", border: "1px solid #E2E8F0", cursor: "pointer" }}>Clear all</button>}
       </div>
-      {!submitted ? (
+      {!submitted && !multiStepMode ? (
         <div style={{ marginTop: 10, textAlign: "center" }}><button style={BTN} onClick={handleSubmit}>Submit</button></div>
       ) : (
-        <div style={{ marginTop: 10, padding: "10px 14px", background: "#F0FFF4", border: "1px solid #9AE6B4", borderRadius: 8, fontSize: 13, color: "#276749" }}>Drawing submitted.</div>
+        !multiStepMode ? (
+          <div style={{ marginTop: 10, padding: "10px 14px", background: "#F0FFF4", border: "1px solid #9AE6B4", borderRadius: 8, fontSize: 13, color: "#276749" }}>Drawing submitted.</div>
+        ) : null
       )}
     </div>
   );

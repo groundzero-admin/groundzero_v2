@@ -4,12 +4,11 @@ import {
   useStartSession,
   useEndSession,
   useRestartSession,
-  useMarkSessionDone,
   useUpcomingSessions,
   useCohortStudents,
 } from "@/api/hooks/useTeacher";
 import { api } from "@/api/client";
-import { Users, Calendar, CheckCircle2, Video, Square, RotateCcw, Flag, Eye, Clapperboard } from "lucide-react";
+import { Users, Calendar, CheckCircle2, Video, Square, Eye, Clapperboard } from "lucide-react";
 import * as s from "./TeacherDashboardPage.css";
 
 const AVATAR_COLORS = [
@@ -29,12 +28,10 @@ export default function TeacherDashboardPage() {
   const startSession = useStartSession();
   const endSession = useEndSession();
   const restartSession = useRestartSession();
-  const markDone = useMarkSessionDone();
   const { refetch: refetchSessions } = useUpcomingSessions(selectedCohortId);
   const [goingLiveId, setGoingLiveId] = useState<string | null>(null);
   const [endingClassId, setEndingClassId] = useState<string | null>(null);
   const [restartingId, setRestartingId] = useState<string | null>(null);
-  const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
 
   // ── No cohort selected ──
   if (!selectedCohortId) {
@@ -209,23 +206,7 @@ export default function TeacherDashboardPage() {
                       }}
                       disabled={restartingId === ses.id}
                     >
-                      <RotateCcw size={14} /> {restartingId === ses.id ? "Restarting…" : "Restart"}
-                    </button>
-                    <button
-                      type="button"
-                      className={s.actionBtnSecondary}
-                      onClick={async () => {
-                        setMarkingDoneId(ses.id);
-                        try {
-                          await markDone.mutateAsync(ses.id);
-                          refetchSessions();
-                        } finally {
-                          setMarkingDoneId(null);
-                        }
-                      }}
-                      disabled={markingDoneId === ses.id}
-                    >
-                      <Flag size={14} /> {markingDoneId === ses.id ? "Marking…" : "Mark Done"}
+                      <Video size={14} /> {restartingId === ses.id ? "Starting…" : "Go Live"}
                     </button>
                   </>
                 ) : isLive ? (

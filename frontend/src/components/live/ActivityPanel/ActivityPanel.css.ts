@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { keyframes, style } from "@vanilla-extract/css";
 import { vars } from "@/styles/theme.css";
 
 export const root = style({
@@ -143,4 +143,35 @@ export const emptyTitle = style({
 export const emptyText = style({
   fontSize: vars.font.size.sm,
   lineHeight: vars.font.lineHeight.relaxed,
+});
+
+export const popIn = keyframes({
+  "0%": { opacity: "0", transform: "translateY(4px) scale(0.98)" },
+  "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+});
+
+export const shakeX = keyframes({
+  "0%": { transform: "translateX(0)" },
+  "30%": { transform: "translateX(-2px)" },
+  "60%": { transform: "translateX(2px)" },
+  "100%": { transform: "translateX(0)" },
+});
+
+export const softAppear = keyframes({
+  "0%": {
+    opacity: "0",
+    transform: "translateY(8px)",
+    filter: "blur(1px)",
+  },
+  "100%": {
+    opacity: "1",
+    transform: "translateY(0)",
+    filter: "blur(0px)",
+  },
+});
+
+export const dotsPulse = keyframes({
+  "0%": { opacity: "0.25", transform: "translateY(0)" },
+  "50%": { opacity: "1", transform: "translateY(-1px)" },
+  "100%": { opacity: "0.25", transform: "translateY(0)" },
 });

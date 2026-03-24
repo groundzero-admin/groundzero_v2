@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, ArrowLeft, Calendar, Clock, Play, BookOpen } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, Play, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSessionReview, useStudentSessionView } from "@/api/hooks/useSessionReview";
+import { useQuery } from "@tanstack/react-query";
 import { useActivity } from "@/api/hooks/useActivities";
 import { useNextActivityQuestion } from "@/api/hooks/useNextActivityQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
@@ -13,12 +14,44 @@ import { ActivityPanel } from "@/components/live/ActivityPanel";
 import type { Session } from "@/api/types";
 import type { EvidenceCreate } from "@/api/types";
 import * as s from "./SessionReviewPage.css";
+import { api } from "@/api/client";
+
+type RecordingAsset = {
+  id: string;
+  type: string;
+  status: string;
+  path?: string | null;
+  url?: string | null;
+};
+type RecordingItem = {
+  id: string;
+  status: string;
+  created_at?: string | null;
+  started_at?: string | null;
+  stopped_at?: string | null;
+  assets: RecordingAsset[];
+};
+type RecordingDetail = {
+  recordings: RecordingItem[];
+};
 
 function formatWhen(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return `${d.toLocaleDateString(undefined, { dateStyle: "medium" })} · ${d.toLocaleTimeString(undefined, { timeStyle: "short" })}`;
+}
+
+function formatDuration(startIso: string | null | undefined, endIso: string | null | undefined): string {
+  if (!startIso || !endIso) return "Duration unavailable";
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return "Duration unavailable";
+  const mins = Math.round((end - start) / 60000);
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
 
 export default function SessionReviewPage() {
@@ -29,8 +62,15 @@ export default function SessionReviewPage() {
 
   const { data, isLoading: loadingReview, error } = useSessionReview(sessionId);
   const { data: sessionView, isLoading: loadingView, error: viewError } = useStudentSessionView(sessionId);
+  const { data: recordingDetail } = useQuery<RecordingDetail>({
+    queryKey: ["student-class-recording-detail", sessionId],
+    queryFn: () => api.get(`/class-recordings/${sessionId}`).then((r) => r.data),
+    enabled: !!sessionId,
+    staleTime: 20_000,
+  });
 
   const [activeActivityId, setActiveActivityId] = useState<string | null>(null);
+  const [selectedRecordingIdx, setSelectedRecordingIdx] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [resetKey, setAttemptKey] = useState(0);
@@ -121,6 +161,25 @@ export default function SessionReviewPage() {
     setAttemptKey((k) => k + 1);
   }, []);
 
+  const recordings = recordingDetail?.recordings ?? [];
+  const recordingRuns = useMemo(() => {
+    return recordings.map((rec) => {
+      const videoAssets = (rec.assets ?? []).filter(
+        (a) => (a.type === "room-composite" || a.type === "room-vod") && a.url,
+      );
+      const preferredVideo = videoAssets.find((a) => !(a.path ?? "").toLowerCase().includes("rec-audio")) ?? videoAssets[0] ?? null;
+      return { rec, preferredVideo };
+    });
+  }, [recordings]);
+  useEffect(() => {
+    if (!recordingRuns.length) {
+      setSelectedRecordingIdx(0);
+      return;
+    }
+    setSelectedRecordingIdx((prev) => Math.min(Math.max(prev, 0), recordingRuns.length - 1));
+  }, [recordingRuns.length]);
+  const selectedRun = recordingRuns[selectedRecordingIdx] ?? null;
+
   if (loadingStudent || loadingReview || !sessionId) {
     return (
       <div className={s.shell}>
@@ -146,7 +205,6 @@ export default function SessionReviewPage() {
   }
 
   const title = data.title?.trim() || `Session ${data.order ?? ""}`;
-  const hasRecording = !!data.recording_playback_url;
   const activities = sessionView?.activities ?? [];
 
   return (
@@ -170,6 +228,21 @@ export default function SessionReviewPage() {
                 <Clock size={14} /> Ended: {formatWhen(data.ended_at)}
               </span>
             )}
+            {recordingRuns.length > 0 && (
+              <span className={s.meta}>
+                <Play size={14} /> Total class runs: {recordingRuns.length}
+              </span>
+            )}
+            {selectedRun && (
+              <>
+                <span className={s.meta}>
+                  <Calendar size={14} /> Run date: {formatWhen(selectedRun.rec.started_at ?? selectedRun.rec.stopped_at ?? selectedRun.rec.created_at ?? null)}
+                </span>
+                <span className={s.meta}>
+                  <Clock size={14} /> {formatDuration(selectedRun.rec.started_at ?? null, selectedRun.rec.stopped_at ?? null)}
+                </span>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -177,16 +250,73 @@ export default function SessionReviewPage() {
       <div className={s.mainGrid}>
         <div className={s.leftCol}>
           <div className={s.playerWrap}>
-            {hasRecording ? (
-              <RecordingPlayer src={data.recording_playback_url!} className={s.video} />
+            {recordings.length === 0 ? (
+              data.recording_playback_url ? (
+                <RecordingPlayer src={data.recording_playback_url} className={s.video} />
+              ) : (
+                <div className={s.noVideo}>
+                  <p className={s.noVideoTitle}>Recording not available</p>
+                  <p className={s.noVideoHint}>
+                    {data.recording_status === "error"
+                      ? "We couldn’t load the recording right now. Try again later."
+                      : "There is no recording for this session yet."}
+                  </p>
+                </div>
+              )
             ) : (
-              <div className={s.noVideo}>
-                <p className={s.noVideoTitle}>Recording not available</p>
-                <p className={s.noVideoHint}>
-                  {data.recording_status === "error"
-                    ? "We couldn’t load the recording right now. Try again later."
-                    : "There is no recording for this session yet."}
-                </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRecordingIdx((p) => Math.max(0, p - 1))}
+                    disabled={selectedRecordingIdx <= 0}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      border: "1px solid #cbd5e1",
+                      background: "#fff",
+                      borderRadius: 10,
+                      padding: "6px 10px",
+                      cursor: selectedRecordingIdx <= 0 ? "not-allowed" : "pointer",
+                      opacity: selectedRecordingIdx <= 0 ? 0.5 : 1,
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    <ChevronLeft size={14} /> Previous
+                  </button>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#ffffff" }}>
+                    Session: {selectedRecordingIdx + 1} of {recordingRuns.length}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRecordingIdx((p) => Math.min(recordingRuns.length - 1, p + 1))}
+                    disabled={selectedRecordingIdx >= recordingRuns.length - 1}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      border: "1px solid #cbd5e1",
+                      background: "#fff",
+                      borderRadius: 10,
+                      padding: "6px 10px",
+                      cursor: selectedRecordingIdx >= recordingRuns.length - 1 ? "not-allowed" : "pointer",
+                      opacity: selectedRecordingIdx >= recordingRuns.length - 1 ? 0.5 : 1,
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                </div>
+                {selectedRun?.preferredVideo ? (
+                  <RecordingPlayer src={selectedRun.preferredVideo.url ?? ""} className={s.video} />
+                ) : (
+                  <div className={s.noVideo}>
+                    <p className={s.noVideoTitle}>Video not available yet for this run.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

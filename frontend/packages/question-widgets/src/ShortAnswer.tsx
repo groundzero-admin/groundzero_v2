@@ -5,6 +5,7 @@ import { CARD, HEADING, BTN, TEXT_INPUT, str, num } from "./shared";
 export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
   const maxWords = num(data.max_words, 50);
+  const multiStepMode = data.__multi_step_mode === true;
 
   const [text, setText] = useState("");
 
@@ -21,13 +22,17 @@ export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps)
       <div style={HEADING}>{prompt}</div>
       <textarea
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          const next = e.target.value;
+          setText(next);
+          if (multiStepMode) onAnswer?.({ text: next });
+        }}
         placeholder="Type your answer here..."
-        style={{ ...TEXT_INPUT, minHeight: 70, resize: "vertical" }}
+        style={{ ...TEXT_INPUT, minHeight: 96, resize: "vertical" }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: wordCount > maxWords ? "#E53E3E" : "#a0aec0" }}>
         <span>{wordCount} / {maxWords} words</span>
-        <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Submit</button>
+        {!multiStepMode && <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Submit</button>}
       </div>
     </div>
   );

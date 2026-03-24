@@ -4,6 +4,7 @@ import { CARD, HEADING, BTN, TEXT_INPUT, str } from "./shared";
 
 export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProps) {
   const prompt = str(data.prompt);
+  const multiStepMode = data.__multi_step_mode === true;
   const [text, setText] = useState("");
 
   useEffect(() => {
@@ -19,8 +20,17 @@ export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProp
           {str(data.image_url) ? <img src={str(data.image_url)} style={{ maxWidth: "100%", maxHeight: 96, borderRadius: 6 }} alt="" /> : <span style={{ color: "#a0aec0", fontSize: 12 }}>[Image]</span>}
         </div>
         <div>
-          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type your response..." style={{ ...TEXT_INPUT, minHeight: 80, resize: "none" as const }} />
-          <button style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Submit</button>
+          <textarea
+            value={text}
+            onChange={(e) => {
+              const next = e.target.value;
+              setText(next);
+              if (multiStepMode) onAnswer?.({ text: next });
+            }}
+            placeholder="Type your response..."
+            style={{ ...TEXT_INPUT, minHeight: 110, resize: "none" as const }}
+          />
+          {!multiStepMode && <button style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Submit</button>}
         </div>
       </div>
     </div>

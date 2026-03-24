@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import type { QuestionProps } from "./shared";
-import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, FEEDBACK_ERR, str, arr, num } from "./shared";
+import { CARD, HEADING, OPT, OPT_SEL, OPT_CORRECT, OPT_WRONG, RADIO, RADIO_SEL, RADIO_OK, RADIO_BAD, BTN, BTN_SECONDARY, FEEDBACK_ERR, str, arr, num } from "./shared";
 
 interface McqProps extends QuestionProps {
   timed?: boolean;
@@ -11,28 +11,37 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
   const question = str(data.question);
   const options = arr(data.options);
   const timeLimit = num(data.time_limit_seconds, 0);
+  const multiStepMode = data.__multi_step_mode === true;
 
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(timeLimit);
+  const [timedOutWithoutAnswer, setTimedOutWithoutAnswer] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const selectedRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (resetKey === undefined) return;
     setSelected(null);
     setSubmitted(false);
     setTimeLeft(timeLimit);
+    setTimedOutWithoutAnswer(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
   useEffect(() => {
-    if (!timed || timeLimit <= 0 || submitted) return;
+    selectedRef.current = selected;
+  }, [selected]);
+
+  useEffect(() => {
+    if (!timed || timeLimit <= 0 || submitted || timedOutWithoutAnswer) return;
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
-          setSubmitted(true);
-          onAnswer?.({ selected, timedOut: true });
+          // Timeout never auto-submits. Student must explicitly submit before timer ends.
+          // This avoids locking into red/green without parent controls.
+          setTimedOutWithoutAnswer(true);
           return 0;
         }
         return t - 1;
@@ -40,7 +49,7 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
     }, 1000);
     return () => clearInterval(timerRef.current!);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timed, timeLimit]);
+  }, [timed, timeLimit, submitted, timedOutWithoutAnswer]);
 
   if (!question) return null;
 
@@ -65,6 +74,15 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
     onAnswer?.({ selected });
   };
 
+  const handleTimedRetry = () => {
+    clearInterval(timerRef.current!);
+    setSelected(null);
+    setSubmitted(false);
+    setTimedOutWithoutAnswer(false);
+    selectedRef.current = null;
+    setTimeLeft(timeLimit);
+  };
+
   return (
     <div style={CARD}>
       {timed && timeLimit > 0 && (
@@ -79,20 +97,44 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
         {(options.length > 0 ? options : ["Option A", "Option B", "Option C", "Option D"]).map((opt, i) => {
           const { label, correct } = getOptionInfo(opt);
           return (
-            <div key={i} style={optStyle(i, correct)} onClick={() => { if (!submitted) setSelected(i); }}>
+            <div
+              key={i}
+              style={optStyle(i, correct)}
+              onClick={() => {
+                if (submitted || timedOutWithoutAnswer) return;
+                setSelected(i);
+                if (multiStepMode) onAnswer?.({ selected: i });
+              }}
+            >
               <span style={radioStyle(i, correct)} />
               {label}
             </div>
           );
         })}
       </div>
-      {selected !== null && !submitted && (
-        <div style={{ marginTop: 10, textAlign: "center" }}>
+      {selected !== null && !multiStepMode && !timedOutWithoutAnswer && (
+        <div
+          style={{
+            marginTop: submitted ? 0 : 10,
+            textAlign: "center",
+            maxHeight: submitted ? 0 : 56,
+            opacity: submitted ? 0 : 1,
+            transform: submitted ? "translateY(-4px)" : "translateY(0)",
+            overflow: "hidden",
+            pointerEvents: submitted ? "none" : "auto",
+            transition: "max-height 220ms ease, opacity 180ms ease, transform 180ms ease, margin-top 220ms ease",
+          }}
+        >
           <button style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
-      {submitted && timed && timeLeft === 0 && !selected && (
-        <div style={FEEDBACK_ERR}>Time's up!</div>
+      {timedOutWithoutAnswer && (
+        <>
+          <div style={FEEDBACK_ERR}>Time's up! Try again to restart the timer.</div>
+          <div style={{ marginTop: 10, textAlign: "center" }}>
+            <button style={BTN_SECONDARY} onClick={handleTimedRetry}>Try Again</button>
+          </div>
+        </>
       )}
     </div>
   );
