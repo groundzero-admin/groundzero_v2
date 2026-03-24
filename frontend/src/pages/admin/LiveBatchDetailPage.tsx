@@ -143,7 +143,7 @@ function EditSessionModal({
                                 <span style={{ opacity: 0.5, marginLeft: 8, fontSize: 11 }}>{a.activity_type} · {a.duration_minutes ? `${a.duration_minutes}m` : "—"}</span>
                                 <span style={{ marginLeft: 8, fontSize: 11, opacity: 0.4 }}>{a.status}</span>
                             </div>
-                            {a.status === "pending" && (
+                            {(a.status === "pending" || a.status === "paused") && (
                                 <button
                                     type="button"
                                     className={s.dangerBtn}

@@ -725,24 +725,24 @@ async def get_next_activity_question(
             stage=state.stage if state else 1,
         )
 
-    # ── ZPD mode: no fixed order, pick by difficulty ──
+    # ── ZPD mode: only for timed_mcq ──
+    # Other modes (default, open_ended, discussion) only serve questions via question_ids.
+    if activity.mode != "timed_mcq":
+        return None
+
     comp_ids = []
     for comp in (activity.primary_competencies or []):
         cid = comp.get("competency_id") or comp.get("competencyId")
         if cid:
             comp_ids.append(cid)
 
-    # ── Grade-band fallback: no primary_competencies set ──
-    # If activity has a pillar_id, find all published questions for that pillar
-    # matching the student's grade, and use their competencies as the pool.
+    # ── Grade-band fallback: pillar set but no primary_competencies (e.g. Math Sprint) ──
     if not comp_ids and activity.pillar_id:
         student_result = await db.execute(select(Student).where(Student.id == student_id))
         student_obj = student_result.scalar_one_or_none()
         if student_obj and student_obj.grade_band:
             from app.models.competency import Capability
             cap_query = select(Capability.id).where(Capability.pillar_id == activity.pillar_id)
-            # For math_logic, only use "Math Foundations" capability (P)
-            # to avoid logic/reasoning questions in a math curriculum sprint
             if activity.pillar_id == "math_logic":
                 cap_query = cap_query.where(Capability.name.ilike("%Math Found%"))
             cap_result = await db.execute(cap_query)
