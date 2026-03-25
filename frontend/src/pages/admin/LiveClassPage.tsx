@@ -29,6 +29,7 @@ export default function LiveClassPage() {
     const [activeTab, setActiveTab]       = useState<"activities" | "feed" | "preview" | "chat">("activities");
     const [activeType, setActiveType]     = useState<string | null>(null);
     const [feedActivityId, setFeedActivityId] = useState<string | null>(null);
+    const [previewActivityId, setPreviewActivityId] = useState<string | null>(null);
     const [joinError, setJoinError]       = useState<string | null>(null);
 
     /** Teacher right panel (Activities / Feed / Preview / Chat): fixed at max width */
@@ -42,6 +43,22 @@ export default function LiveClassPage() {
     const { data: sessionView }       = useTeacherSessionView(cohortId || undefined, sessionId || undefined);
     const launchActivity = useLaunchActivity();
     const pauseActivity  = usePauseActivity();
+
+    // Initialize/repair activity selections (only when current ids become invalid).
+    // We do NOT force-reset on every render, to keep teacher manual dropdown selection.
+    useEffect(() => {
+        const ordered = [...(sessionActivities ?? [])].sort((a, b) => a.order - b.order);
+        if (ordered.length === 0) return;
+        const preferred = ordered.find((a) => a.status === "active")
+            ?? ordered.find((a) => a.status === "paused")
+            ?? ordered[0];
+        if (!preferred?.activity_id) return;
+
+        const validFeed = !feedActivityId || ordered.some((a) => a.activity_id === feedActivityId);
+        const validPreview = !previewActivityId || ordered.some((a) => a.activity_id === previewActivityId);
+        if (!validFeed) setFeedActivityId(preferred.activity_id);
+        if (!validPreview) setPreviewActivityId(preferred.activity_id);
+    }, [sessionActivities, feedActivityId, previewActivityId]);
 
     // Join HMS
     useEffect(() => {
@@ -141,7 +158,23 @@ export default function LiveClassPage() {
                 <div style={{ width: SIDEBAR_WIDTH_PX, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #e2e8f0", background: "#fff" }}>
                     <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                         {(["activities", "feed", "preview", "chat"] as const).map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer", background: activeTab === tab ? "#eef2ff" : "transparent", color: activeTab === tab ? "#1e293b" : "#64748b", fontWeight: 800, fontSize: 10, borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent" }}>
+                            <button
+                                key={tab}
+                                onClick={() => {
+                                    if (tab === "feed" || tab === "preview") {
+                                        const ordered = [...(sessionActivities ?? [])].sort((a, b) => a.order - b.order);
+                                        const live = ordered.find((a) => a.status === "active")
+                                            ?? ordered.find((a) => a.status === "paused")
+                                            ?? ordered[0];
+                                        if (live?.activity_id) {
+                                            if (tab === "feed") setFeedActivityId(live.activity_id);
+                                            if (tab === "preview") setPreviewActivityId(live.activity_id);
+                                        }
+                                    }
+                                    setActiveTab(tab);
+                                }}
+                                style={{ flex: 1, padding: "10px 0", border: "none", cursor: "pointer", background: activeTab === tab ? "#eef2ff" : "transparent", color: activeTab === tab ? "#1e293b" : "#64748b", fontWeight: 800, fontSize: 10, borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent" }}
+                            >
                                 {tab === "activities" ? "Activities" : tab === "feed" ? "Feed" : tab === "preview" ? "Preview" : "Chat"}
                             </button>
                         ))}
@@ -160,6 +193,8 @@ export default function LiveClassPage() {
                                 sessionActivities={sessionActivities}
                                 sessionView={sessionView}
                                 cohortStudents={cohortStudents}
+                                selectedActivityId={previewActivityId}
+                                setSelectedActivityId={setPreviewActivityId}
                             />
                         )}
                         {activeTab === "chat" && (

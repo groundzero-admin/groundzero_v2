@@ -1,4 +1,4 @@
-import { CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { SessionActivity, LivePulseEvent, StudentActivityScores } from "@/api/types";
 import type { Student } from "@/api/types";
 import type { ConfidenceMood } from "./StudentConfidenceBar/StudentConfidenceBar";
@@ -34,6 +34,8 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
     setFeedActivityId: (id: string | null) => void;
     activityInfoById: Map<string, { description?: string | null; questionCount?: number }>;
 }) {
+    const [showStudentResponses, setShowStudentResponses] = useState(false);
+
     // Confidence pulse messages
     const confidenceMsgs = messages
         .filter((m: any) => {
@@ -72,6 +74,15 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
     const liveActivity = ordered.find(a => a.status === "active") ?? ordered.filter(a => a.status !== "pending").at(-1) ?? ordered[0];
     const selectedId = feedActivityId ?? liveActivity?.activity_id ?? null;
 
+    // Keep default selection on the launched/live activity when Feed opens.
+    useEffect(() => {
+        if (ordered.length === 0) return;
+        const exists = !!feedActivityId && ordered.some(a => a.activity_id === feedActivityId);
+        if (!exists && liveActivity?.activity_id) {
+            setFeedActivityId(liveActivity.activity_id);
+        }
+    }, [ordered, liveActivity, feedActivityId, setFeedActivityId]);
+
     const attempted = (scoresByActivity[selectedId ?? ""] ?? []).sort((a, b) => (b.correct / (b.total || 1)) - (a.correct / (a.total || 1)));
     const attemptedIds = new Set(attempted.map(s => s.student_id));
     const notAttempted: StudentRow[] = (cohortStudents ?? []).filter(s => !attemptedIds.has(s.id)).map(s => ({ student_id: s.id, student_name: s.name, correct: 0, total: 0 }));
@@ -79,30 +90,69 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
 
     return (
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
-            {/* Activity tabs */}
+            {/* Activity selector */}
             {ordered.length > 0 && (
-                <div style={{ display: "flex", overflowX: "auto", flexShrink: 0, borderBottom: "1px solid #e2e8f0", background: "#fff", scrollbarWidth: "none" }}>
-                    {ordered.map(a => {
-                        const isSelected = a.activity_id === selectedId;
-                        const isLive = a.status === "active";
-                        const isDone = a.status === "completed";
-                        return (
-                            <button key={a.id} onClick={() => setFeedActivityId(a.activity_id)} style={{ flexShrink: 0, cursor: "pointer", outline: "none", padding: "8px 12px", display: "flex", alignItems: "center", gap: 5, background: "transparent", border: "none", borderBottom: isSelected ? "2px solid #6366f1" : "2px solid transparent" }}>
-                                {isLive && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", animation: "pulse 1.5s infinite", flexShrink: 0 }} />}
-                                {isDone && <CheckCircle2 size={9} color="#94a3b8" />}
-                                <span style={{ fontSize: 11, fontWeight: isSelected ? 700 : 500, color: isSelected ? "#0f172a" : isDone ? "#94a3b8" : "#475569", whiteSpace: "nowrap", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis" }}>
-                                    {a.activity_name ?? a.activity_id}
-                                </span>
-                            </button>
-                        );
-                    })}
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, borderBottom: "1px solid #e2e8f0", background: "#fff", padding: "8px 10px" }}>
+                    <select
+                        value={selectedId ?? ""}
+                        onChange={(e) => setFeedActivityId(e.target.value || null)}
+                        style={{
+                            flex: 1,
+                            minWidth: 0,
+                            padding: "7px 10px",
+                            borderRadius: 10,
+                            border: "1px solid #e2e8f0",
+                            background: "#fff",
+                            color: "#334155",
+                            fontSize: 11,
+                            fontWeight: 600,
+                        }}
+                    >
+                        {ordered.map((a) => (
+                            <option key={a.id} value={a.activity_id}>
+                                {a.order}. {a.activity_name ?? a.activity_id}
+                                {a.status === "active" ? " (live)" : ""}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             )}
 
-            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: 10 }}>
-                {/* Student list */}
-                {students.length > 0 && (
-                    <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <div style={{ flexShrink: 0, padding: "8px 10px 0", borderBottom: showStudentResponses ? "1px solid #e2e8f0" : "none", background: "#fafafa" }}>
+                <button
+                    type="button"
+                    onClick={() => setShowStudentResponses((v) => !v)}
+                    style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        border: "1px solid #e2e8f0",
+                        background: "#fff",
+                        color: "#334155",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center",
+                    }}
+                >
+                    {showStudentResponses ? "Hide all students responses" : "Show all students responses"}
+                </button>
+            </div>
+
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8, padding: 10 }}>
+                {/* Student list — activity-wise correct/incorrect (hidden by default) */}
+                {showStudentResponses && students.length > 0 && (
+                    <div
+                        style={{
+                            flexShrink: 0,
+                            maxHeight: "min(42vh, 380px)",
+                            overflowY: "auto",
+                            background: "#fff",
+                            borderRadius: 12,
+                            border: "1px solid #e2e8f0",
+                            overflowX: "hidden",
+                        }}
+                    >
                         {(() => {
                             const totalQs = activityInfoById.get(selectedId ?? "")?.questionCount ?? 0;
                             return students.map((st, idx) => {
@@ -163,8 +213,8 @@ export function FeedTab({ sessionActivities, activityScores, cohortStudents, pul
                     </div>
                 )}
 
-                {/* How Students Feel */}
-                <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px" }}>
+                {/* How Students Feel — uses remaining vertical space when responses are hidden */}
+                <div style={{ flex: showStudentResponses ? undefined : 1, minHeight: showStudentResponses ? undefined : 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 12px" }}>
                     <div style={{ fontWeight: 700, fontSize: 11, marginBottom: 6, color: "#0f172a" }}>💬 How Students Feel</div>
                     {confidenceMsgs.length > 0 ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
