@@ -24,6 +24,7 @@ class BenchmarkQuestion(Base):
     strong_signals = Column(JSONB, nullable=False, default=list)
     watchout_signals = Column(JSONB, nullable=False, default=list)
     image_url = Column(Text, nullable=True)
+    visual_data = Column(JSONB, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

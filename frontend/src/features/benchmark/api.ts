@@ -1,5 +1,10 @@
 import { api } from "@/api/client";
 
+export interface VisualData {
+  type: "sequence" | "fraction_compare" | "probability_bag" | "scaling" | "exponential_tree" | "robot_rules" | "venn" | "equation_puzzle";
+  [key: string]: unknown;
+}
+
 export interface BenchmarkQuestion {
   id: string;
   grade_band: string;
@@ -8,6 +13,7 @@ export interface BenchmarkQuestion {
   curriculum_anchor: string | null;
   pillars: string[];
   image_url: string | null;
+  visual_data: VisualData | null;
 }
 
 export interface BenchmarkSessionResponse {

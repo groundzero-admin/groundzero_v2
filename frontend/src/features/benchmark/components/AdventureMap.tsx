@@ -23,6 +23,9 @@ const ChromaVideo = memo(function ChromaVideo({ src, size = 90 }: { src: string;
     canvas.width = renderSize;
     canvas.height = renderSize;
 
+    const DIST_SOLID = 40;
+    const DIST_FADE = 70;
+
     const draw = () => {
       if (video.paused || video.ended) {
         rafRef.current = requestAnimationFrame(draw);
@@ -42,12 +45,18 @@ const ChromaVideo = memo(function ChromaVideo({ src, size = 90 }: { src: string;
 
       const imageData = ctx.getImageData(0, 0, renderSize, renderSize);
       const d = imageData.data;
+
+      const bgR = d[0], bgG = d[1], bgB = d[2];
+
       for (let i = 0; i < d.length; i += 4) {
         const r = d[i], g = d[i + 1], b = d[i + 2];
-        const brightness = (r + g + b) / 3;
-        if (brightness > 220) {
-          const fade = Math.max(0, (brightness - 220) / 35);
-          d[i + 3] = Math.round(d[i + 3] * (1 - fade));
+        const dr = r - bgR, dg = g - bgG, db = b - bgB;
+        const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+        if (dist < DIST_SOLID) {
+          d[i + 3] = 0;
+        } else if (dist < DIST_FADE) {
+          const fade = (dist - DIST_SOLID) / (DIST_FADE - DIST_SOLID);
+          d[i + 3] = Math.round(d[i + 3] * fade);
         }
       }
       ctx.putImageData(imageData, 0, 0);
