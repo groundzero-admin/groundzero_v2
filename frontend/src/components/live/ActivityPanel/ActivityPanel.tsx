@@ -14,6 +14,8 @@ interface ActivityPanelProps {
   submitted: boolean;
   isCorrect: boolean | null;
   resetKey?: number;
+  /** Needed for `ai_conversation` (SPARK). Optional so other question types remain unaffected. */
+  studentId?: string | null;
   onAnswer: (answer: unknown) => void;
   onTryAgain: () => void;
   onNext: () => void;
@@ -34,6 +36,7 @@ export function ActivityPanel({
   submitted,
   isCorrect,
   resetKey,
+  studentId,
   onAnswer,
   onTryAgain,
   onNext,
@@ -45,6 +48,7 @@ export function ActivityPanel({
 }: ActivityPanelProps) {
   const timerExpired = timeLeft !== null && timeLeft !== undefined && timeLeft <= 0;
   const isScribble = activityQuestion?.template_slug === "draw_scribble";
+  const isAiConversation = activityQuestion?.template_slug === "ai_conversation";
 
   const formatTime = (secs: number) => {
     const m = Math.floor(Math.max(0, secs) / 60);
@@ -136,7 +140,13 @@ export function ActivityPanel({
         ) : (
           <div className={s.questionArea}>
             <div style={{ position: "relative", minHeight: "100%" }}>
-              <div style={{ opacity: submitting ? 0.55 : 1, transition: "opacity 140ms ease", pointerEvents: submitting ? "none" : "auto" }}>
+              <div
+                style={{
+                  opacity: submitting && !isAiConversation ? 0.55 : 1,
+                  transition: "opacity 140ms ease",
+                  pointerEvents: submitting && !isAiConversation ? "none" : "auto",
+                }}
+              >
                 {questionsLoading ? (
                   <div className={s.emptyState}>
                     <Loader2 size={28} style={{ animation: "spin 1s linear infinite" }} />
@@ -156,14 +166,23 @@ export function ActivityPanel({
                   <QuestionRenderer
                     key={activityQuestion.activity_question_id}
                     slug={activityQuestion.template_slug}
-                    data={activityQuestion.data}
+                    data={
+                      activityQuestion.template_slug === "ai_conversation"
+                        ? {
+                            ...activityQuestion.data,
+                            __spark_student_id: studentId,
+                            __spark_question_id: activityQuestion.activity_question_id,
+                            __spark_competency_id: activityQuestion.competency_id,
+                          }
+                        : activityQuestion.data
+                    }
                     onAnswer={onAnswer}
                     resetKey={resetKey}
                   />
                 )}
 
                 {/* Hint on wrong answer */}
-              {!isScribble && submitted && isCorrect === false && (() => {
+              {!isScribble && !isAiConversation && submitted && isCorrect === false && (() => {
                   const hint = typeof activityQuestion?.data?.hint === "string" ? activityQuestion.data.hint : null;
                   if (!hint) return null;
                   return (
@@ -183,7 +202,7 @@ export function ActivityPanel({
                 })()}
               </div>
 
-              {submitting && (
+              {submitting && !isAiConversation && (
                 <div
                   style={{
                     position: "absolute",
@@ -310,7 +329,28 @@ export function ActivityPanel({
                 </>
               )}
 
-              {!isScribble && isCorrect === false && (
+              {isAiConversation && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={onTryAgain}
+                    style={{ flex: 1 }}
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={onNext}
+                    style={{ padding: "6px 10px", fontSize: 12, minWidth: 132, flex: "0 0 auto" }}
+                  >
+                    Next Question
+                  </Button>
+                </>
+              )}
+
+              {!isScribble && !isAiConversation && isCorrect === false && (
                 <Button
                   variant="secondary"
                   size="md"
@@ -322,7 +362,7 @@ export function ActivityPanel({
                 </Button>
               )}
 
-              {!isScribble && isCorrect === false && (
+              {!isScribble && !isAiConversation && isCorrect === false && (
                 <Button
                   variant="primary"
                   size="md"
@@ -338,7 +378,7 @@ export function ActivityPanel({
                 </Button>
               )}
 
-              {!isScribble && isCorrect === true && (
+              {!isScribble && !isAiConversation && isCorrect === true && (
                 <Button
                   variant="primary"
                   size="md"
