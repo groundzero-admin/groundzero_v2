@@ -20,8 +20,9 @@ export const moduleBadge = style({
   gap: vars.space[1],
   padding: `${vars.space[1]} ${vars.space[3]}`,
   borderRadius: vars.radius.full,
-  backgroundColor: vars.color.interactive.primary,
-  color: vars.color.text.inverse,
+  // Student live: make the "Live Activity" badge light green for UX emphasis.
+  backgroundColor: "rgba(34, 197, 94, 0.18)",
+  color: "#166534",
   fontSize: vars.font.size.xs,
   fontFamily: vars.font.family.display,
   fontWeight: vars.font.weight.bold,

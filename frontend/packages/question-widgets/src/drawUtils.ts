@@ -1,10 +1,18 @@
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type ToolType = "select" | "pen" | "rect" | "circle" | "diamond" | "arrow" | "eraser";
+export type ToolType =
+  | "select"
+  | "pen"
+  | "rect"
+  | "parallelogram"
+  | "circle"
+  | "diamond"
+  | "arrow"
+  | "eraser";
 
 export interface Shape {
   id: string;
-  type: "rect" | "circle" | "diamond" | "arrow" | "pen";
+  type: "rect" | "parallelogram" | "circle" | "diamond" | "arrow" | "pen";
   x: number;
   y: number;
   w: number;
@@ -12,15 +20,17 @@ export interface Shape {
   color: string;
   text?: string;
   points?: { x: number; y: number }[];
+  textSize?: number;
 }
 
 let _shapeId = 0;
 export const genId = () => `s${++_shapeId}`;
 
 export const TOOLS: { id: ToolType; label: string; icon: string }[] = [
-  { id: "select", label: "Select", icon: "↖" },
+  { id: "select", label: "Select", icon: "☝️" },
   { id: "pen", label: "Pen", icon: "✏" },
   { id: "rect", label: "Rect", icon: "▭" },
+  { id: "parallelogram", label: "Parallelogram", icon: "▱" },
   { id: "circle", label: "Circle", icon: "○" },
   { id: "diamond", label: "Diamond", icon: "◇" },
   { id: "arrow", label: "Arrow", icon: "→" },
@@ -58,7 +68,12 @@ export function hitTest(s: Shape, px: number, py: number): boolean {
     const maxY = Math.max(s.y, s.y + s.h) + pad;
     return px >= minX && px <= maxX && py >= minY && py <= maxY;
   }
-  return px >= s.x - pad && px <= s.x + s.w + pad && py >= s.y - pad && py <= s.y + s.h + pad;
+  // For all box-like shapes, normalize for negative w/h while hit-testing.
+  const minX = Math.min(s.x, s.x + s.w) - pad;
+  const minY = Math.min(s.y, s.y + s.h) - pad;
+  const maxX = Math.max(s.x, s.x + s.w) + pad;
+  const maxY = Math.max(s.y, s.y + s.h) + pad;
+  return px >= minX && px <= maxX && py >= minY && py <= maxY;
 }
 
 /** Get the center point of a shape (for placing text labels) */
@@ -75,6 +90,31 @@ function drawShapeBody(ctx: CanvasRenderingContext2D, s: Shape) {
       ctx.fillRect(s.x, s.y, s.w, s.h);
       ctx.strokeRect(s.x, s.y, s.w, s.h);
       break;
+    case "parallelogram": {
+      // Normalize bounds so dragging in any direction works.
+      const minX = Math.min(s.x, s.x + s.w);
+      const maxX = Math.max(s.x, s.x + s.w);
+      const minY = Math.min(s.y, s.y + s.h);
+      const maxY = Math.max(s.y, s.y + s.h);
+      const w = maxX - minX;
+      // Skew the top/bottom edges.
+      const skew = Math.max(0, Math.min(w * 0.2, w * 0.25));
+
+      const p1 = { x: minX + skew, y: minY };
+      const p2 = { x: maxX + skew, y: minY };
+      const p3 = { x: maxX - skew, y: maxY };
+      const p4 = { x: minX - skew, y: maxY };
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
     case "circle": {
       const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
       ctx.beginPath();
@@ -126,14 +166,15 @@ function drawLabel(ctx: CanvasRenderingContext2D, s: Shape) {
   if (!s.text) return;
   const c = shapeCenter(s);
   ctx.save();
-  ctx.font = "bold 14px system-ui, -apple-system, sans-serif";
+  const fontSize = s.textSize ?? 14;
+  ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   if (s.type === "arrow") {
     // White background pill behind text on arrows
     const m = ctx.measureText(s.text);
-    const pw = m.width + 10, ph = 16;
+    const pw = m.width + 10, ph = Math.max(14, fontSize + 2);
     ctx.fillStyle = "#fff";
     ctx.globalAlpha = 0.9;
     ctx.beginPath();
@@ -155,16 +196,52 @@ function drawSelection(ctx: CanvasRenderingContext2D, s: Shape) {
   ctx.strokeStyle = "#7C3AED";
   ctx.lineWidth = 1.5;
   const pad = 4;
-  if (s.type === "pen" && s.points) {
+  const center = shapeCenter(s);
+  const fontSize = s.textSize ?? 14;
+
+  // Shape bounds (normalized to support negative w/h)
+  let minX = 0, minY = 0, maxX = 0, maxY = 0;
+  if (s.type === "pen" && s.points?.length) {
     const xs = s.points.map(p => p.x), ys = s.points.map(p => p.y);
-    ctx.strokeRect(Math.min(...xs) - pad, Math.min(...ys) - pad,
-      Math.max(...xs) - Math.min(...xs) + pad * 2, Math.max(...ys) - Math.min(...ys) + pad * 2);
-  } else if (s.type === "arrow") {
-    const minX = Math.min(s.x, s.x + s.w), minY = Math.min(s.y, s.y + s.h);
-    ctx.strokeRect(minX - pad, minY - pad, Math.abs(s.w) + pad * 2, Math.abs(s.h) + pad * 2);
+    minX = Math.min(...xs); minY = Math.min(...ys);
+    maxX = Math.max(...xs); maxY = Math.max(...ys);
   } else {
-    ctx.strokeRect(s.x - pad, s.y - pad, s.w + pad * 2, s.h + pad * 2);
+    minX = Math.min(s.x, s.x + s.w);
+    minY = Math.min(s.y, s.y + s.h);
+    maxX = Math.max(s.x, s.x + s.w);
+    maxY = Math.max(s.y, s.y + s.h);
   }
+
+  // Text boundary + handle (when text exists)
+  if (s.text) {
+    ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+    const textWidth = ctx.measureText(s.text).width;
+
+    const pw = textWidth + 10;
+    const ph = s.type === "arrow" ? Math.max(14, fontSize + 2) : fontSize + 8;
+    const x = center.x - pw / 2;
+    const y = center.y - ph / 2;
+
+    ctx.strokeRect(x - pad, y - pad, pw + pad * 2, ph + pad * 2);
+
+    // bottom-right handle (text resize)
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.arc(x + pw + pad, y + ph + pad, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    // keep going: still draw the shape boundary so resizing remains possible
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#7C3AED";
+  }
+
+  // Main dashed boundary for the shape (always)
+  ctx.strokeRect(minX - pad, minY - pad, (maxX - minX) + pad * 2, (maxY - minY) + pad * 2);
+
+  // Shape resize handle: always show on the shape boundary bottom-right corner.
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#3b82f6";
+  ctx.beginPath(); ctx.arc(maxX, maxY, 4.5, 0, Math.PI * 2); ctx.fill();
 }
 
 export function drawShape(ctx: CanvasRenderingContext2D, s: Shape, selected: boolean) {

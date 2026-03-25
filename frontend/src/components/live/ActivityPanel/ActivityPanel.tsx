@@ -44,6 +44,7 @@ export function ActivityPanel({
   panelLabel = "Live Activity",
 }: ActivityPanelProps) {
   const timerExpired = timeLeft !== null && timeLeft !== undefined && timeLeft <= 0;
+  const isScribble = activityQuestion?.template_slug === "draw_scribble";
 
   const formatTime = (secs: number) => {
     const m = Math.floor(Math.max(0, secs) / 60);
@@ -100,9 +101,11 @@ export function ActivityPanel({
         ) : activity ? (
           <>
             <div className={s.activityTitle}>{activity.name}</div>
-            {activity.description && (
+            {activityQuestion ? (
+              <div className={s.activityDesc}>{activityQuestion.title}</div>
+            ) : activity.description ? (
               <div className={s.activityDesc}>{activity.description}</div>
-            )}
+            ) : null}
           </>
         ) : null}
 
@@ -160,7 +163,7 @@ export function ActivityPanel({
                 )}
 
                 {/* Hint on wrong answer */}
-                {submitted && isCorrect === false && (() => {
+              {!isScribble && submitted && isCorrect === false && (() => {
                   const hint = typeof activityQuestion?.data?.hint === "string" ? activityQuestion.data.hint : null;
                   if (!hint) return null;
                   return (
@@ -221,46 +224,93 @@ export function ActivityPanel({
         {activityQuestion && !timerExpired && submitted && (
           <>
             <div style={{ minHeight: 48 }}>
-            {isCorrect === true && (
-              <div
-                style={{
-                  marginTop: 4,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.08))",
-                  color: "#166534",
-                  border: "1px solid rgba(34,197,94,0.35)",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
-                  willChange: "transform, opacity",
-                }}
-              >
-                Hurray! Great answer.
-              </div>
-            )}
-            {isCorrect === false && (
-              <div
-                style={{
-                  marginTop: 4,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.07))",
-                  color: "#991b1b",
-                  border: "1px solid rgba(239,68,68,0.35)",
-                  fontWeight: 700,
-                  fontSize: 13,
-                  animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
-                  willChange: "transform, opacity",
-                }}
-              >
-                Not quite right. Try again!
-              </div>
-            )}
+              {isScribble && submitted && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: "linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.08))",
+                    color: "#166534",
+                    border: "1px solid rgba(34,197,94,0.35)",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  Answer submitted
+                </div>
+              )}
+
+              {!isScribble && isCorrect === true && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: "linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.08))",
+                    color: "#166534",
+                    border: "1px solid rgba(34,197,94,0.35)",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  Hurray! Great answer.
+                </div>
+              )}
+
+              {!isScribble && isCorrect === false && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    background: "linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.07))",
+                    color: "#991b1b",
+                    border: "1px solid rgba(239,68,68,0.35)",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    animation: `${s.softAppear} 320ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  Not quite right. Try again!
+                </div>
+              )}
             </div>
 
             <div className={s.actions}>
-              {isCorrect === false && (
+              {isScribble && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={onTryAgain}
+                    style={{ flex: 1 }}
+                    disabled={submitting}
+                  >
+                    Try Again
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={onNext}
+                    style={{ padding: "6px 10px", fontSize: 12, minWidth: 132, flex: "0 0 auto" }}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                    ) : (
+                      "Next Question"
+                    )}
+                  </Button>
+                </>
+              )}
+
+              {!isScribble && isCorrect === false && (
                 <Button
                   variant="secondary"
                   size="md"
@@ -271,7 +321,8 @@ export function ActivityPanel({
                   Try Again
                 </Button>
               )}
-              {isCorrect === false && (
+
+              {!isScribble && isCorrect === false && (
                 <Button
                   variant="primary"
                   size="md"
@@ -286,7 +337,8 @@ export function ActivityPanel({
                   )}
                 </Button>
               )}
-              {isCorrect === true && (
+
+              {!isScribble && isCorrect === true && (
                 <Button
                   variant="primary"
                   size="md"

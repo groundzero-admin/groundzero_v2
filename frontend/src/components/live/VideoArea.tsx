@@ -20,10 +20,11 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
     preferredMainPeerId?: string | null;
     isCompactViewport?: boolean;
 }) {
-    const [showParticipants, setShowParticipants] = useState(false);
+    // On mobile (compact) start hidden; on laptop start visible.
+    const [showParticipants, setShowParticipants] = useState(() => !isCompactViewport);
 
     useEffect(() => {
-        if (!isCompactViewport) setShowParticipants(false);
+        setShowParticipants(!isCompactViewport);
     }, [isCompactViewport]);
 
     const hasScreenShare = tiles.some(t => t.isScreen);
@@ -76,9 +77,15 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                 )}
             </div>
 
-            {/* Participant strip */}
-            {tiles.length > 0 && isCompactViewport && (
-                <div style={{ padding: "6px 8px 0", background: "rgba(0,0,0,0.3)", flexShrink: 0 }}>
+            {/* Participant strip controls */}
+            {tiles.length > 0 && (
+                <div
+                    style={{
+                        padding: isCompactViewport ? "6px 8px 0" : "0 8px 6px",
+                        background: isCompactViewport ? "rgba(0,0,0,0.3)" : "transparent",
+                        flexShrink: 0,
+                    }}
+                >
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                             type="button"
@@ -100,35 +107,37 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                             {showParticipants ? <X size={14} /> : <Users size={14} />}
                             {showParticipants ? "Hide participants" : "Show participants"}
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const teacherLike = tiles.find(t => t.peerId === preferredMainPeerId)
-                                    ?? tiles.find(t => !t.isScreen && !t.isLocal)
-                                    ?? null;
-                                if (teacherLike) setPinnedId(teacherLike.id);
-                            }}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "7px 10px",
-                                borderRadius: 9,
-                                border: "1px solid rgba(34,197,94,0.45)",
-                                background: "rgba(20,83,45,0.6)",
-                                color: "#dcfce7",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                fontWeight: 700,
-                            }}
-                        >
-                            <UserRoundCheck size={14} />
-                            Select teacher
-                        </button>
+                        {isCompactViewport && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const teacherLike = tiles.find(t => t.peerId === preferredMainPeerId)
+                                        ?? tiles.find(t => !t.isScreen && !t.isLocal)
+                                        ?? null;
+                                    if (teacherLike) setPinnedId(teacherLike.id);
+                                }}
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    padding: "7px 10px",
+                                    borderRadius: 9,
+                                    border: "1px solid rgba(34,197,94,0.45)",
+                                    background: "rgba(20,83,45,0.6)",
+                                    color: "#dcfce7",
+                                    cursor: "pointer",
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                }}
+                            >
+                                <UserRoundCheck size={14} />
+                                Select teacher
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
-            {tiles.length > 0 && (!isCompactViewport || showParticipants) && (
+            {tiles.length > 0 && showParticipants && (
                 <div className="participantStripScroll" style={{ display: "flex", gap: 6, padding: isCompactViewport ? "10px 8px" : "14px 8px", overflowX: "auto", flexShrink: 0, background: "rgba(0,0,0,0.3)", scrollbarWidth: "thin", alignItems: "center" }}>
                     {tiles.filter(t => !t.isScreen).map(t => {
                         const isSelected = t.id === (pinnedId ?? tiles.find(x => !x.isScreen && !x.isLocal)?.id ?? tiles[0]?.id);

@@ -262,11 +262,26 @@ export function renderStudentAnswerSummary(
       return (
         <div>
           {line("dr", "Drawing submitted", "Yes (see preview below)")}
-          <img
-            src={drawing}
-            alt="Student drawing"
-            style={{ maxWidth: "100%", maxHeight: 160, borderRadius: 8, border: "1px solid #e2e8f0", marginTop: 6 }}
-          />
+          <div
+            style={{
+              marginTop: 6,
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
+              background: "#fff",
+              overflowY: "auto",
+              maxHeight: 260,
+            }}
+          >
+            <img
+              src={drawing}
+              alt="Student drawing"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+              }}
+            />
+          </div>
         </div>
       );
     }

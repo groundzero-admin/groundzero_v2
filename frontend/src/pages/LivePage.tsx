@@ -227,6 +227,8 @@ export default function LivePage() {
     if (!studentId || !activityQuestion || submitted) return;
     lastAnswerRef.current = answer as Record<string, unknown>;
 
+    const isScribble = activityQuestion.template_slug === "draw_scribble";
+
     const responseTimeMs = Date.now() - questionShownAt.current;
 
     const evidence: EvidenceCreate = {
@@ -242,16 +244,28 @@ export default function LivePage() {
 
     try {
       const result = await submitEvidence(evidence);
-      const correct = result.event.outcome >= 0.5;
-      setSubmitted(true);
-      setIsCorrect(correct);
-      setLocalScoreDelta((prev) => ({
-        total: prev.total + 1,
-        correct: prev.correct + (correct ? 1 : 0),
-      }));
-      // BKT updates intentionally not shown to student
-      if (!correct) {
-        setWantHint(true);
+      if (isScribble) {
+        // For scribble questions we always show "Answer submitted" UI.
+        // Evidence is still created (so backend can store attempt), but we ignore outcome correctness.
+        setSubmitted(true);
+        setIsCorrect(null);
+        setLocalScoreDelta((prev) => ({
+          total: prev.total + 1,
+          correct: prev.correct, // do not increment correct count
+        }));
+        setWantHint(false);
+      } else {
+        const correct = result.event.outcome >= 0.5;
+        setSubmitted(true);
+        setIsCorrect(correct);
+        setLocalScoreDelta((prev) => ({
+          total: prev.total + 1,
+          correct: prev.correct + (correct ? 1 : 0),
+        }));
+        // BKT updates intentionally not shown to student
+        if (!correct) {
+          setWantHint(true);
+        }
       }
     } catch {
       // handled by TanStack Query
@@ -664,12 +678,30 @@ export default function LivePage() {
                 <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                   <button
                     onClick={() => {
+                      const lastAnswer = lastAnswerRef.current as Record<string, unknown> | null;
+                      const selectedIdx =
+                        lastAnswer && typeof lastAnswer.selected === "number" ? (lastAnswer.selected as number) : null;
+
+                      // Spark (backend) uses `selected_option` for MCQ diagnosis/hints.
+                      // Our MCQ payload stores `selected` as a 0-based index into `data.options`,
+                      // so we convert it to A/B/C... using the current question's option ordering.
+                      const selectedOption =
+                        activityQuestion?.template_slug === "mcq_single" || activityQuestion?.template_slug === "mcq_timed"
+                          ? (() => {
+                              const opts = activityQuestion?.data?.options;
+                              if (!Array.isArray(opts) || selectedIdx === null) return undefined;
+                              if (selectedIdx < 0 || selectedIdx >= opts.length) return undefined;
+                              return String.fromCharCode("A".charCodeAt(0) + selectedIdx);
+                            })()
+                          : undefined;
+
                       setSparkTrigger({
                         studentId,
                         questionId: activityQuestion.activity_question_id,
                         trigger: "wrong_answer",
                         competencyId: activityQuestion.competency_id,
-                        studentResponse: lastAnswerRef.current ?? undefined,
+                        selectedOption,
+                        studentResponse: lastAnswer ?? undefined,
                       });
                       setAiInteraction("hint");
                       setWantHint(false);

@@ -16,15 +16,24 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
   // Inline text editing: which shape + position on screen
   const [editing, setEditing] = useState<{ id: string; pctX: number; pctY: number } | null>(null);
   const editRef = useRef<HTMLInputElement>(null);
-  const drag = useRef<{ mode: "none" | "draw" | "move"; sx: number; sy: number; id?: string; ox?: number; oy?: number; pts?: { x: number; y: number }[] }>({ mode: "none", sx: 0, sy: 0 });
+  const drag = useRef<{
+    mode: "none" | "draw" | "move" | "resizeShape" | "resizeText";
+    sx: number;
+    sy: number;
+    id?: string;
+    ox?: number;
+    oy?: number;
+    pts?: { x: number; y: number }[];
+    ax?: number;
+    ay?: number;
+    startTextSize?: number;
+  }>({ mode: "none", sx: 0, sy: 0 });
 
   useEffect(() => { if (resetKey === undefined) return; setShapes([]); setHistory([]); setTool("pen"); setColor("#1a202c"); setSelectedId(null); setSubmitted(false); setEditing(null); }, [resetKey]);
 
   const render = useCallback(() => { if (canvasRef.current) renderCanvas(canvasRef.current, shapes, selectedId); }, [shapes, selectedId]);
   useEffect(() => { render(); }, [render]);
   useEffect(() => { if (editing) setTimeout(() => editRef.current?.focus(), 0); }, [editing]);
-
-  if (!prompt) return null;
 
   const pushHistory = () => setHistory(h => [...h.slice(-19), shapes]);
   const undo = () => { if (!history.length) return; setShapes(history[history.length - 1]); setHistory(h => h.slice(0, -1)); setSelectedId(null); };
@@ -53,9 +62,71 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
     if (tool === "select") {
       for (let i = shapes.length - 1; i >= 0; i--) {
         if (hitTest(shapes[i], pos.x, pos.y)) {
-          setSelectedId(shapes[i].id);
-          drag.current = { mode: "move", sx: pos.x, sy: pos.y, id: shapes[i].id, ox: pos.x - shapes[i].x, oy: pos.y - shapes[i].y };
-          pushHistory();
+          const s = shapes[i];
+          setSelectedId(s.id);
+          const pad = 10;
+
+          // Shape resize corner (normalized)
+          const minX = Math.min(s.x, s.x + s.w);
+          const maxX = Math.max(s.x, s.x + s.w);
+          const minY = Math.min(s.y, s.y + s.h);
+          const maxY = Math.max(s.y, s.y + s.h);
+          const shapeHandleX = maxX;
+          const shapeHandleY = maxY;
+
+          // Text resize corner (approx match to drawSelection)
+          let textHandleX: number | null = null;
+          let textHandleY: number | null = null;
+          if (s.text) {
+            const center = shapeCenter(s);
+            const fontSize = s.textSize ?? 14;
+            const approxTextWidth = (s.text?.length ?? 0) * fontSize * 0.6;
+            const pw = approxTextWidth + 10;
+            const ph = s.type === "arrow" ? Math.max(14, fontSize + 2) : fontSize + 8;
+            const x = center.x - pw / 2;
+            const y = center.y - ph / 2;
+            textHandleX = x + pw + 4;
+            textHandleY = y + ph + 4;
+          }
+
+          const distToTextHandle =
+            textHandleX == null || textHandleY == null ? Number.POSITIVE_INFINITY : Math.hypot(pos.x - textHandleX, pos.y - textHandleY);
+          const distToShapeHandle = Math.hypot(pos.x - shapeHandleX, pos.y - shapeHandleY);
+
+          if (s.text && distToTextHandle <= pad) {
+            // Resize text font size from the dotted text boundary corner.
+            pushHistory();
+            drag.current = {
+              mode: "resizeText",
+              sx: pos.x,
+              sy: pos.y,
+              id: s.id,
+              startTextSize: s.textSize ?? 14,
+            };
+          } else if (distToShapeHandle <= pad) {
+            // Resize the shape again (keep this even when text exists).
+            pushHistory();
+            drag.current = {
+              mode: "resizeShape",
+              sx: pos.x,
+              sy: pos.y,
+              id: s.id,
+              ax: minX,
+              ay: minY,
+            };
+          } else {
+            // Move shape
+            drag.current = {
+              mode: "move",
+              sx: pos.x,
+              sy: pos.y,
+              id: s.id,
+              ox: pos.x - s.x,
+              oy: pos.y - s.y,
+            };
+            pushHistory();
+          }
+
           return;
         }
       }
@@ -75,7 +146,7 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
     pushHistory();
     const id = genId();
     drag.current = { mode: "draw", sx: pos.x, sy: pos.y, id };
-    setShapes(p => [...p, { id, type: tool as Shape["type"], x: pos.x, y: pos.y, w: 0, h: 0, color }]);
+    setShapes(p => [...p, { id, type: tool as Shape["type"], x: pos.x, y: pos.y, w: 0, h: 0, color, textSize: 14 }]);
     setSelectedId(id);
   };
 
@@ -86,6 +157,20 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
     const d = drag.current;
     if (d.mode === "move" && d.id) {
       setShapes(p => p.map(s => s.id === d.id ? { ...s, x: pos.x - (d.ox ?? 0), y: pos.y - (d.oy ?? 0) } : s));
+    } else if (d.mode === "resizeShape" && d.id && d.ax != null && d.ay != null) {
+      setShapes(p =>
+        p.map((s) => {
+          if (s.id !== d.id) return s;
+          return { ...s, w: pos.x - d.ax!, h: pos.y - d.ay! };
+        }),
+      );
+    } else if (d.mode === "resizeText" && d.id && d.startTextSize != null) {
+      // Dragging the bottom-right corner (diagonal) increases text size.
+      const delta = (pos.x - d.sx) + (pos.y - d.sy);
+      const nextSize = Math.max(10, Math.min(48, d.startTextSize + delta * 0.02));
+      setShapes(p =>
+        p.map((s) => (s.id === d.id ? { ...s, textSize: nextSize } : s)),
+      );
     } else if (d.mode === "draw") {
       if (tool === "pen" && d.pts) { d.pts.push(pos); drawPenSegment(canvasRef.current!, d.pts, color); }
       else if (d.id) { setShapes(p => p.map(s => s.id === d.id ? { ...s, w: pos.x - d.sx, h: pos.y - d.sy } : s)); }
@@ -146,6 +231,10 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  // Do not early-return before all hooks above.
+  // If prompt becomes available after first render, early return changes hook order and crashes React.
+  if (!prompt) return null;
+
   const active = (id: ToolType) => tool === id;
   const tbtn = (id: ToolType) => ({
     padding: "5px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600 as const, border: "none",
@@ -166,11 +255,14 @@ export default function DrawScribble({ data, onAnswer, resetKey }: QuestionProps
         <button onClick={undo} disabled={!history.length || submitted} style={{ ...tbtn("select"), background: "#F1F5F9", color: history.length ? "#475569" : "#CBD5E1", opacity: history.length ? 1 : 0.5 }}>↩ Undo</button>
       </div>
       <div style={{ position: "relative" }}>
-        <canvas ref={canvasRef} width={600} height={360}
+        {/* Scrollable drawing viewport (bigger canvas height than viewport) */}
+        <div style={{ overflowY: "auto", maxHeight: "clamp(220px, 40vh, 380px)" }}>
+        <canvas ref={canvasRef} width={600} height={1100}
           onMouseDown={handleDown} onMouseMove={handleMove} onMouseUp={handleUp} onMouseLeave={handleUp}
           onTouchStart={handleDown} onTouchMove={handleMove} onTouchEnd={handleUp}
           onDoubleClick={handleDblClick}
-          style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10, cursor: submitted ? "default" : tool === "select" ? "default" : tool === "eraser" ? "not-allowed" : "crosshair", width: "100%", height: "auto", aspectRatio: "5/3", touchAction: "none", pointerEvents: (submitted || editing) ? "none" : "auto" }} />
+          style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 10, cursor: submitted ? "default" : tool === "select" ? "default" : tool === "eraser" ? "not-allowed" : "crosshair", width: "100%", height: "auto", touchAction: "none", pointerEvents: (submitted || editing) ? "none" : "auto", display: "block" }} />
+        </div>
         {editing && (
           <input ref={editRef} autoFocus key={editing.id} defaultValue={editingShape?.text ?? ""}
             onKeyDown={e => { if (e.key === "Enter") commitEdit((e.target as HTMLInputElement).value); if (e.key === "Escape") setEditing(null); }}
