@@ -60,6 +60,13 @@ QUESTIONS = [
             "Agrees with the friend — 8 is more so you get more",
             "Says the friend is wrong but can't explain why in a way the friend would understand"
         ],
+        "visual_data": {
+            "type": "fraction_compare",
+            "left_slices": 4,
+            "right_slices": 8,
+            "left_label": "4 slices",
+            "right_label": "8 slices",
+        },
     },
     {
         "grade_band": "4-5",
@@ -74,6 +81,11 @@ QUESTIONS = [
         "watchout_signals": [
             "'Heads, because it's overdue' (gambler's fallacy)"
         ],
+        "visual_data": {
+            "type": "sequence",
+            "items": ["T", "T", "T", "T", "T", "T", "T", "T", "T", "T"],
+            "label": "?",
+        },
     },
     {
         "grade_band": "4-5",
@@ -150,6 +162,12 @@ QUESTIONS = [
             "'They're different shapes' — treats names as exclusive categories without seeing the inclusion relationship",
             "'A square is more even' — correct intuition but no precise reasoning"
         ],
+        "visual_data": {
+            "type": "venn",
+            "left_label": "Rectangles",
+            "right_label": "",
+            "overlap_label": "Squares",
+        },
     },
     {
         "grade_band": "4-5",
@@ -208,6 +226,15 @@ QUESTIONS = [
         "watchout_signals": [
             "'It stops' (assumes a default that wasn't specified) — reveals assumption that systems have sensible defaults without instruction"
         ],
+        "visual_data": {
+            "type": "robot_rules",
+            "rules": [
+                {"condition": "Red", "action": "Turn left", "emoji": "\ud83d\udfe5", "color": "#E53E3E"},
+                {"condition": "Blue", "action": "Turn right", "emoji": "\ud83d\udfe6", "color": "#3182CE"},
+                {"condition": "Green", "action": "Stop", "emoji": "\ud83d\udfe9", "color": "#38A169"},
+            ],
+            "unknown": {"condition": "Yellow", "emoji": "\ud83d\udfe8"},
+        },
     },
     {
         "grade_band": "4-5",
@@ -238,6 +265,12 @@ QUESTIONS = [
             "'About 20 people' — adds instead of multiplying, treats it as linear growth",
             "Can't engage with why the number grows fast — treats it as a fixed count"
         ],
+        "visual_data": {
+            "type": "exponential_tree",
+            "branch_factor": 2,
+            "levels": 5,
+            "label": "Each tells {n} friends",
+        },
     },
     {
         "grade_band": "4-5",
@@ -363,6 +396,11 @@ QUESTIONS = [
             "Picks one without any reasoning — 'the free one sounds better'",
             "Can't compare the deals even roughly — no proportional intuition"
         ],
+        "visual_data": {
+            "type": "sequence",
+            "items": ["\ud83d\udce6", "\ud83d\udce6", "\ud83c\udf81 FREE"],
+            "label": "vs 30% off",
+        },
     },
     {
         "grade_band": "6-7",
@@ -455,6 +493,13 @@ QUESTIONS = [
             "'Same chance' — ignores that the total changed",
             "'Less likely because I already got a bad one' — emotional reasoning replacing probabilistic"
         ],
+        "visual_data": {
+            "type": "probability_bag",
+            "items": [
+                {"label": "Mango", "count": 7, "color": "#F6AD55"},
+                {"label": "Lemon", "count": 3, "color": "#68D391"},
+            ],
+        },
     },
     {
         "grade_band": "6-7",
@@ -500,6 +545,16 @@ QUESTIONS = [
             "Can solve but can't construct their own — understands procedure but not structure",
             "Creates a trivially easy puzzle ('my number plus 1 is 3')"
         ],
+        "visual_data": {
+            "type": "equation_puzzle",
+            "parts": [
+                {"text": "2 \u00d7"},
+                {"text": "?", "mystery": True},
+                {"text": "+ 3"},
+                {"text": "="},
+                {"text": "11"},
+            ],
+        },
     },
     {
         "grade_band": "6-7",
@@ -561,6 +616,11 @@ QUESTIONS = [
             "'Exactly double — double the size means double the pizza' — linear thinking about area",
             "Correct answer but no reasoning — 'I think more but I don't know why'"
         ],
+        "visual_data": {
+            "type": "scaling",
+            "label1": "Radius r",
+            "label2": "Radius 2r",
+        },
     },
     {
         "grade_band": "6-7",
@@ -576,6 +636,12 @@ QUESTIONS = [
         "watchout_signals": [
             "'They both spread fast' — notices similarity without any depth of structural comparison"
         ],
+        "visual_data": {
+            "type": "exponential_tree",
+            "branch_factor": 3,
+            "levels": 4,
+            "label": "Each tells {n} people",
+        },
     },
     {
         "grade_band": "6-7",
@@ -731,6 +797,11 @@ QUESTIONS = [
         "watchout_signals": [
             "Finds 2 but can't explain why no other even primes exist — treats it as a memorised exception rather than a logical consequence"
         ],
+        "visual_data": {
+            "type": "sequence",
+            "items": ["2", "3", "5", "7", "11", "13"],
+            "label": "Primes",
+        },
     },
     {
         "grade_band": "8-9",
@@ -856,6 +927,11 @@ QUESTIONS = [
             "'Obviously yes' or 'obviously no' with no reasoning — doesn't engage with why it's a genuinely puzzling question",
             "No attempt to argue or convince — just states an opinion"
         ],
+        "visual_data": {
+            "type": "sequence",
+            "items": ["0.9", "0.99", "0.999", "0.9999", "\u2026"],
+            "label": "1?",
+        },
     },
     {
         "grade_band": "8-9",
@@ -935,6 +1011,11 @@ QUESTIONS = [
             "'Averages are always misleading' — overcorrects without nuance",
             "Can explain the problem but can't propose when averages would work — black-and-white thinking"
         ],
+        "visual_data": {
+            "type": "sequence",
+            "items": ["\u20b930K", "\u20b930K", "\u20b930K", "\u2026", "\u20b910Cr"],
+            "label": "Avg?",
+        },
     },
     {
         "grade_band": "8-9",
@@ -973,6 +1054,7 @@ async def seed_questions(db: AsyncSession) -> int:
             existing.pillars = q["pillars"]
             existing.strong_signals = q["strong_signals"]
             existing.watchout_signals = q["watchout_signals"]
+            existing.visual_data = q.get("visual_data")
             existing.is_active = True
         else:
             db.add(BenchmarkQuestion(
@@ -983,6 +1065,7 @@ async def seed_questions(db: AsyncSession) -> int:
                 pillars=q["pillars"],
                 strong_signals=q["strong_signals"],
                 watchout_signals=q["watchout_signals"],
+                visual_data=q.get("visual_data"),
             ))
         count += 1
 

@@ -8,6 +8,7 @@ import useVoiceRecording from "../hooks/useVoiceRecording";
 import useConfetti from "../hooks/useConfetti";
 import useSoundEffects from "../hooks/useSoundEffects";
 import AdventureMap from "../components/AdventureMap";
+import QuestionVisual from "../components/QuestionVisual";
 import { CHARACTERS, type CharacterPose } from "../constants/characters";
 import { CheckCircle, Loader2, Volume2, Trophy, ArrowRight, Pencil } from "lucide-react";
 
@@ -853,6 +854,14 @@ export default function ConversationRoomPage() {
                 <span className="cr-skip-hint">Tap to show full question</span>
               )}
             </div>
+
+            {currentQuestion.visual_data && typingDone && (
+              <QuestionVisual
+                visual={currentQuestion.visual_data}
+                color={character.color}
+                accent={character.accent}
+              />
+            )}
           </div>
         )}
       </div>
