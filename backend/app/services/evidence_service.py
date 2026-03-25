@@ -253,6 +253,21 @@ async def process_evidence(
     await db.commit()
     await db.refresh(event)
 
+    # 7. Fire misconception analysis for wrong/partial answers on activity questions
+    if _activity_question and data.outcome < 0.8:
+        import asyncio
+        from app.services.misconception_service import analyze_misconception
+        from app.config import settings as app_settings
+        asyncio.create_task(analyze_misconception(
+            db_url=app_settings.DATABASE_URL,
+            evidence_id=event.id,
+            slug=_template_slug,
+            question_data=_activity_question.data,
+            response=data.response or {},
+            response_time_ms=data.response_time_ms,
+            outcome=data.outcome,
+        ))
+
     return event, update_results, feedback
 
 
