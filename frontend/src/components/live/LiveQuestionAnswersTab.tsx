@@ -17,26 +17,19 @@ export function LiveQuestionAnswersTab({
   sessionActivities,
   sessionView,
   cohortStudents,
+  selectedActivityId,
+  setSelectedActivityId,
 }: {
   cohortId: string;
   sessionId: string;
   sessionActivities: SessionActivity[] | undefined;
   sessionView: SessionViewOut | undefined;
   cohortStudents: Student[] | undefined;
+  selectedActivityId: string | null;
+  setSelectedActivityId: (id: string | null) => void;
 }) {
-  const defaultActivityId = useMemo(() => {
-    const active = sessionActivities?.find((a) => a.status === "active");
-    if (active) return active.activity_id;
-    const ordered = [...(sessionActivities ?? [])].sort((a, b) => a.order - b.order);
-    return ordered[0]?.activity_id ?? null;
-  }, [sessionActivities]);
-
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [qIdx, setQIdx] = useState(0);
-
-  useEffect(() => {
-    if (defaultActivityId) setSelectedActivityId(defaultActivityId);
-  }, [defaultActivityId]);
+  const [openByStudent, setOpenByStudent] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setQIdx(0);
@@ -51,6 +44,12 @@ export function LiveQuestionAnswersTab({
   const questions = data?.questions ?? [];
   const block = questions[qIdx];
   const totalQ = questions.length;
+
+  /** Default: all student rows expanded; reset when activity or question changes */
+  useEffect(() => {
+    if (!cohortStudents?.length) return;
+    setOpenByStudent(Object.fromEntries(cohortStudents.map((st) => [st.id, true])));
+  }, [selectedActivityId, qIdx, cohortStudents]);
 
   const viewAct = sessionView?.activities.find((a) => a.activity_id === selectedActivityId);
   const previewMeta = useMemo(() => {
@@ -79,6 +78,11 @@ export function LiveQuestionAnswersTab({
     });
   }, [cohortStudents, block]);
 
+  const orderedActivities = useMemo(
+    () => [...(sessionActivities ?? [])].sort((a, b) => a.order - b.order),
+    [sessionActivities],
+  );
+
   if (!sessionActivities?.length) {
     return <div className={s.emptyState}>No activities on this session yet.</div>;
   }
@@ -86,24 +90,30 @@ export function LiveQuestionAnswersTab({
   return (
     <div className={s.root}>
       <div className={s.activityBar}>
-        <label className={s.activityLabel} htmlFor="live-answers-activity">
-          ACTIVITY
-        </label>
-        <select
-          id="live-answers-activity"
-          className={s.select}
-          value={selectedActivityId ?? ""}
-          onChange={(e) => setSelectedActivityId(e.target.value || null)}
-        >
-          {[...sessionActivities]
-            .sort((a, b) => a.order - b.order)
-            .map((a) => (
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select
+            value={selectedActivityId ?? ""}
+            onChange={(e) => setSelectedActivityId(e.target.value || null)}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: "7px 10px",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0",
+              background: "#fff",
+              color: "#334155",
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            {orderedActivities.map((a) => (
               <option key={a.id} value={a.activity_id}>
                 {a.order}. {a.activity_name ?? a.activity_id}
-                {a.status === "active" ? " (live)" : a.status === "paused" ? " (paused)" : ""}
+                {a.status === "active" ? " (live)" : ""}
               </option>
             ))}
-        </select>
+          </select>
+        </div>
       </div>
 
       <div className={s.mainColumn}>
@@ -135,7 +145,7 @@ export function LiveQuestionAnswersTab({
                 onClick={() => setQIdx((i) => Math.max(0, i - 1))}
                 disabled={qIdx <= 0}
               >
-                <ChevronLeft size={16} /> Prev
+                <ChevronLeft size={12} /> Prev
               </button>
               <span className={s.navLabel}>
                 Q{qIdx + 1} / {totalQ}
@@ -146,12 +156,11 @@ export function LiveQuestionAnswersTab({
                 onClick={() => setQIdx((i) => Math.min(totalQ - 1, i + 1))}
                 disabled={qIdx >= totalQ - 1}
               >
-                Next <ChevronRight size={16} />
+                Next <ChevronRight size={12} />
               </button>
             </div>
 
             <section className={s.questionCard} aria-label="Question preview">
-              <div className={s.questionMeta}>{block.template_slug ?? "question"}</div>
               <div className={s.questionTitle}>{block.title}</div>
               {previewMeta?.template_slug ? (
                 <div className={s.questionPreviewScroll}>
@@ -171,7 +180,17 @@ export function LiveQuestionAnswersTab({
               <div className={s.answersHeader}>STUDENT PREVIEW</div>
               <div className={s.answersScroll}>
                 {rows.map((row) => (
-                  <details key={row.student_id} className={s.studentDisclosure}>
+                  <details
+                    key={row.student_id}
+                    className={s.studentDisclosure}
+                    open={openByStudent[row.student_id] ?? true}
+                    onToggle={(e) => {
+                      // Read synchronously — `currentTarget` is null inside setState updaters (event pooled / cleared).
+                      if (e.target !== e.currentTarget) return;
+                      const nextOpen = (e.currentTarget as HTMLDetailsElement).open;
+                      setOpenByStudent((prev) => ({ ...prev, [row.student_id]: nextOpen }));
+                    }}
+                  >
                     <summary
                       className={`${s.studentSummary} ${row.hasResponse ? s.studentSummaryAnswered : s.studentSummaryNoAnswer}`}
                     >
@@ -218,11 +237,17 @@ export function LiveQuestionAnswersTab({
                               previewMeta?.data as Record<string, unknown> | undefined,
                             ) ?? (
                               <div style={{ fontSize: 11, color: "#64748b" }}>
-                                No formatter for this template — expand “Technical: raw JSON” below.
+                                No formatter for this template.
                               </div>
                             )}
                           </div>
-                          <details style={{ marginTop: 8 }}>
+                          {/*
+                          <details
+                            style={{ marginTop: 8 }}
+                            onToggle={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
                             <summary
                               style={{
                                 fontSize: 10,
@@ -244,7 +269,6 @@ export function LiveQuestionAnswersTab({
                                 fontSize: 10,
                                 lineHeight: 1.45,
                                 overflow: "auto",
-                                maxHeight: 120,
                                 whiteSpace: "pre-wrap",
                                 wordBreak: "break-word",
                               }}
@@ -252,6 +276,7 @@ export function LiveQuestionAnswersTab({
                               {JSON.stringify(row.response, null, 2)}
                             </pre>
                           </details>
+                          */}
                         </>
                       )}
                       {row.hasResponse && (!row.response || Object.keys(row.response).length === 0) && (
