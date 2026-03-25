@@ -120,7 +120,7 @@ export const activityOrder = style({
 });
 
 export const liveIcon = style({ color: "#22c55e" });
-export const pauseIcon = style({ color: "#f59e0b" });
+export const pauseIcon = style({ color: "#94a3b8" });
 
 export const activityName = style({
   fontWeight: vars.font.weight.semibold,
@@ -185,7 +185,7 @@ export const launchBtn = style({
 
 export const launchBtnPause = style([
   launchBtn,
-  { background: "#f59e0b" },
+  { background: "#ef4444" },
 ]);
 
 export const main = style({
