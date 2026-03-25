@@ -262,7 +262,31 @@ async def process_turn(
     db.add(spark_msg)
 
     total_messages = len(history) + 2  # student + spark this turn
-    max_msg = settings.SPARK_MAX_TURNS * 2
+
+    # Honor per-question max_turns for ai_conversation.
+    # If missing/invalid, fall back to the global SPARK_MAX_TURNS.
+    max_turns = settings.SPARK_MAX_TURNS
+    if conv.question_id:
+        from app.models.activity_question import ActivityQuestion
+
+        aq = await db.get(ActivityQuestion, conv.question_id)
+        if aq and isinstance(aq.data, dict):
+            raw_max = aq.data.get("max_turns")
+            parsed: int | None = None
+            if isinstance(raw_max, int):
+                parsed = raw_max
+            elif isinstance(raw_max, str):
+                try:
+                    parsed = int(raw_max)
+                except ValueError:
+                    parsed = None
+
+            if parsed is not None and parsed > 0:
+                max_turns = parsed
+
+    # Keep existing semantics: conversation is considered complete when
+    # `total_messages >= max_turns * 2` (opening message is already counted in `history`).
+    max_msg = max_turns * 2
     is_complete = total_messages >= max_msg
 
     if is_complete:

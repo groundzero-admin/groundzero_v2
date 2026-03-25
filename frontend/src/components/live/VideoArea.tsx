@@ -20,10 +20,11 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
     preferredMainPeerId?: string | null;
     isCompactViewport?: boolean;
 }) {
-    const [showParticipants, setShowParticipants] = useState(false);
+    // On mobile (compact) start hidden; on laptop start visible.
+    const [showParticipants, setShowParticipants] = useState(() => !isCompactViewport);
 
     useEffect(() => {
-        if (!isCompactViewport) setShowParticipants(false);
+        setShowParticipants(!isCompactViewport);
     }, [isCompactViewport]);
 
     const hasScreenShare = tiles.some(t => t.isScreen);
@@ -48,6 +49,12 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
 
     return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0, background: "#0b0b1a" }}>
+            <style>{`
+              .participantStripScroll::-webkit-scrollbar { height: 9px; }
+              .participantStripScroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.18); border-radius: 999px; }
+              .participantStripScroll::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.75); border-radius: 999px; border: 2px solid rgba(0,0,0,0.25); }
+              .participantStripScroll::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.95); }
+            `}</style>
             {/* Spotlight */}
             <div style={{ flex: 1, minHeight: 0, padding: 6, paddingBottom: 4 }}>
                 {spotlightTile ? (
@@ -70,9 +77,15 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                 )}
             </div>
 
-            {/* Participant strip */}
-            {tiles.length > 0 && isCompactViewport && (
-                <div style={{ padding: "6px 8px 0", background: "rgba(0,0,0,0.3)", flexShrink: 0 }}>
+            {/* Participant strip controls */}
+            {tiles.length > 0 && (
+                <div
+                    style={{
+                        padding: isCompactViewport ? "6px 8px 0" : "0 8px 6px",
+                        background: isCompactViewport ? "rgba(0,0,0,0.3)" : "transparent",
+                        flexShrink: 0,
+                    }}
+                >
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                             type="button"
@@ -94,40 +107,44 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                             {showParticipants ? <X size={14} /> : <Users size={14} />}
                             {showParticipants ? "Hide participants" : "Show participants"}
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const teacherLike = tiles.find(t => t.peerId === preferredMainPeerId)
-                                    ?? tiles.find(t => !t.isScreen && !t.isLocal)
-                                    ?? null;
-                                if (teacherLike) setPinnedId(teacherLike.id);
-                            }}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 6,
-                                padding: "7px 10px",
-                                borderRadius: 9,
-                                border: "1px solid rgba(34,197,94,0.45)",
-                                background: "rgba(20,83,45,0.6)",
-                                color: "#dcfce7",
-                                cursor: "pointer",
-                                fontSize: 12,
-                                fontWeight: 700,
-                            }}
-                        >
-                            <UserRoundCheck size={14} />
-                            Select teacher
-                        </button>
+                        {isCompactViewport && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const teacherLike = tiles.find(t => t.peerId === preferredMainPeerId)
+                                        ?? tiles.find(t => !t.isScreen && !t.isLocal)
+                                        ?? null;
+                                    if (teacherLike) setPinnedId(teacherLike.id);
+                                }}
+                                style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    padding: "7px 10px",
+                                    borderRadius: 9,
+                                    border: "1px solid rgba(34,197,94,0.45)",
+                                    background: "rgba(20,83,45,0.6)",
+                                    color: "#dcfce7",
+                                    cursor: "pointer",
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                }}
+                            >
+                                <UserRoundCheck size={14} />
+                                Select teacher
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
-            {tiles.length > 0 && (!isCompactViewport || showParticipants) && (
-                <div style={{ display: "flex", gap: 6, padding: "5px 8px", overflowX: "auto", flexShrink: 0, background: "rgba(0,0,0,0.3)", scrollbarWidth: "none" }}>
+            {tiles.length > 0 && showParticipants && (
+                <div className="participantStripScroll" style={{ display: "flex", gap: 6, padding: isCompactViewport ? "10px 8px" : "14px 8px", overflowX: "auto", flexShrink: 0, background: "rgba(0,0,0,0.3)", scrollbarWidth: "thin", alignItems: "center" }}>
                     {tiles.filter(t => !t.isScreen).map(t => {
                         const isSelected = t.id === (pinnedId ?? tiles.find(x => !x.isScreen && !x.isLocal)?.id ?? tiles[0]?.id);
+                        const cardW = isCompactViewport ? 200 : 280;
+                        const cardH = isCompactViewport ? 140 : 200;
                         return (
-                            <button key={t.id} onClick={() => setPinnedId(pinnedId === t.id ? null : t.id)} style={{ position: "relative", width: 80, height: 56, flexShrink: 0, padding: 0, background: "transparent", outline: "none", border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)", borderRadius: 9, overflow: "hidden", cursor: "pointer", boxShadow: isSelected ? "0 0 10px rgba(34,197,94,0.35)" : "none", transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s", transform: isSelected ? "scale(1.06)" : "scale(1)" }}>
+                            <button key={t.id} onClick={() => setPinnedId(pinnedId === t.id ? null : t.id)} style={{ position: "relative", width: cardW, height: cardH, flexShrink: 0, padding: 0, background: "transparent", outline: "none", border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: isSelected ? "0 0 14px rgba(34,197,94,0.35)" : "none", transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s", transform: isSelected ? "scale(1.06)" : "scale(1)" }}>
                                 <VideoTile trackId={t.trackId} label={t.label} isPinned={false} onPin={() => { }} style={{ width: "100%", height: "100%", borderRadius: 0 }} />
                                 {isSelected && <div style={{ position: "absolute", top: 3, right: 3, width: 7, height: 7, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 5px #22c55e" }} />}
                             </button>

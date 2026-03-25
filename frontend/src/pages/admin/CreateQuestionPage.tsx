@@ -15,6 +15,7 @@ import {
   ArrowLeft, ChevronRight, Eye, Trash2, Plus, Pencil,
 } from "lucide-react";
 import LivePreview from "./LivePreview";
+import { useStudents } from "@/api/hooks/useStudents";
 import * as s from "./admin.css";
 
 type Step = "pick" | "fill";
@@ -24,6 +25,7 @@ export default function CreateQuestionPage() {
   const { data: templates, isLoading: loadingT } = useQuestionTemplates();
   const { data: questions, isLoading: loadingQ } = useActivityQuestions();
   const { data: graph } = useSkillGraph();
+  const { data: students } = useStudents();
   const createMut = useCreateActivityQuestion();
   const updateMut = useUpdateActivityQuestion();
   const deleteMut = useDeleteActivityQuestion();
@@ -41,6 +43,9 @@ export default function CreateQuestionPage() {
   const [compSearch, setCompSearch] = useState("");
   const [compOpen, setCompOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+
+  const previewStudentId = students?.[0]?.id ?? null;
+  const previewCompetencyId = competencyIds[0] ?? null;
 
   // Recently created modals (match Question Bank UX)
   const [previewQ, setPreviewQ] = useState<ActivityQuestion | null>(null);
@@ -365,7 +370,18 @@ export default function CreateQuestionPage() {
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--color-text-secondary, #666)", display: "flex", alignItems: "center", gap: 6 }}>
                 <Eye size={14} /> Student View
               </div>
-              <LivePreview slug={selected.slug} data={formData} />
+              <LivePreview
+                slug={selected.slug}
+                data={
+                  selected.slug === "ai_conversation" && previewStudentId && previewCompetencyId
+                    ? {
+                        ...formData,
+                        __spark_student_id: previewStudentId,
+                        __spark_competency_id: previewCompetencyId,
+                      }
+                    : formData
+                }
+              />
             </div>
           )}
         </div>
@@ -454,7 +470,18 @@ export default function CreateQuestionPage() {
             </div>
             <div style={{ marginTop: 14 }}>
               {previewQ.template_slug ? (
-                <LivePreview slug={previewQ.template_slug} data={previewQ.data ?? {}} />
+                <LivePreview
+                  slug={previewQ.template_slug}
+                  data={
+                    previewQ.template_slug === "ai_conversation" && previewStudentId
+                      ? {
+                          ...(previewQ.data ?? {}),
+                          __spark_student_id: previewStudentId,
+                          __spark_competency_id: previewQ.competency_id,
+                        }
+                      : previewQ.data ?? {}
+                  }
+                />
               ) : (
                 <div className={s.emptyState}>No preview available (missing template slug).</div>
               )}

@@ -179,10 +179,11 @@ export function VideoArea({ confidence, onConfidenceChange, questionActive: _qa,
       {/* ━━ PARTICIPANT STRIP ━━ */}
       {participantStrip.length > 0 && (
         <div style={{
-          display: "flex", gap: 6, padding: "5px 8px",
+          display: "flex", gap: 6, padding: "14px 8px",
           overflowX: "auto", flexShrink: 0,
           background: "rgba(0,0,0,0.25)",
-          scrollbarWidth: "none",
+          scrollbarWidth: "thin",
+          alignItems: "center",
         }}>
           {participantStrip.map(p => {
             const isSelected = p.id === effectivePinnedId;
@@ -192,7 +193,7 @@ export function VideoArea({ confidence, onConfidenceChange, questionActive: _qa,
                 onClick={() => setPinnedPeerId(p.id)}
                 style={{
                   position: "relative",
-                  width: 72, height: 52,
+                  width: 280, height: 200,
                   flexShrink: 0, flexGrow: 0,
                   border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)",
                   borderRadius: 9,

@@ -224,8 +224,49 @@ export default function LivePage() {
 
   // Called by QuestionRenderer's onAnswer — auto-submits evidence
   const handleAnswer = useCallback(async (answer: unknown) => {
-    if (!studentId || !activityQuestion || submitted) return;
+    if (!studentId || !activityQuestion) return;
     lastAnswerRef.current = answer as Record<string, unknown>;
+
+    const isScribble = activityQuestion.template_slug === "draw_scribble";
+    const isAiConversation = activityQuestion.template_slug === "ai_conversation";
+
+    if (isAiConversation) {
+      // AI conversation is "free chat":
+      // - submit evidence silently (so teacher preview can show the full chat)
+      // - do not change correctness/judging UI
+      // - count the question only once (first student message)
+      const shouldCount = !submitted;
+      if (shouldCount) {
+        setSubmitted(true);
+        setLocalScoreDelta((prev) => ({
+          total: prev.total + 1,
+          correct: prev.correct,
+        }));
+      }
+
+      setIsCorrect(null);
+      setWantHint(false);
+
+      const responseTimeMs = Date.now() - questionShownAt.current;
+      const evidence: EvidenceCreate = {
+        student_id: studentId,
+        competency_id: activityQuestion.competency_id,
+        session_id: session?.id,
+        response_time_ms: responseTimeMs,
+        activity_question_id: activityQuestion.activity_question_id,
+        activity_id: activity?.id,
+        response: answer as Record<string, unknown>,
+        ai_interaction: "conversation",
+      };
+      try {
+        await submitEvidence(evidence);
+      } catch {
+        // Silently ignore evidence errors for chat UX.
+      }
+      return;
+    }
+
+    if (submitted) return;
 
     const responseTimeMs = Date.now() - questionShownAt.current;
 
@@ -242,16 +283,28 @@ export default function LivePage() {
 
     try {
       const result = await submitEvidence(evidence);
-      const correct = result.event.outcome >= 0.5;
-      setSubmitted(true);
-      setIsCorrect(correct);
-      setLocalScoreDelta((prev) => ({
-        total: prev.total + 1,
-        correct: prev.correct + (correct ? 1 : 0),
-      }));
-      // BKT updates intentionally not shown to student
-      if (!correct) {
-        setWantHint(true);
+      if (isScribble) {
+        // For scribble questions we always show "Answer submitted" UI.
+        // Evidence is still created (so backend can store attempt), but we ignore outcome correctness.
+        setSubmitted(true);
+        setIsCorrect(null);
+        setLocalScoreDelta((prev) => ({
+          total: prev.total + 1,
+          correct: prev.correct, // do not increment correct count
+        }));
+        setWantHint(false);
+      } else {
+        const correct = result.event.outcome >= 0.5;
+        setSubmitted(true);
+        setIsCorrect(correct);
+        setLocalScoreDelta((prev) => ({
+          total: prev.total + 1,
+          correct: prev.correct + (correct ? 1 : 0),
+        }));
+        // BKT updates intentionally not shown to student
+        if (!correct) {
+          setWantHint(true);
+        }
       }
     } catch {
       // handled by TanStack Query
@@ -271,6 +324,7 @@ export default function LivePage() {
     setSubmitted(false);
     setIsCorrect(null);
     setWantHint(false);
+    lastAnswerRef.current = null;
     setAttemptKey((k) => k + 1);
   }, []);
 
@@ -649,6 +703,7 @@ export default function LivePage() {
                   submitted={submitted}
                   isCorrect={isCorrect}
                   resetKey={resetKey}
+                  studentId={studentId}
                   onAnswer={handleAnswer}
                   onTryAgain={handleTryAgain}
                   onNext={handleNext}
@@ -664,12 +719,30 @@ export default function LivePage() {
                 <div style={{ padding: "10px 14px", flexShrink: 0, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                   <button
                     onClick={() => {
+                      const lastAnswer = lastAnswerRef.current as Record<string, unknown> | null;
+                      const selectedIdx =
+                        lastAnswer && typeof lastAnswer.selected === "number" ? (lastAnswer.selected as number) : null;
+
+                      // Spark (backend) uses `selected_option` for MCQ diagnosis/hints.
+                      // Our MCQ payload stores `selected` as a 0-based index into `data.options`,
+                      // so we convert it to A/B/C... using the current question's option ordering.
+                      const selectedOption =
+                        activityQuestion?.template_slug === "mcq_single" || activityQuestion?.template_slug === "mcq_timed"
+                          ? (() => {
+                              const opts = activityQuestion?.data?.options;
+                              if (!Array.isArray(opts) || selectedIdx === null) return undefined;
+                              if (selectedIdx < 0 || selectedIdx >= opts.length) return undefined;
+                              return String.fromCharCode("A".charCodeAt(0) + selectedIdx);
+                            })()
+                          : undefined;
+
                       setSparkTrigger({
                         studentId,
                         questionId: activityQuestion.activity_question_id,
                         trigger: "wrong_answer",
                         competencyId: activityQuestion.competency_id,
-                        studentResponse: lastAnswerRef.current ?? undefined,
+                        selectedOption,
+                        studentResponse: lastAnswer ?? undefined,
                       });
                       setAiInteraction("hint");
                       setWantHint(false);

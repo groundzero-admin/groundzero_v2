@@ -25,12 +25,12 @@ export function VideoTile({
             {trackId ? (
                 <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: isLarge ? "contain" : "cover", background: "#000" }} autoPlay muted playsInline />
             ) : (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: isLarge ? 56 : 28, background: "linear-gradient(135deg,#1e1e2e,#252540)", color: "#555" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", height: "100%", fontSize: isLarge ? 56 : 40, background: "linear-gradient(135deg,#1e1e2e,#252540)", color: "#555" }}>
                     {label.replace("🖥️ ", "").charAt(0)?.toUpperCase() ?? "?"}
                 </div>
             )}
-            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: isLarge ? "8px 12px" : "4px 6px", background: "linear-gradient(transparent, rgba(0,0,0,0.75))", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: isLarge ? 12 : 10, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: isLarge ? "8px 12px" : "7px 9px", background: "linear-gradient(transparent, rgba(0,0,0,0.75))", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: isLarge ? 12 : 12, fontWeight: 500, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</span>
                 <div style={{ display: "flex", gap: 3, alignItems: "center", flexShrink: 0 }}>
                     {isPinned && <span style={{ fontSize: 10, color: "#fbbf24" }}>📌</span>}
                     {onMute && (

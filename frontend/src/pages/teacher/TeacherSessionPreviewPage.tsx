@@ -11,7 +11,7 @@ import {
   useCohorts,
   useSessionActivities,
 } from "@/api/hooks/useTeacher";
-import { Calendar, ArrowLeft, Radio, Pause, Play, BookOpen, ChevronRight, ChevronLeft, FileText, ExternalLink } from "lucide-react";
+import { Calendar, ArrowLeft, Radio, Pause, Play, StopCircle, BookOpen, ChevronRight, ChevronLeft, FileText, ExternalLink } from "lucide-react";
 import LivePreview from "@/pages/admin/LivePreview";
 import * as s from "./TeacherSessionPreviewPage.css";
 
@@ -149,20 +149,20 @@ export default function TeacherSessionPreviewPage() {
                       type="button"
                       className={s.launchBtnPause}
                       disabled={!canManageLive || pauseActivity.isPending}
-                      title={!canManageLive ? "Start the session (Go Live) to launch/pause activities." : undefined}
+                      title={!canManageLive ? "Start the session (Go Live) to launch/stop activities." : undefined}
                       onClick={() => pauseActivity.mutate(sessionId)}
                     >
-                      <Pause size={14} /> Pause
+                      <StopCircle size={14} /> Stop
                     </button>
                   ) : (
                     <button
                       type="button"
                       className={s.launchBtn}
                       disabled={!canManageLive || launchActivity.isPending}
-                      title={!canManageLive ? "Start the session (Go Live) to launch/pause activities." : undefined}
+                      title={!canManageLive ? "Start the session (Go Live) to launch/stop activities." : undefined}
                       onClick={() => launchActivity.mutate({ sessionId, activityId: act.activity_id })}
                     >
-                      <Play size={14} /> {isPaused ? "Resume" : "Launch"}
+                      <Play size={14} /> Launch
                     </button>
                   )}
                 </div>

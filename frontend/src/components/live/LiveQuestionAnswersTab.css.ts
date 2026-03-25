@@ -13,29 +13,64 @@ export const activityBar = style({
   flexShrink: 0,
   padding: `${vars.space[2]} ${vars.space[3]}`,
   borderBottom: `1px solid ${vars.color.border.subtle}`,
-});
-
-export const activityLabel = style({
-  fontSize: vars.font.size.xs,
-  fontWeight: vars.font.weight.bold,
-  color: vars.color.text.tertiary,
-  display: "block",
-  marginBottom: vars.space[1],
-  letterSpacing: "0.06em",
-});
-
-export const select = style({
-  width: "100%",
-  padding: `${vars.space[2]} ${vars.space[3]}`,
-  borderRadius: vars.radius.lg,
-  border: `1px solid ${vars.color.border.subtle}`,
-  fontSize: vars.font.size.sm,
-  fontWeight: vars.font.weight.semibold,
   background: vars.color.surface.card,
-  color: vars.color.text.primary,
 });
 
-/** Fills remaining height: question block + answers block */
+/** Horizontal activity tabs (aligned with Feed tab) */
+export const activityTabRow = style({
+  display: "flex",
+  overflowX: "auto",
+  flexShrink: 0,
+  gap: 0,
+  scrollbarWidth: "thin",
+});
+
+export const activityTabBtn = style({
+  flexShrink: 0,
+  cursor: "pointer",
+  outline: "none",
+  padding: "8px 12px",
+  display: "flex",
+  alignItems: "center",
+  gap: 5,
+  background: "transparent",
+  border: "none",
+  borderBottom: "2px solid transparent",
+});
+
+export const activityTabBtnSelected = style({
+  background: "rgba(34, 197, 94, 0.16)",
+  borderBottom: "2px solid #22c55e",
+});
+
+export const activityTabBtnSelectedLive = style({
+  background: "rgba(34, 197, 94, 0.26)",
+  borderBottom: "2px solid #16a34a",
+});
+
+export const activityTabLabel = style({
+  fontSize: "11px",
+  fontWeight: vars.font.weight.semibold,
+  whiteSpace: "nowrap",
+  maxWidth: 120,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+});
+
+export const activityTabLabelSelected = style({
+  color: "#14532d",
+  fontWeight: vars.font.weight.bold,
+});
+
+export const activityTabLabelMuted = style({
+  color: "#94a3b8",
+});
+
+export const activityTabLabelDefault = style({
+  color: "#475569",
+});
+
+/** Single scroll column: question + student answers flow naturally */
 export const mainColumn = style({
   flex: 1,
   minHeight: 0,
@@ -43,7 +78,9 @@ export const mainColumn = style({
   flexDirection: "column",
   gap: vars.space[3],
   padding: vars.space[3],
-  overflow: "hidden",
+  overflowY: "auto",
+  overflowX: "hidden",
+  WebkitOverflowScrolling: "touch",
 });
 
 export const navRow = style({
@@ -52,16 +89,21 @@ export const navRow = style({
   alignItems: "center",
   justifyContent: "space-between",
   gap: vars.space[2],
+  position: "sticky",
+  top: 0,
+  zIndex: 2,
+  padding: `${vars.space[1]} 0`,
+  background: vars.color.surface.card,
 });
 
 export const navBtn = style({
   display: "flex",
   alignItems: "center",
-  gap: 4,
-  padding: "6px 10px",
-  borderRadius: vars.radius.lg,
+  gap: 2,
+  padding: "3px 7px",
+  borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border.subtle}`,
-  fontSize: vars.font.size.sm,
+  fontSize: "10px",
   fontWeight: vars.font.weight.bold,
   color: vars.color.text.secondary,
   background: vars.color.surface.card,
@@ -74,12 +116,12 @@ export const navBtn = style({
 });
 
 export const navLabel = style({
-  fontSize: vars.font.size.sm,
+  fontSize: "10px",
   fontWeight: vars.font.weight.bold,
   color: vars.color.text.primary,
 });
 
-/** Question preview card — fixed vertical space; preview scrolls inside if needed */
+/** Question preview — natural height; outer column scrolls */
 export const questionCard = style({
   flexShrink: 0,
   display: "flex",
@@ -89,8 +131,6 @@ export const questionCard = style({
   borderRadius: vars.radius.xl,
   padding: vars.space[4],
   boxShadow: vars.shadow.sm,
-  height: "clamp(320px, 46vh, 480px)",
-  minHeight: "320px",
 });
 
 export const questionMeta = style({
@@ -108,28 +148,24 @@ export const questionTitle = style({
   lineHeight: 1.35,
 });
 
-/** Scrolls inside the question card if the widget is taller than the box */
+/** Question widget wrapper — no inner scroll; grows with content */
 export const questionPreviewScroll = style({
-  flex: 1,
-  minHeight: 0,
-  overflow: "auto",
-  WebkitOverflowScrolling: "touch",
   borderRadius: vars.radius.lg,
   background: vars.color.surface.inset,
   border: `1px solid ${vars.color.border.subtle}`,
+  padding: vars.space[2],
 });
 
-/** Student answers — takes remaining space; fixed flex behavior */
+/** Student answers — flows with main column scroll */
 export const answersCard = style({
-  flex: 1,
-  minHeight: 0,
+  flexShrink: 0,
   display: "flex",
   flexDirection: "column",
   background: vars.color.surface.card,
   border: `1px solid ${vars.color.border.subtle}`,
   borderRadius: vars.radius.xl,
   boxShadow: vars.shadow.sm,
-  overflow: "hidden",
+  overflow: "visible",
 });
 
 export const answersHeader = style({
@@ -143,16 +179,13 @@ export const answersHeader = style({
 });
 
 export const answersScroll = style({
-  flex: 1,
-  minHeight: 0,
-  overflowY: "auto",
   padding: vars.space[3],
   display: "flex",
   flexDirection: "column",
   gap: vars.space[2],
 });
 
-/** Per-student accordion; closed by default */
+/** Per-student accordion; open by default in TSX */
 export const studentDisclosure = style({
   flexShrink: 0,
   borderRadius: vars.radius.lg,
