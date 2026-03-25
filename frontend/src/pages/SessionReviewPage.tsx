@@ -391,6 +391,7 @@ export default function SessionReviewPage() {
               submitted={submitted}
               isCorrect={isCorrect}
               resetKey={resetKey}
+              studentId={studentId}
               onAnswer={handleAnswer}
               onTryAgain={handleTryAgain}
               onNext={handleNext}
