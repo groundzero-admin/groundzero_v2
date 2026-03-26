@@ -28,6 +28,7 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const [isCorrect, setIsCorrect] = useState<Record<number, boolean | null>>({});
   const [stepResetKeys, setStepResetKeys] = useState<Record<number, number>>({});
+  const [submittedAll, setSubmittedAll] = useState(false);
 
   useEffect(() => {
     if (resetKey === undefined) return;
@@ -36,6 +37,7 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
     setChecked({});
     setIsCorrect({});
     setStepResetKeys({});
+    setSubmittedAll(false);
   }, [resetKey]);
 
   if (steps.length === 0) {
@@ -111,6 +113,7 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
     // New answer invalidates prior check state for this step.
     setChecked((prev) => ({ ...prev, [idx]: false }));
     setIsCorrect((prev) => ({ ...prev, [idx]: null }));
+    setSubmittedAll(false);
   };
 
   const handleCheckCurrent = () => {
@@ -129,10 +132,13 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
     setChecked((prev) => ({ ...prev, [current]: false }));
     setIsCorrect((prev) => ({ ...prev, [current]: null }));
     setStepResetKeys((prev) => ({ ...prev, [current]: (prev[current] ?? 0) + 1 }));
+    setSubmittedAll(false);
   };
 
   const handleFinish = () => {
-    onAnswer?.({ answers });
+    if (submittedAll) return;
+    setSubmittedAll(true);
+    onAnswer?.({ answers, __allow_resubmit: true });
   };
 
   const isLast = current === steps.length - 1;
@@ -184,6 +190,9 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
       {checked[current] && isCorrect[current] === true && (
         <div style={FEEDBACK_OK}>Correct. You can continue.</div>
       )}
+      {checked[current] && isCorrect[current] === null && (
+        <div style={FEEDBACK_OK}>Answer submitted.</div>
+      )}
       {checked[current] && isCorrect[current] === false && (
         <div style={FEEDBACK_ERR}>Not correct yet. Try again for this step.</div>
       )}
@@ -217,9 +226,14 @@ export default function MultiStep({ data, onAnswer, resetKey }: QuestionProps) {
           <button style={BTN} onClick={() => setCurrent(current + 1)}>Next step</button>
         )}
 
-        {isLast && checked[current] && isCorrect[current] !== false && (
-          <button style={BTN} onClick={handleFinish}>Go to next question</button>
+        {isLast && checked[current] && (
+          <button style={BTN_SECONDARY} onClick={handleTryAgain}>Wanna try again</button>
         )}
+
+        {isLast && checked[current] && !submittedAll && (
+          <button style={BTN} onClick={handleFinish}>Submit all answers</button>
+        )}
+
       </div>
     </div>
   );

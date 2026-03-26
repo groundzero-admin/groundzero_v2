@@ -7,6 +7,8 @@ export interface QuestionProps {
   onAnswer?: (answer: unknown) => void;
   /** Increment to reset the widget to its initial state without unmounting. */
   resetKey?: number;
+  /** When true, hide the template's Submit control — host shows Try again / Next after grading. */
+  hideInlineSubmit?: boolean;
 }
 
 /* ─── Style tokens ─── */

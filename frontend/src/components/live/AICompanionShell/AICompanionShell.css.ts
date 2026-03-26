@@ -30,6 +30,14 @@ export const fab = style({
   ":hover": {
     transform: "scale(1.08)",
   },
+  "@media": {
+    "(max-width: 640px)": {
+      bottom: "14px",
+      right: "14px",
+      width: "44px",
+      height: "44px",
+    },
+  },
 });
 
 export const fabNoPulse = style({
@@ -52,6 +60,14 @@ export const fabNoPulse = style({
   ":hover": {
     transform: "scale(1.08)",
   },
+  "@media": {
+    "(max-width: 640px)": {
+      bottom: "14px",
+      right: "14px",
+      width: "44px",
+      height: "44px",
+    },
+  },
 });
 
 // ── Popup (expanded chat window) ──
@@ -70,6 +86,16 @@ export const popup = style({
   boxShadow: vars.shadow.xl,
   overflow: "hidden",
   zIndex: vars.zIndex.modal,
+  "@media": {
+    "(max-width: 640px)": {
+      left: "10px",
+      right: "10px",
+      bottom: "10px",
+      width: "auto",
+      maxHeight: "72vh",
+      borderRadius: vars.radius.xl,
+    },
+  },
 });
 
 // ── Header ──
@@ -129,6 +155,12 @@ export const messagesArea = style({
   flex: 1,
   overflowY: "auto",
   scrollBehavior: "smooth",
+  "@media": {
+    "(max-width: 640px)": {
+      padding: vars.space[3],
+      gap: vars.space[2],
+    },
+  },
 });
 
 export const messageRow = style({
@@ -209,6 +241,11 @@ export const inputArea = style({
   borderTop: `1px solid ${vars.color.border.subtle}`,
   backgroundColor: vars.color.surface.inset,
   flexShrink: 0,
+  "@media": {
+    "(max-width: 640px)": {
+      padding: `${vars.space[2]} ${vars.space[3]}`,
+    },
+  },
 });
 
 export const input = style({

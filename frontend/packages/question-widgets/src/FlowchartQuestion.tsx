@@ -232,7 +232,7 @@ function parseData(data: Record<string, unknown>): { nodes: FlowNode[]; edges: F
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function FlowchartQuestion({ data, onAnswer, resetKey }: QuestionProps) {
+export default function FlowchartQuestion({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const flow = useMemo(() => parseData(data), [data]);
 
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -389,9 +389,9 @@ export default function FlowchartQuestion({ data, onAnswer, resetKey }: Question
       )}
 
       {/* ── Actions ── */}
-      {allFilled && !checked && !multiStepMode && (
+      {allFilled && !checked && !multiStepMode && !hideInlineSubmit && (
         <div style={{ textAlign: "center", marginTop: 4 }}>
-          <button style={BTN} onClick={() => {
+          <button type="button" style={BTN} onClick={() => {
             setChecked(true);
             onAnswer?.({ placed, correct: blankNodes.every(n => placed[n.id] === n.correct) });
           }}>

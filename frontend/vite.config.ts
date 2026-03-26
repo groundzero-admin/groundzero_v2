@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // listen on 0.0.0.0 so other devices on the same Wi‑Fi can open http://<laptop-ip>:3000
     port: 3000,
     proxy: {
       "/api": {

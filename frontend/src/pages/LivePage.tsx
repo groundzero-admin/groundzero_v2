@@ -17,7 +17,6 @@ import { useStudentState } from "@/api/hooks/useStudentState";
 import { useActiveSession } from "@/api/hooks/useActiveSession";
 import { useActivity } from "@/api/hooks/useActivities";
 import { useSessionActivities } from "@/api/hooks/useTeacher";
-import { useSessionScore } from "@/api/hooks/useSessionScore";
 import { useNextActivityQuestion } from "@/api/hooks/useNextActivityQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
 import { api } from "@/api/client";
@@ -190,22 +189,6 @@ export default function LivePage() {
     };
   }, [isTimedMcq, activity?.duration_minutes, activeSessionActivity?.launched_at]);
 
-  // ── Stateful score tracking — seeded from server, incremented locally ──
-  const { data: serverScore } = useSessionScore(studentId, session?.id);
-  const [localScoreDelta, setLocalScoreDelta] = useState({ total: 0, correct: 0 });
-  const lastActivityRef = useRef<string | null>(null);
-
-  // Reset local delta when activity changes
-  useEffect(() => {
-    if (activity?.id && activity.id !== lastActivityRef.current) {
-      setLocalScoreDelta({ total: 0, correct: 0 });
-      lastActivityRef.current = activity.id;
-    }
-  }, [activity?.id]);
-
-  const totalAnswered = (serverScore?.total ?? 0) + localScoreDelta.total;
-  const correctCount = (serverScore?.correct ?? 0) + localScoreDelta.correct;
-
   // Submit mutation
   const { mutateAsync: submitEvidence, isPending: submitting } =
     useSubmitEvidence(studentId);
@@ -238,10 +221,6 @@ export default function LivePage() {
       const shouldCount = !submitted;
       if (shouldCount) {
         setSubmitted(true);
-        setLocalScoreDelta((prev) => ({
-          total: prev.total + 1,
-          correct: prev.correct,
-        }));
       }
 
       setIsCorrect(null);
@@ -266,7 +245,11 @@ export default function LivePage() {
       return;
     }
 
-    if (submitted) return;
+    const maybeAnswer = (answer && typeof answer === "object" && !Array.isArray(answer))
+      ? (answer as Record<string, unknown>)
+      : null;
+    const allowResubmit = maybeAnswer?.__allow_resubmit === true;
+    if (submitted && !allowResubmit) return;
 
     const responseTimeMs = Date.now() - questionShownAt.current;
 
@@ -288,19 +271,11 @@ export default function LivePage() {
         // Evidence is still created (so backend can store attempt), but we ignore outcome correctness.
         setSubmitted(true);
         setIsCorrect(null);
-        setLocalScoreDelta((prev) => ({
-          total: prev.total + 1,
-          correct: prev.correct, // do not increment correct count
-        }));
         setWantHint(false);
       } else {
         const correct = result.event.outcome >= 0.5;
         setSubmitted(true);
         setIsCorrect(correct);
-        setLocalScoreDelta((prev) => ({
-          total: prev.total + 1,
-          correct: prev.correct + (correct ? 1 : 0),
-        }));
         // BKT updates intentionally not shown to student
         if (!correct) {
           setWantHint(true);
@@ -709,8 +684,6 @@ export default function LivePage() {
                   onNext={handleNext}
                   submitting={submitting}
                   timeLeft={isTimedMcq ? timeLeft : undefined}
-                  totalAnswered={totalAnswered}
-                  correctCount={correctCount}
                 />
               </div>
 

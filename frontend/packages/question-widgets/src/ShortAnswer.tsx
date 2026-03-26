@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, TEXT_INPUT, str, num } from "./shared";
 
-export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps) {
+export default function ShortAnswer({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const prompt = str(data.prompt);
   const maxWords = num(data.max_words, 50);
   const multiStepMode = data.__multi_step_mode === true;
@@ -32,7 +32,9 @@ export default function ShortAnswer({ data, onAnswer, resetKey }: QuestionProps)
       />
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 11, color: wordCount > maxWords ? "#E53E3E" : "#a0aec0" }}>
         <span>{wordCount} / {maxWords} words</span>
-        {!multiStepMode && <button style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Submit</button>}
+        {!multiStepMode && !hideInlineSubmit && (
+          <button type="button" style={{ ...BTN, opacity: wordCount === 0 ? 0.5 : 1 }} onClick={() => onAnswer?.({ text })}>Submit</button>
+        )}
       </div>
     </div>
   );

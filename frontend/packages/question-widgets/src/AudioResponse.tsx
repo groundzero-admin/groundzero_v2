@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TEXT_INPUT, BTN, str } from "./shared";
 
-export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProps) {
+export default function AudioResponse({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const prompt = str(data.prompt);
   const audioUrl = str(data.audio_url);
   const allowReplay = data.allow_replay !== false;
@@ -94,9 +94,9 @@ export default function AudioResponse({ data, onAnswer, resetKey }: QuestionProp
         style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 92 }}
       />
 
-      {!multiStepMode && !submitted && (
+      {!multiStepMode && !submitted && !hideInlineSubmit && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={handleSubmit} disabled={!text.trim()}>
+          <button type="button" style={BTN} onClick={handleSubmit} disabled={!text.trim()}>
             Submit
           </button>
         </div>

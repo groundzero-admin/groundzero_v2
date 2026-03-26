@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TAG, TAG_USED, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
-export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) {
+export default function FillBlanks({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const sentence = str(data.sentence);
   const answers = arr(data.answers);
   const distractors = arr(data.distractors);
@@ -117,7 +117,9 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
         key={`blank-${idx}`}
         onClick={() => value && !checked && removeWord(idx)}
         style={{
-          display: "inline-block",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
           borderBottom: value ? "2px solid" : "2px dashed",
           borderColor: isCorrect ? "#22C55E" : isWrong ? "#EF4444" : "#7C3AED",
           minWidth: 60,
@@ -131,7 +133,33 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
           transition: "all 0.2s",
         }}
       >
-        {value || "\u00A0\u00A0\u00A0\u00A0\u00A0"}
+        <span>{value || "\u00A0\u00A0\u00A0\u00A0\u00A0"}</span>
+        {value && !checked && (
+          <button
+            type="button"
+            aria-label="Remove filled word"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeWord(idx);
+            }}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              border: "none",
+              background: "rgba(124,58,237,0.14)",
+              color: "#6d28d9",
+              fontSize: 12,
+              fontWeight: 800,
+              lineHeight: "16px",
+              textAlign: "center",
+              padding: 0,
+              cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+        )}
       </span>
     );
   };
@@ -163,9 +191,9 @@ export default function FillBlanks({ data, onAnswer, resetKey }: QuestionProps) 
         </div>
       )}
 
-      {allFilled && !checked && !multiStepMode && (
+      {allFilled && !checked && !multiStepMode && !hideInlineSubmit && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleCheck}>Submit</button>
+          <button type="button" style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {checked && (

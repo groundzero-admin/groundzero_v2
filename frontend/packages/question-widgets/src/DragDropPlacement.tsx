@@ -3,7 +3,7 @@ import type { DragEvent } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TAG, TAG_USED, ZONE, ZONE_HOVER, ZONE_FILLED, ZONE_CORRECT, ZONE_WRONG, BTN, BTN_SECONDARY, FEEDBACK_OK, FEEDBACK_ERR, str, arr } from "./shared";
 
-export default function DragDropPlacement({ data, onAnswer, resetKey }: QuestionProps) {
+export default function DragDropPlacement({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const instruction = str(data.instruction);
   const items = arr(data.items);
   const zones = arr(data.zones);
@@ -12,12 +12,15 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
 
   const [placed, setPlaced] = useState<Record<number, string>>({});
   const [dragOver, setDragOver] = useState<number | null>(null);
+  /** Tap-to-place: select item in bank, then tap a zone. */
+  const [selected, setSelected] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (resetKey === undefined) return;
     setPlaced({});
     setDragOver(null);
+    setSelected(null);
     setChecked(false);
   }, [resetKey]);
 
@@ -28,23 +31,33 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
   const onDragStart = (e: DragEvent, item: string) => {
     e.dataTransfer.setData("text/plain", item);
     e.dataTransfer.effectAllowed = "move";
+    setSelected(null);
+  };
+
+  const placeInZone = (zoneIdx: number, item: string) => {
+    if (checked || !item) return;
+    setPlaced((prev) => {
+      const next: Record<number, string> = { ...prev };
+      for (const k of Object.keys(next)) {
+        const ki = Number(k);
+        if (next[ki] === item) delete next[ki];
+      }
+      next[zoneIdx] = item;
+      if (multiStepMode) {
+        const stepCorrect = zoneList.every((z, i) => next[i] === z);
+        onAnswer?.({ placed: next, correct: stepCorrect });
+      }
+      return next;
+    });
+    setSelected(null);
+    setDragOver(null);
+    setChecked(false);
   };
 
   const onDrop = (e: DragEvent, zoneIdx: number) => {
     e.preventDefault();
     const item = e.dataTransfer.getData("text/plain");
-    if (item) {
-      setPlaced((prev) => {
-        const next = { ...prev, [zoneIdx]: item };
-        if (multiStepMode) {
-          const stepCorrect = zoneList.every((z, i) => next[i] === z);
-          onAnswer?.({ placed: next, correct: stepCorrect });
-        }
-        return next;
-      });
-    }
-    setDragOver(null);
-    setChecked(false);
+    if (item) placeInZone(zoneIdx, item);
   };
 
   const removeFromZone = (zoneIdx: number) => {
@@ -69,28 +82,78 @@ export default function DragDropPlacement({ data, onAnswer, resetKey }: Question
   return (
     <div style={CARD}>
       <div style={HEADING}>{instruction}</div>
+      <div style={{ fontSize: 11, color: "#64748b", marginBottom: 10, fontWeight: 600 }}>
+        Drag to a zone or tap an item, then tap the matching zone.
+      </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
         {items.map((w, i) => (
-          <span key={i} draggable={!usedItems.has(w) && !checked} onDragStart={(e) => onDragStart(e, w)} style={usedItems.has(w) ? TAG_USED : TAG}>{w}</span>
+          <span
+            key={i}
+            role="button"
+            tabIndex={0}
+            draggable={!usedItems.has(w) && !checked}
+            onDragStart={(e) => onDragStart(e, w)}
+            onClick={() => {
+              if (checked || usedItems.has(w)) return;
+              setSelected((s) => (s === w ? null : w));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (!checked && !usedItems.has(w)) setSelected((s) => (s === w ? null : w));
+              }
+            }}
+            style={{
+              ...(usedItems.has(w) ? TAG_USED : TAG),
+              ...(selected === w && !usedItems.has(w)
+                ? { boxShadow: "0 0 0 3px rgba(124,58,237,0.35)", borderColor: "#7C3AED" }
+                : {}),
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            {w}
+          </span>
         ))}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {zoneList.map((z, i) => (
           <div
             key={i}
+            role={selected && !checked ? "button" : undefined}
+            tabIndex={selected && !checked ? 0 : undefined}
             onDragOver={(e) => { if (!checked) { e.preventDefault(); setDragOver(i); } }}
             onDragLeave={() => setDragOver(null)}
             onDrop={(e) => { if (!checked) onDrop(e, i); }}
-            onClick={() => placed[i] && removeFromZone(i)}
-            style={zoneStyle(i)}
+            onClick={() => {
+              if (checked) return;
+              if (selected && !usedItems.has(selected)) {
+                placeInZone(i, selected);
+                return;
+              }
+              if (placed[i]) removeFromZone(i);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (checked) return;
+                if (selected && !usedItems.has(selected)) placeInZone(i, selected);
+                else if (placed[i]) removeFromZone(i);
+              }
+            }}
+            style={{
+              ...zoneStyle(i),
+              cursor: selected && !checked ? "pointer" : placed[i] && !checked ? "pointer" : undefined,
+              touchAction: "manipulation",
+            }}
           >
-            {placed[i] || z}
+            {placed[i] || (selected && !checked ? `Tap to place — ${z}` : z)}
           </div>
         ))}
       </div>
-      {allPlaced && !checked && !multiStepMode && (
+      {allPlaced && !checked && !multiStepMode && !hideInlineSubmit && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleCheck}>Submit</button>
+          <button type="button" style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {checked && !multiStepMode && (

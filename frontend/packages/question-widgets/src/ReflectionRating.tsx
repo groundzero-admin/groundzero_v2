@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, TEXT_INPUT, BTN, str, arr } from "./shared";
 
-export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionProps) {
+export default function ReflectionRating({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const prompt = str(data.prompt);
   const scaleType = str(data.scale_type) || "emoji";
   const followUpPrompt = str(data.follow_up_prompt);
@@ -72,9 +72,9 @@ export default function ReflectionRating({ data, onAnswer, resetKey }: QuestionP
           style={{ ...TEXT_INPUT, resize: "vertical" as const, minHeight: 92, marginTop: 12 }}
         />
       )}
-      {!multiStepMode && !submitted && selected !== null && (
+      {!multiStepMode && !submitted && selected !== null && !hideInlineSubmit && (
         <div style={{ marginTop: 12, textAlign: "center" }}>
-          <button style={BTN} onClick={handleSubmit}>Submit</button>
+          <button type="button" style={BTN} onClick={handleSubmit}>Submit</button>
         </div>
       )}
       {!multiStepMode && submitted && (

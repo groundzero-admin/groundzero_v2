@@ -131,24 +131,9 @@ export default function LiveClassPage() {
         activityInfoById.set(a.activity_id, { description: a.description, questionCount: a.questions?.length ?? 0 });
     }
 
-    const hasScreenShare = tiles.some(t => t.isScreen);
-
     return (
         <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#f8fafc", color: "#0f172a", fontFamily: "'Inter',sans-serif" }}>
-            <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}} ::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}`}</style>
-
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#fff", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontWeight: 800, fontSize: 14 }}>Live Class</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#16a34a", fontWeight: 700 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "pulse 1.5s infinite" }} />
-                        {peers.length} joined
-                    </div>
-                    {hasScreenShare && <span style={{ fontSize: 10, background: "#f59e0b18", color: "#b45309", padding: "2px 8px", borderRadius: 999, fontWeight: 700 }}>Screen shared</span>}
-                </div>
-                {pinnedId && <button onClick={() => setPinnedId(null)} style={{ background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 999, padding: "6px 10px", color: "#9a3412", cursor: "pointer", fontSize: 11, fontWeight: 800 }}>Unpin</button>}
-            </div>
+            <style>{`::-webkit-scrollbar{width:6px;height:6px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}`}</style>
 
             {/* Body */}
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
@@ -215,6 +200,11 @@ export default function LiveClassPage() {
                         {b.icon} {b.label}
                     </button>
                 ))}
+                {pinnedId && (
+                    <button onClick={() => setPinnedId(null)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 10, border: "1px solid #fed7aa", cursor: "pointer", fontWeight: 600, fontSize: 12, color: "#fff7ed", background: "#9a3412" }}>
+                        Unpin
+                    </button>
+                )}
                 <div style={{ width: 1, height: 24, background: "#2a2a3e", margin: "0 4px" }} />
                 <button onClick={handleLeaveClass} style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontWeight: 600, fontSize: 12, color: "#fff", background: "#64748b" }}>
                     <PhoneOff size={16} /> Leave

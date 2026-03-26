@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, ArrowLeft, Calendar, Clock, Play, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSessionReview, useStudentSessionView } from "@/api/hooks/useSessionReview";
 import { useQuery } from "@tanstack/react-query";
 import { useActivity } from "@/api/hooks/useActivities";
 import { useNextActivityQuestion } from "@/api/hooks/useNextActivityQuestion";
 import { useSubmitEvidence } from "@/api/hooks/useSubmitEvidence";
-import { useSessionScore } from "@/api/hooks/useSessionScore";
 import { useStudent } from "@/context/StudentContext";
 import { RecordingPlayer } from "@/components/dashboard/RecordingPlayer";
 import { ActivityPanel } from "@/components/live/ActivityPanel";
@@ -57,7 +55,6 @@ function formatDuration(startIso: string | null | undefined, endIso: string | nu
 export default function SessionReviewPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { studentId, isLoading: loadingStudent } = useStudent();
 
   const { data, isLoading: loadingReview, error } = useSessionReview(sessionId);
@@ -83,20 +80,6 @@ export default function SessionReviewPage() {
     refetch: refetchQuestion,
   } = useNextActivityQuestion(studentId, activeActivityId);
 
-  const { data: serverScore } = useSessionScore(studentId, sessionId);
-  const [localScoreDelta, setLocalScoreDelta] = useState({ total: 0, correct: 0 });
-  const lastActivityRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (activeActivityId && activeActivityId !== lastActivityRef.current) {
-      setLocalScoreDelta({ total: 0, correct: 0 });
-      lastActivityRef.current = activeActivityId;
-    }
-  }, [activeActivityId]);
-
-  const totalAnswered = (serverScore?.total ?? 0) + localScoreDelta.total;
-  const correctCount = (serverScore?.correct ?? 0) + localScoreDelta.correct;
-
   const { mutateAsync: submitEvidence, isPending: submitting } = useSubmitEvidence(studentId);
 
   const sessionStub = useMemo((): Session | null => {
@@ -121,7 +104,11 @@ export default function SessionReviewPage() {
 
   const handleAnswer = useCallback(
     async (answer: unknown) => {
-      if (!studentId || !activityQuestion || submitted || !sessionId) return;
+      const maybeAnswer = (answer && typeof answer === "object" && !Array.isArray(answer))
+        ? (answer as Record<string, unknown>)
+        : null;
+      const allowResubmit = maybeAnswer?.__allow_resubmit === true;
+      if (!studentId || !activityQuestion || (!allowResubmit && submitted) || !sessionId) return;
 
       const responseTimeMs = Date.now() - questionShownAt.current;
 
@@ -139,16 +126,11 @@ export default function SessionReviewPage() {
         const correct = result.event.outcome >= 0.5;
         setSubmitted(true);
         setIsCorrect(correct);
-        setLocalScoreDelta((prev) => ({
-          total: prev.total + 1,
-          correct: prev.correct + (correct ? 1 : 0),
-        }));
-        queryClient.invalidateQueries({ queryKey: ["session-score", studentId, sessionId] });
       } catch {
         /* TanStack Query surfaces errors */
       }
     },
-    [studentId, activityQuestion, submitted, sessionId, submitEvidence, queryClient],
+    [studentId, activityQuestion, submitted, sessionId, submitEvidence],
   );
 
   const handleNext = useCallback(() => {
@@ -397,8 +379,6 @@ export default function SessionReviewPage() {
               onNext={handleNext}
               submitting={submitting}
               timeLeft={null}
-              totalAnswered={totalAnswered}
-              correctCount={correctCount}
               panelLabel="Session review"
             />
           )}
