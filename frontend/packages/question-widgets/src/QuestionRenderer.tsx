@@ -42,7 +42,7 @@ const SLUG_MAP: Record<string, React.ComponentType<any>> = {
   flowchart: FlowchartQuestion,
 };
 
-export default function QuestionRenderer({ slug, data, onAnswer, resetKey }: Props) {
+export default function QuestionRenderer({ slug, data, onAnswer, resetKey, hideInlineSubmit }: Props) {
   const Component = SLUG_MAP[slug];
 
   if (!Component) {
@@ -54,8 +54,8 @@ export default function QuestionRenderer({ slug, data, onAnswer, resetKey }: Pro
   }
 
   if (slug === "mcq_timed") {
-    return <McqSingle data={data} onAnswer={onAnswer} timed resetKey={resetKey} />;
+    return <McqSingle data={data} onAnswer={onAnswer} timed resetKey={resetKey} hideInlineSubmit={hideInlineSubmit} />;
   }
 
-  return <Component data={data} onAnswer={onAnswer} resetKey={resetKey} />;
+  return <Component data={data} onAnswer={onAnswer} resetKey={resetKey} hideInlineSubmit={hideInlineSubmit} />;
 }

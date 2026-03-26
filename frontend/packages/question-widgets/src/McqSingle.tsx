@@ -7,7 +7,7 @@ interface McqProps extends QuestionProps {
   resetKey?: number;
 }
 
-export default function McqSingle({ data, onAnswer, timed = false, resetKey }: McqProps) {
+export default function McqSingle({ data, onAnswer, timed = false, resetKey, hideInlineSubmit }: McqProps) {
   const question = str(data.question);
   const options = arr(data.options);
   const timeLimit = num(data.time_limit_seconds, 0);
@@ -112,20 +112,9 @@ export default function McqSingle({ data, onAnswer, timed = false, resetKey }: M
           );
         })}
       </div>
-      {selected !== null && !multiStepMode && !timedOutWithoutAnswer && (
-        <div
-          style={{
-            marginTop: submitted ? 0 : 10,
-            textAlign: "center",
-            maxHeight: submitted ? 0 : 56,
-            opacity: submitted ? 0 : 1,
-            transform: submitted ? "translateY(-4px)" : "translateY(0)",
-            overflow: "hidden",
-            pointerEvents: submitted ? "none" : "auto",
-            transition: "max-height 220ms ease, opacity 180ms ease, transform 180ms ease, margin-top 220ms ease",
-          }}
-        >
-          <button style={BTN} onClick={handleCheck}>Submit</button>
+      {selected !== null && !multiStepMode && !timedOutWithoutAnswer && !submitted && !hideInlineSubmit && (
+        <div style={{ marginTop: 10, textAlign: "center" }}>
+          <button type="button" style={BTN} onClick={handleCheck}>Submit</button>
         </div>
       )}
       {timedOutWithoutAnswer && (

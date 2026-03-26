@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, FEEDBACK_OK, FEEDBACK_ERR, str, num } from "./shared";
 
-export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps) {
+export default function SliderInput({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const prompt = str(data.prompt);
   const min = num(data.min_value, 0);
   const max = num(data.max_value, 100);
@@ -82,9 +82,9 @@ export default function SliderInput({ data, onAnswer, resetKey }: QuestionProps)
         </div>
       )}
 
-      {!checked && !multiStepMode && (
+      {!checked && !multiStepMode && !hideInlineSubmit && (
         <div style={{ textAlign: "center" }}>
-          <button style={BTN} onClick={() => { setChecked(true); onAnswer?.({ value: val, correct: isCorrect }); }}>
+          <button type="button" style={BTN} onClick={() => { setChecked(true); onAnswer?.({ value: val, correct: isCorrect }); }}>
             Submit
           </button>
         </div>

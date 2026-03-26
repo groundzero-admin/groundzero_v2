@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import type { QuestionProps } from "./shared";
 import { CARD, HEADING, BTN, TEXT_INPUT, str } from "./shared";
 
-export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProps) {
+export default function ImageResponse({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const prompt = str(data.prompt);
   const multiStepMode = data.__multi_step_mode === true;
   const [text, setText] = useState("");
@@ -30,7 +30,9 @@ export default function ImageResponse({ data, onAnswer, resetKey }: QuestionProp
             placeholder="Type your response..."
             style={{ ...TEXT_INPUT, minHeight: 110, resize: "none" as const }}
           />
-          {!multiStepMode && <button style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Submit</button>}
+          {!multiStepMode && !hideInlineSubmit && (
+            <button type="button" style={{ ...BTN, marginTop: 8, width: "100%" }} onClick={() => onAnswer?.({ text })}>Submit</button>
+          )}
         </div>
       </div>
     </div>

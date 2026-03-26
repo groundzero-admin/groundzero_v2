@@ -1,4 +1,4 @@
-import { Flame, BookOpen, Wrench, Bot, Palette, Radio, Pause, StopCircle, CheckCircle2, FileText, ExternalLink, LayoutGrid } from "lucide-react";
+import { Flame, BookOpen, Wrench, Bot, Palette, Radio, StopCircle, CheckCircle2, FileText, ExternalLink, LayoutGrid } from "lucide-react";
 import type { SessionActivity } from "@/api/types";
 
 /** Default filter: show every activity in session order (avoids missing new activities that use a different type). */
@@ -83,7 +83,6 @@ export function ActivitiesTab({ activities, sessionId, activityInfoById, launchA
             {filtered.map(a => {
                 const isLive = a.status === "active";
                 const isDone = a.status === "completed";
-                const isPaused = a.status === "paused";
                 const info = activityInfoById.get(a.activity_id);
                 return (
                     <div key={a.id} style={{ background: isLive ? "#dcfce7" : "#f8fafc", border: isLive ? "1px solid #22c55e55" : "1px solid #e2e8f0", borderRadius: 14, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
@@ -91,7 +90,6 @@ export function ActivitiesTab({ activities, sessionId, activityInfoById, launchA
                             <div style={{ fontWeight: 900, fontSize: 12, color: isDone ? "#94a3b8" : "#0f172a" }}>
                                 {isDone   && <CheckCircle2 size={12} color="#22c55e" style={{ marginRight: 4, verticalAlign: "middle" }} />}
                                 {isLive   && <Radio        size={12} color="#22c55e" style={{ marginRight: 4, verticalAlign: "middle" }} />}
-                                {isPaused && <Pause        size={12} color="#94a3b8" style={{ marginRight: 4, verticalAlign: "middle" }} />}
                                 {a.activity_name ?? a.activity_id}
                             </div>
                             {(info?.description || info?.questionCount != null) && (
@@ -110,11 +108,9 @@ export function ActivitiesTab({ activities, sessionId, activityInfoById, launchA
                                     ))}
                                 </div>
                             )}
-                            <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>
-                                {a.duration_minutes ? `${a.duration_minutes} min` : ""}
-                                {a.launched_at ? ` · ${new Date(a.launched_at).toLocaleTimeString()}` : ""}
-                                {isPaused && <span style={{ color: "#64748b", marginLeft: 6, fontWeight: 800 }}>Stopped</span>}
-                            </div>
+                            {a.duration_minutes != null && a.duration_minutes > 0 && (
+                                <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>{a.duration_minutes} min</div>
+                            )}
                         </div>
                         {!isDone && (
                             <div style={{ display: "flex", gap: 4 }}>

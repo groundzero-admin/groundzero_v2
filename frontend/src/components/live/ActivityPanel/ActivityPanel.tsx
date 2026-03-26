@@ -21,8 +21,6 @@ interface ActivityPanelProps {
   onNext: () => void;
   submitting: boolean;
   timeLeft?: number | null;
-  totalAnswered?: number;
-  correctCount?: number;
   /** Label for the top badge (default: Live Activity). */
   panelLabel?: string;
 }
@@ -42,8 +40,6 @@ export function ActivityPanel({
   onNext,
   submitting,
   timeLeft,
-  totalAnswered = 0,
-  correctCount = 0,
   panelLabel = "Live Activity",
 }: ActivityPanelProps) {
   const timerExpired = timeLeft !== null && timeLeft !== undefined && timeLeft <= 0;
@@ -113,13 +109,6 @@ export function ActivityPanel({
           </>
         ) : null}
 
-        {totalAnswered > 0 && (
-          <div className={s.progressMini} style={{ gap: "12px", fontSize: "12px", color: "var(--text-secondary)" }}>
-            <span>{totalAnswered} answered</span>
-            <span>{correctCount} correct</span>
-          </div>
-        )}
-
         <div className={s.divider} />
 
         {/* Time's up */}
@@ -130,11 +119,7 @@ export function ActivityPanel({
                 <Clock size={24} />
               </div>
               <div className={s.emptyTitle}>Time's up!</div>
-              <div className={s.emptyText}>
-                You answered {totalAnswered} question{totalAnswered !== 1 ? "s" : ""} and
-                got {correctCount} correct.
-                Great effort!
-              </div>
+              <div className={s.emptyText}>Great effort!</div>
             </div>
           </div>
         ) : (
@@ -178,6 +163,9 @@ export function ActivityPanel({
                     }
                     onAnswer={onAnswer}
                     resetKey={resetKey}
+                    hideInlineSubmit={
+                      submitted && isCorrect === false && !isScribble && !isAiConversation
+                    }
                   />
                 )}
 

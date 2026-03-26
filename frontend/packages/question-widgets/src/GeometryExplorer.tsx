@@ -218,6 +218,7 @@ function McqSection({
   onAnswer,
   resetKey,
   multiStepMode = false,
+  hideInlineSubmit,
 }: {
   question: string;
   options: string[];
@@ -226,6 +227,7 @@ function McqSection({
   onAnswer?: ((a: unknown) => void) | null;
   resetKey?: number;
   multiStepMode?: boolean;
+  hideInlineSubmit?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -264,9 +266,9 @@ function McqSection({
           <span style={radioStyle(i, opt)} />{opt}
         </div>
       ))}
-      {selected !== null && !submitted && !multiStepMode && (
+      {selected !== null && !submitted && !multiStepMode && !hideInlineSubmit && (
         <div style={{ marginTop: 10, textAlign: "center" }}>
-          <button style={BTN} onClick={() => { setSubmitted(true); onAnswer?.({ selected: options[selected!], correct: correct(options[selected!] ?? "") }); }}>Submit</button>
+          <button type="button" style={BTN} onClick={() => { setSubmitted(true); onAnswer?.({ selected: options[selected!], correct: correct(options[selected!] ?? "") }); }}>Submit</button>
         </div>
       )}
       {submitted && (
@@ -278,7 +280,7 @@ function McqSection({
   );
 }
 
-export default function GeometryExplorer({ data, onAnswer, resetKey }: QuestionProps) {
+export default function GeometryExplorer({ data, onAnswer, resetKey, hideInlineSubmit }: QuestionProps) {
   const mode = (str(data.mode) || "angle_drag") as Mode;
   const question = str(data.question);
   const options = arr(data.options);
@@ -300,6 +302,7 @@ export default function GeometryExplorer({ data, onAnswer, resetKey }: QuestionP
           onAnswer={onAnswer}
           resetKey={resetKey}
           multiStepMode={multiStepMode}
+          hideInlineSubmit={hideInlineSubmit}
         />
       )}
     </div>
