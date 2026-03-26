@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import get_current_user, require_role
+from app.config import settings
 from app.database import get_db
 from app.models.student import Student
 from app.models.user import User
@@ -31,7 +32,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
     - secure: False for local dev (no HTTPS), True in production
     - samesite: "lax" prevents CSRF from other domains
     - path: only sent to /api/v1/auth endpoints (not on every request)
-    - max_age: 7 days in seconds
+    - max_age: matches refresh token expiry in settings
     """
     response.set_cookie(
         key="refresh_token",
@@ -39,7 +40,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         httponly=True,
         secure=False,  # set True in production (requires HTTPS)
         samesite="lax",
-        max_age=7 * 24 * 3600,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         path="/api/v1/auth",
     )
 
