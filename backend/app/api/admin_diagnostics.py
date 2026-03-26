@@ -167,6 +167,17 @@ async def get_class_report(
             if cid:
                 competency_ids_set.add(cid)
 
+    # Also gather competency IDs from actual evidence in this session
+    # (covers pillar-based activities like Math Sprint that have no primary_competencies)
+    evidence_comp_result = await db.execute(
+        select(EvidenceEvent.competency_id)
+        .where(EvidenceEvent.session_id == session_id)
+        .distinct()
+    )
+    for row in evidence_comp_result.scalars().all():
+        if row:
+            competency_ids_set.add(row)
+
     competency_ids = list(competency_ids_set)
     if not competency_ids:
         return []
@@ -232,7 +243,6 @@ async def get_class_report(
                     WHERE competency_id = :comp_id
                       AND student_id = ANY(:student_ids)
                       AND session_id = :session_id
-                      AND source = 'mcq'
                       AND meta->>'activityQuestionId' IS NOT NULL
                     ORDER BY student_id, meta->>'activityQuestionId', created_at DESC
                 ) latest
