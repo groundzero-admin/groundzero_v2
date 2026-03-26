@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "CHANGE-ME-IN-PRODUCTION"  # override via .env
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 60
     BCRYPT_ROUNDS: int = 12
 
     # Frontend URL (for invite links)
