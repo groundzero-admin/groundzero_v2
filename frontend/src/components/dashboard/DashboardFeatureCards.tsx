@@ -14,14 +14,15 @@ export function DashboardFeatureCards() {
         <span className={s.linkHint}>Report sent to parents</span>
       </Link>
 
-      <Link to="/studio" className={`${s.card} ${s.cardPurple}`}>
+      <div className={`${s.card} ${s.cardPurple} ${s.cardDisabled}`} aria-disabled>
+        <span className={s.comingSoon}>COMING SOON</span>
         <div className={s.cardTop}>
-          <Calculator className={s.icon} size={22} strokeWidth={2} />
+          <Calculator className={s.iconMuted} size={22} strokeWidth={2} />
         </div>
-        <h3 className={s.title}>Math Studio</h3>
-        <p className={s.desc}>Suggested concepts based on your level</p>
-        <span className={s.badgePurple}>4 topics ready</span>
-      </Link>
+        <h3 className={s.titleMuted}>Math Studio</h3>
+        <p className={s.descMuted}>Suggested concepts based on your level</p>
+        <span className={s.badgeMuted}>4 topics ready</span>
+      </div>
 
       <div className={`${s.card} ${s.cardTeal} ${s.cardDisabled}`} aria-disabled>
         <span className={s.comingSoon}>COMING SOON</span>
@@ -30,7 +31,7 @@ export function DashboardFeatureCards() {
         </div>
         <h3 className={s.titleMuted}>Exam Prep</h3>
         <p className={s.descMuted}>Chapter-wise practice to prep for exams</p>
-        <span className={s.badgeTeal}>10 chapters</span>
+        <span className={s.badgeMuted}>10 chapters</span>
       </div>
     </div>
   );

@@ -137,7 +137,13 @@ export default function LiveClassPage() {
 
             {/* Body */}
             <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-                <VideoArea tiles={tiles} pinnedId={pinnedId} setPinnedId={setPinnedId} onMute={makeMuteHandler} />
+                <VideoArea
+                    tiles={tiles}
+                    pinnedId={pinnedId}
+                    setPinnedId={setPinnedId}
+                    onMute={makeMuteHandler}
+                    canModerateParticipants
+                />
 
                 {/* Sidebar — fixed max width (not resizable) */}
                 <div style={{ width: SIDEBAR_WIDTH_PX, flexShrink: 0, display: "flex", flexDirection: "column", borderLeft: "1px solid #e2e8f0", background: "#fff" }}>

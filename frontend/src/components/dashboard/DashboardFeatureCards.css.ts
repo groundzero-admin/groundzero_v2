@@ -159,3 +159,13 @@ export const badgeTeal = style({
   padding: "4px 10px",
   borderRadius: "999px",
 });
+
+export const badgeMuted = style({
+  marginTop: "12px",
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "#94a3b8",
+  background: "#f1f5f9",
+  padding: "4px 10px",
+  borderRadius: "999px",
+});

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, X, UserRoundCheck } from "lucide-react";
+import { Users, X, UserRoundCheck, MoreVertical } from "lucide-react";
 import { VideoTile } from "./VideoTile";
 
 export interface TileData {
@@ -12,16 +12,18 @@ export interface TileData {
     audioTrack?: string;
 }
 
-export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferredMainPeerId, isCompactViewport = false }: {
+export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, canModerateParticipants = false, preferredMainPeerId, isCompactViewport = false }: {
     tiles: TileData[];
     pinnedId: string | null;
     setPinnedId: (id: string | null) => void;
-    onMute: (tile: TileData) => (() => void) | undefined;
+    onMute?: (tile: TileData) => (() => void) | undefined;
+    canModerateParticipants?: boolean;
     preferredMainPeerId?: string | null;
     isCompactViewport?: boolean;
 }) {
     // On mobile (compact) start hidden; on laptop start visible.
     const [showParticipants, setShowParticipants] = useState(() => !isCompactViewport);
+    const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
 
     useEffect(() => {
         setShowParticipants(!isCompactViewport);
@@ -68,7 +70,7 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                             )}
                         </div>
                     ) : (
-                        <VideoTile trackId={spotlightTile.trackId} label={spotlightTile.label} isPinned={!!pinnedId} isLarge onPin={() => setPinnedId(null)} onMute={onMute(spotlightTile)} style={{ width: "100%", height: "100%", borderRadius: 12 }} />
+                        <VideoTile trackId={spotlightTile.trackId} label={spotlightTile.label} isPinned={!!pinnedId} isLarge onPin={() => setPinnedId(null)} style={{ width: "100%", height: "100%", borderRadius: 12 }} />
                     )
                 ) : (
                     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontSize: 14, background: "#0d0d1a", borderRadius: 12 }}>
@@ -143,9 +145,47 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, preferred
                         const isSelected = t.id === (pinnedId ?? tiles.find(x => !x.isScreen && !x.isLocal)?.id ?? tiles[0]?.id);
                         const cardW = isCompactViewport ? 200 : 280;
                         const cardH = isCompactViewport ? 140 : 200;
+                        const muteAction = onMute?.(t);
+                        const canShowMenu = canModerateParticipants && !!muteAction;
                         return (
                             <button key={t.id} onClick={() => setPinnedId(pinnedId === t.id ? null : t.id)} style={{ position: "relative", width: cardW, height: cardH, flexShrink: 0, padding: 0, background: "transparent", outline: "none", border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: isSelected ? "0 0 14px rgba(34,197,94,0.35)" : "none", transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s", transform: isSelected ? "scale(1.06)" : "scale(1)" }}>
-                                <VideoTile trackId={t.trackId} label={t.label} isPinned={false} onPin={() => { }} style={{ width: "100%", height: "100%", borderRadius: 0 }} />
+                                <VideoTile
+                                    trackId={t.trackId}
+                                    label={t.label}
+                                    isPinned={false}
+                                    onPin={() => { }}
+                                    style={{ width: "100%", height: "100%", borderRadius: 0 }}
+                                />
+                                {canShowMenu && (
+                                    <div style={{ position: "absolute", top: 6, right: 6, zIndex: 6 }}>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setMenuOpenFor((prev) => (prev === t.id ? null : t.id));
+                                            }}
+                                            aria-label="Participant actions"
+                                            style={{ width: 24, height: 24, borderRadius: 999, border: "1px solid rgba(255,255,255,0.25)", background: "rgba(15,23,42,0.72)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                                        >
+                                            <MoreVertical size={14} />
+                                        </button>
+                                        {menuOpenFor === t.id && (
+                                            <div style={{ marginTop: 4, minWidth: 110, borderRadius: 8, background: "rgba(15,23,42,0.94)", border: "1px solid rgba(148,163,184,0.32)", boxShadow: "0 8px 20px rgba(0,0,0,0.35)", overflow: "hidden" }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        muteAction?.();
+                                                        setMenuOpenFor(null);
+                                                    }}
+                                                    style={{ width: "100%", border: "none", background: "transparent", color: "#f1f5f9", fontSize: 12, fontWeight: 700, padding: "8px 10px", textAlign: "left", cursor: "pointer" }}
+                                                >
+                                                    Mute
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                                 {isSelected && <div style={{ position: "absolute", top: 3, right: 3, width: 7, height: 7, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 5px #22c55e" }} />}
                             </button>
                         );

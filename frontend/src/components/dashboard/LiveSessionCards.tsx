@@ -26,13 +26,51 @@ interface LiveSession {
 
 function useMyLiveSessions() {
   const { studentId } = useStudent();
-  return useQuery<LiveSession[]>({
+  const query = useQuery<LiveSession[]>({
     queryKey: ["my-live-sessions"],
     queryFn: () => api.get("/students/me/live-sessions").then((r) => r.data),
     enabled: !!studentId,
     /** Keep short: after enrollments change, card should appear without waiting minutes (see admin atomic enroll). */
     staleTime: 10_000,
+    /**
+     * Smart polling:
+     * - Before the next class time: do not poll.
+     * - Once class time has passed (or class is already live): poll every 10s.
+     */
+    refetchInterval: (q) => {
+      const sessions = (q.state.data ?? []) as LiveSession[];
+      const now = Date.now();
+      const hasLive = sessions.some((s) => s.is_live);
+      const hasSessionReadyToStart = sessions.some((s) => {
+        const t = parseScheduleDate(s.scheduled_at)?.getTime();
+        return t != null && t <= now && !isSessionPast(s);
+      });
+      if (hasLive || hasSessionReadyToStart) return 10_000;
+      return false;
+    },
   });
+
+  useEffect(() => {
+    const sessions = query.data ?? [];
+    if (!sessions.length) return;
+
+    const now = Date.now();
+    const nextStartMs = sessions
+      .map((s) => parseScheduleDate(s.scheduled_at)?.getTime() ?? Number.POSITIVE_INFINITY)
+      .filter((t) => Number.isFinite(t) && t > now)
+      .sort((a, b) => a - b)[0];
+
+    if (!Number.isFinite(nextStartMs)) return;
+
+    const delay = Math.max(0, Math.min(nextStartMs - now, 2_147_483_647));
+    const timer = window.setTimeout(() => {
+      query.refetch();
+    }, delay);
+
+    return () => window.clearTimeout(timer);
+  }, [query.data, query.refetch]);
+
+  return query;
 }
 
 function parseScheduleDate(iso: string | null): Date | null {
