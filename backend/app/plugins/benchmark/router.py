@@ -252,7 +252,7 @@ async def submit_answer(
         )
         db.add(turn)
 
-    session.total_turns = data.question_number
+    session.total_turns = (session.total_turns or 0) + (0 if data.is_retry else 1)
 
     entry = {
         "question_number": question.question_number,

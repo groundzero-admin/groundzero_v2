@@ -1,5 +1,8 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import type { Character } from "../constants/characters";
+import { CHARACTERS } from "../constants/characters";
+
+const STORAGE_KEY = "gz_benchmark_session";
 
 interface BenchmarkSessionState {
   selectedCharacter: Character | null;
@@ -17,13 +20,34 @@ const BenchmarkSessionContext = createContext<BenchmarkSessionState>({
   reset: () => {},
 });
 
+function loadFromStorage(): { sessionId: string | null; characterId: string | null } {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { sessionId: null, characterId: null };
+}
+
 export function BenchmarkSessionProvider({ children }: { children: ReactNode }) {
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const stored = loadFromStorage();
+  const restoredChar = stored.characterId ? CHARACTERS.find(c => c.id === stored.characterId) ?? null : null;
+
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(restoredChar);
+  const [sessionId, setSessionId] = useState<string | null>(stored.sessionId);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        sessionId,
+        characterId: selectedCharacter?.id ?? null,
+      }));
+    } catch { /* ignore */ }
+  }, [sessionId, selectedCharacter]);
 
   const reset = () => {
     setSelectedCharacter(null);
     setSessionId(null);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
 import { CHARACTERS } from "../constants/characters";
@@ -10,6 +10,22 @@ export default function CharacterSelectPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Check for an active session and resume it
+  useEffect(() => {
+    benchmarkApi.listSessions().then(({ data }) => {
+      const active = (data as { id: string; character: string; status: string }[])
+        .find(s => s.status === "active" || s.status === "benchmark_ready");
+      if (active) {
+        const char = CHARACTERS.find(c => c.id === active.character);
+        if (char) {
+          setCharacter(char);
+          setSessionId(active.id);
+          navigate("/benchmark/conversation", { replace: true });
+        }
+      }
+    }).catch(() => { /* no active session, continue with selection */ });
+  }, [navigate, setCharacter, setSessionId]);
 
   const handleSelect = async (character: (typeof CHARACTERS)[number]) => {
     if (loading) return;

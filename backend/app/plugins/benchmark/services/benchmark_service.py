@@ -252,7 +252,7 @@ async def _seed_bkt_via_evidence(
             session_id=benchmark_session_id,
         )
 
-        _event, updates = await process_evidence(db, evidence)
+        _event, updates, _feedback = await process_evidence(db, evidence)
         all_updates.extend(updates)
 
     return all_updates

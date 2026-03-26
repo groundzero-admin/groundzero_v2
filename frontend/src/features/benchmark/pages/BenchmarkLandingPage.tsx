@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useStudent } from "@/context/StudentContext";
 import { useStudentById } from "@/api/hooks/useStudents";
 import { CHARACTERS } from "../constants/characters";
+import { useBenchmarkSession } from "../context/BenchmarkSessionContext";
+import benchmarkApi from "../api";
 
 const PILLARS = [
   { icon: "\u{1F4AC}", name: "Communication", desc: "How you explain ideas", bg: "#FEE2E2", color: "#DC2626" },
@@ -14,6 +17,16 @@ export default function BenchmarkLandingPage() {
   const navigate = useNavigate();
   const { studentId } = useStudent();
   const { data: student } = useStudentById(studentId);
+  const { setCharacter, setSessionId } = useBenchmarkSession();
+  const [activeSession, setActiveSession] = useState<{ id: string; character: string; total_turns: number } | null>(null);
+
+  useEffect(() => {
+    benchmarkApi.listSessions().then(({ data }) => {
+      const active = (data as { id: string; character: string; status: string; total_turns: number }[])
+        .find(s => s.status === "active");
+      if (active) setActiveSession(active);
+    }).catch(() => {});
+  }, []);
 
   return (
     <div className="bl-root">
@@ -73,15 +86,24 @@ export default function BenchmarkLandingPage() {
         </div>
 
         <button
-          onClick={() => navigate("/benchmark/select")}
+          onClick={() => {
+            if (activeSession) {
+              const char = CHARACTERS.find(c => c.id === activeSession.character);
+              if (char) setCharacter(char);
+              setSessionId(activeSession.id);
+              navigate("/benchmark/conversation");
+            } else {
+              navigate("/benchmark/select");
+            }
+          }}
           disabled={!student}
           className="bl-cta-btn"
           style={{ opacity: student ? 1 : 0.5, cursor: student ? "pointer" : "not-allowed" }}
         >
-          Let's Go! {"\u{1F31F}"}
+          {activeSession ? `Continue (${activeSession.total_turns}/8)` : "Let's Go! \u{1F31F}"}
         </button>
 
-        <div className="bl-duration">Takes about 20 minutes</div>
+        <div className="bl-duration">{activeSession ? "Pick up where you left off" : "Takes about 20 minutes"}</div>
       </div>
 
       <button onClick={() => navigate("/benchmark/history")} className="bl-history-btn">

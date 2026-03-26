@@ -116,14 +116,29 @@ export default function ConversationRoomPage() {
     }
   }, [sessionId, selectedCharacter, navigate]);
 
-  // ─── Load questions ───
+  // ─── Load questions + resume from backend state ───
   useEffect(() => {
     if (!sessionId) return;
-    benchmarkApi
-      .getQuestions()
-      .then((res: { data: BenchmarkQuestion[] }) => {
-        setQuestions(res.data);
-        setPhase("intro");
+    Promise.all([
+      benchmarkApi.getQuestions(),
+      benchmarkApi.getSession(sessionId),
+    ])
+      .then(([qRes, sRes]: [{ data: BenchmarkQuestion[] }, { data: { total_turns?: number; status?: string } }]) => {
+        setQuestions(qRes.data);
+        const turns = sRes.data?.total_turns ?? 0;
+        if (turns > 0 && turns < qRes.data.length) {
+          setCurrentIndex(turns);
+          // Seed answered array with placeholders for already-completed questions
+          const resumedAnswers: AnsweredQuestion[] = qRes.data.slice(0, turns).map((q, i) => ({
+            questionNumber: i + 1,
+            questionText: q.text,
+            answerText: "(answered previously)",
+          }));
+          setAnswered(resumedAnswers);
+          setPhase("map");
+        } else {
+          setPhase("intro");
+        }
       })
       .catch(() => {
         alert("Failed to load questions. Please try again.");
@@ -428,6 +443,45 @@ export default function ConversationRoomPage() {
       setRetryHint(null);
 
       if (isLastQuestion) {
+        // Show feedback for last question, then celebrate and navigate
+        const lastFeedback = await benchmarkApi.fetchFeedback({
+          question_text: currentQuestion.text,
+          answer_text: trimmedAnswer,
+          question_number: currentQuestion.question_number,
+          character: character.id,
+          is_retry: isRetry,
+        }).catch(() => null);
+
+        if (lastFeedback?.data) {
+          const fb = { text: lastFeedback.data.feedback_text, audioBase64: lastFeedback.data.audio_base64 };
+          setFeedbackText(fb.text);
+          setFeedbackTypedWords([]);
+          setPhase("feedback");
+          setIsSpeaking(true);
+          const words = fb.text.split(" ");
+          let widx = 0;
+          clearInterval(feedbackTimerRef.current);
+          feedbackTimerRef.current = setInterval(() => {
+            widx++;
+            setFeedbackTypedWords(words.slice(0, widx));
+            if (widx >= words.length) clearInterval(feedbackTimerRef.current);
+          }, 80);
+          if (fb.audioBase64) {
+            try {
+              const blob = new Blob(
+                [Uint8Array.from(atob(fb.audioBase64), c => c.charCodeAt(0))],
+                { type: "audio/wav" },
+              );
+              const url = URL.createObjectURL(blob);
+              const audio = new Audio(url);
+              await new Promise<void>(res => { audio.onended = () => res(); audio.onerror = () => res(); audio.play().catch(() => res()); });
+              URL.revokeObjectURL(url);
+            } catch { /* ignore audio errors */ }
+          } else {
+            await new Promise(res => setTimeout(res, Math.max(2000, words.length * 200)));
+          }
+        }
+
         setPhase("celebration");
         celebrationBurst();
         playComplete();
