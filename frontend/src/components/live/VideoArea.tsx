@@ -12,11 +12,12 @@ export interface TileData {
     audioTrack?: string;
 }
 
-export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, canModerateParticipants = false, preferredMainPeerId, isCompactViewport = false }: {
+export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, onStopCamera, canModerateParticipants = false, preferredMainPeerId, isCompactViewport = false }: {
     tiles: TileData[];
     pinnedId: string | null;
     setPinnedId: (id: string | null) => void;
     onMute?: (tile: TileData) => (() => void) | undefined;
+    onStopCamera?: (tile: TileData) => (() => void) | undefined;
     canModerateParticipants?: boolean;
     preferredMainPeerId?: string | null;
     isCompactViewport?: boolean;
@@ -146,7 +147,8 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, canModera
                         const cardW = isCompactViewport ? 200 : 280;
                         const cardH = isCompactViewport ? 140 : 200;
                         const muteAction = onMute?.(t);
-                        const canShowMenu = canModerateParticipants && !!muteAction;
+                        const stopCameraAction = onStopCamera?.(t);
+                        const canShowMenu = canModerateParticipants && (!!muteAction || !!stopCameraAction);
                         return (
                             <button key={t.id} onClick={() => setPinnedId(pinnedId === t.id ? null : t.id)} style={{ position: "relative", width: cardW, height: cardH, flexShrink: 0, padding: 0, background: "transparent", outline: "none", border: isSelected ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.08)", borderRadius: 12, overflow: "hidden", cursor: "pointer", boxShadow: isSelected ? "0 0 14px rgba(34,197,94,0.35)" : "none", transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s", transform: isSelected ? "scale(1.06)" : "scale(1)" }}>
                                 <VideoTile
@@ -171,17 +173,32 @@ export function VideoArea({ tiles = [], pinnedId, setPinnedId, onMute, canModera
                                         </button>
                                         {menuOpenFor === t.id && (
                                             <div style={{ marginTop: 4, minWidth: 110, borderRadius: 8, background: "rgba(15,23,42,0.94)", border: "1px solid rgba(148,163,184,0.32)", boxShadow: "0 8px 20px rgba(0,0,0,0.35)", overflow: "hidden" }}>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        muteAction?.();
-                                                        setMenuOpenFor(null);
-                                                    }}
-                                                    style={{ width: "100%", border: "none", background: "transparent", color: "#f1f5f9", fontSize: 12, fontWeight: 700, padding: "8px 10px", textAlign: "left", cursor: "pointer" }}
-                                                >
-                                                    Mute
-                                                </button>
+                                                {muteAction && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            muteAction();
+                                                            setMenuOpenFor(null);
+                                                        }}
+                                                        style={{ width: "100%", border: "none", background: "transparent", color: "#f1f5f9", fontSize: 12, fontWeight: 700, padding: "8px 10px", textAlign: "left", cursor: "pointer" }}
+                                                    >
+                                                        Mute
+                                                    </button>
+                                                )}
+                                                {stopCameraAction && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            stopCameraAction();
+                                                            setMenuOpenFor(null);
+                                                        }}
+                                                        style={{ width: "100%", border: "none", background: "transparent", color: "#f1f5f9", fontSize: 12, fontWeight: 700, padding: "8px 10px", textAlign: "left", cursor: "pointer", borderTop: muteAction ? "1px solid rgba(148,163,184,0.2)" : "none" }}
+                                                    >
+                                                        Stop camera
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>

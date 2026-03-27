@@ -356,7 +356,7 @@ export const sessionTitle = style({
 export const sessionTitleMuted = style([
   sessionTitle,
   {
-    color: "#a0a0a0",
+    color: "#0f172a",
   },
 ]);
 
@@ -369,7 +369,7 @@ export const sessionMeta = style({
 export const sessionMetaMuted = style([
   sessionMeta,
   {
-    color: "#c4c4c4",
+    color: "#334155",
   },
 ]);
 
@@ -391,8 +391,8 @@ export const sessionCohort = style({
 export const sessionCohortMuted = style([
   sessionCohort,
   {
-    color: "#c4b5fd",
-    background: "rgba(124, 58, 237, 0.06)",
+    color: "#334155",
+    background: "#e2e8f0",
   },
 ]);
 
@@ -410,30 +410,30 @@ export const reviewBtn = style({
   gap: "4px",
   padding: "5px 12px",
   borderRadius: "999px",
-  border: "1px solid #e2e8f0",
-  background: "#f8fafc",
+  border: "1px solid #93c5fd",
+  background: "linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)",
   fontSize: "11px",
-  fontWeight: 600,
-  color: "#64748b",
+  fontWeight: 700,
+  color: "#1e3a8a",
   cursor: "pointer",
   fontFamily: "inherit",
   ":hover": {
-    background: "#f1f5f9",
-    borderColor: "#cbd5e1",
-    color: "#475569",
+    background: "linear-gradient(135deg, #bfdbfe 0%, #bbf7d0 100%)",
+    borderColor: "#60a5fa",
+    color: "#1d4ed8",
   },
 });
 
 export const reviewBtnMuted = style([
   reviewBtn,
   {
-    borderColor: "#eee",
-    background: "#fafafa",
-    color: "#94a3b8",
+    borderColor: "#93c5fd",
+    background: "linear-gradient(135deg, #dbeafe 0%, #dcfce7 100%)",
+    color: "#1e3a8a",
     ":hover": {
-      background: "#f1f5f9",
-      borderColor: "#e2e8f0",
-      color: "#64748b",
+      background: "linear-gradient(135deg, #bfdbfe 0%, #bbf7d0 100%)",
+      borderColor: "#60a5fa",
+      color: "#1d4ed8",
     },
   },
 ]);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Loader2, ArrowLeft, Calendar, Clock, Play, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, Play, Square, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSessionReview, useStudentSessionView } from "@/api/hooks/useSessionReview";
 import { useQuery } from "@tanstack/react-query";
 import { useActivity } from "@/api/hooks/useActivities";
@@ -335,11 +335,11 @@ export default function SessionReviewPage() {
                       <div className={s.activityActions}>
                         <button
                           type="button"
-                          className={s.startBtn}
-                          onClick={() => setActiveActivityId(act.activity_id)}
+                          className={selected ? s.stopBtn : s.startBtn}
+                          onClick={() => setActiveActivityId(selected ? null : act.activity_id)}
                         >
-                          <Play size={12} />
-                          {selected ? "Continue" : "Start"}
+                          {selected ? <Square size={12} /> : <Play size={12} />}
+                          {selected ? "Stop" : "Start"}
                         </button>
                       </div>
                     </li>

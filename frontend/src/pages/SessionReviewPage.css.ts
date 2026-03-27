@@ -301,12 +301,23 @@ export const startBtn = style({
   cursor: "pointer",
   fontSize: vars.font.size.xs,
   fontWeight: vars.font.weight.semibold,
-  background: vars.color.interactive.primary,
-  color: vars.color.text.inverse,
+  background: "#16a34a",
+  color: "#ffffff",
   ":hover": {
-    background: vars.color.interactive.primaryHover,
+    background: "#15803d",
   },
 });
+
+export const stopBtn = style([
+  startBtn,
+  {
+    background: "#dc2626",
+    color: "#ffffff",
+    ":hover": {
+      background: "#b91c1c",
+    },
+  },
+]);
 
 export const rightPlaceholder = style({
   padding: vars.space[8],

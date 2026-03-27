@@ -126,6 +126,11 @@ export default function LiveClassPage() {
         return async () => { try { await hmsActions.setRemoteTrackEnabled(tile.audioTrack!, false); } catch { } };
     }
 
+    function makeStopCameraHandler(tile: TileData) {
+        if (tile.isLocal || tile.isScreen || !tile.trackId) return undefined;
+        return async () => { try { await hmsActions.setRemoteTrackEnabled(tile.trackId, false); } catch { } };
+    }
+
     const activityInfoById = new Map<string, { description?: string | null; questionCount?: number }>();
     for (const a of (sessionView?.activities ?? [])) {
         activityInfoById.set(a.activity_id, { description: a.description, questionCount: a.questions?.length ?? 0 });
@@ -142,6 +147,7 @@ export default function LiveClassPage() {
                     pinnedId={pinnedId}
                     setPinnedId={setPinnedId}
                     onMute={makeMuteHandler}
+                    onStopCamera={makeStopCameraHandler}
                     canModerateParticipants
                 />
 
