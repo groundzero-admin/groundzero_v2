@@ -128,7 +128,7 @@ export default function LiveClassPage() {
 
     function makeStopCameraHandler(tile: TileData) {
         if (tile.isLocal || tile.isScreen || !tile.trackId) return undefined;
-        return async () => { try { await hmsActions.setRemoteTrackEnabled(tile.trackId, false); } catch { } };
+        return async () => { try { await hmsActions.setRemoteTrackEnabled(tile.trackId!, false); } catch { } };
     }
 
     const activityInfoById = new Map<string, { description?: string | null; questionCount?: number }>();

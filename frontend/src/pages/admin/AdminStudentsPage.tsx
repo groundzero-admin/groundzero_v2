@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api/client";
 import { useCohorts } from "@/api/hooks/useAdmin";
-import { Plus, Copy, Check, Search, ChevronLeft, ChevronRight, RefreshCw, GitBranch } from "lucide-react";
+import { Plus, Copy, Check, Search, ChevronLeft, ChevronRight, RefreshCw, GitBranch, Trash2 } from "lucide-react";
 import * as s from "./admin.css";
 
 // ── Types ──
@@ -83,6 +83,13 @@ export default function AdminStudentsPage() {
     const regenerateInvite = useMutation({
         mutationFn: (userId: string) =>
             api.post<{ invite_link: string }>(`/admin/students/${userId}/regenerate-invite`).then((r) => r.data),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ["admin-students"] });
+        },
+    });
+
+    const deleteStudent = useMutation({
+        mutationFn: (userId: string) => api.delete(`/admin/students/${userId}`),
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["admin-students"] });
         },
@@ -255,6 +262,15 @@ export default function AdminStudentsPage() {
                                     <RefreshCw size={12} /> {st.invite_status === "none" ? "Send invite" : "Regenerate"}
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                className={s.dangerBtn}
+                                style={{ padding: "4px 10px", fontSize: 11 }}
+                                onClick={() => deleteStudent.mutate(st.id)}
+                                disabled={deleteStudent.isPending}
+                            >
+                                <Trash2 size={12} />
+                            </button>
                         </div>
                     </div>
                 ))}

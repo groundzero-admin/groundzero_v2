@@ -78,7 +78,7 @@ async def list_students(
     base_query = (
         select(User, Student)
         .outerjoin(Student, Student.user_id == User.id)
-        .where(User.role == "student")
+        .where(User.role == "student", User.is_active == True)
     )
 
     if search:
@@ -221,3 +221,32 @@ async def regenerate_invite(
         invite_link=build_invite_link(raw_token),
         invite_status="pending",
     )
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=204,
+    summary="Soft-delete a student (deactivate)",
+)
+async def delete_student(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("admin")),
+):
+    user = await db.get(User, uuid.UUID(user_id))
+    if not user or user.role != "student":
+        raise HTTPException(status_code=404, detail="Student not found")
+    user.is_active = False
+
+    # Remove cohort enrollments
+    student = (await db.execute(
+        select(Student).where(Student.user_id == user.id)
+    )).scalar_one_or_none()
+    if student:
+        await db.execute(
+            CohortEnrollment.__table__.delete().where(
+                CohortEnrollment.student_id == student.id
+            )
+        )
+
+    await db.commit()

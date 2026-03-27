@@ -119,9 +119,7 @@ export default function TeacherDashboardPage() {
           const isDone = doneIds.has(ses.id);
           const isEnded = endedIds.has(ses.id);
           const isNext = ses.id === firstPendingId;
-          const isFuture = !isDone && !isEnded && !isNext && !ses.started_at;
           const isLive = ses.started_at && !ses.ended_at;
-          const canStart = isNext || isLive;
 
           return (
             <div
