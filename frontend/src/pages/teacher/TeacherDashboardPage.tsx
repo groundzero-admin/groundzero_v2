@@ -95,11 +95,6 @@ export default function TeacherDashboardPage() {
     }
   }
 
-  function isStartable(scheduledAt: string | null): boolean {
-    if (!scheduledAt) return true;
-    return Date.now() >= new Date(scheduledAt).getTime() - 30 * 60 * 1000;
-  }
-
   // ══════════════════════════════════════════
   // Session boxes + student list
   // ══════════════════════════════════════════
@@ -126,7 +121,7 @@ export default function TeacherDashboardPage() {
           const isNext = ses.id === firstPendingId;
           const isFuture = !isDone && !isEnded && !isNext && !ses.started_at;
           const isLive = ses.started_at && !ses.ended_at;
-          const canStart = (isNext || isLive) && isStartable(ses.scheduled_at);
+          const canStart = isNext || isLive;
 
           return (
             <div
@@ -249,8 +244,7 @@ export default function TeacherDashboardPage() {
                     type="button"
                     className={s.actionBtnPrimary}
                     onClick={() => handleGoLive(ses.id)}
-                    disabled={!canStart || goingLiveId === ses.id}
-                    style={isFuture || !canStart ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+                    disabled={goingLiveId === ses.id}
                   >
                     <Video size={14} /> {goingLiveId === ses.id ? "Starting…" : "Go Live"}
                   </button>
